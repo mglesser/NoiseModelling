@@ -525,4 +525,62 @@ public class NoiseMapByReceiverMakerTest {
             assertEquals(PointPath.POINT_TYPE.DIFH, pathsParameters.get(1).getPointList().get(1).type);
         }
     }
+
+    /**
+     * Source, receiver and building on the side
+     * S            R
+     *     -----
+     *     |   |
+     *     -----
+     * @throws Exception
+     */
+    @Test
+    public void testReflexion() throws Exception {
+        try (Statement st = connection.createStatement()) {
+            // Import buildings
+            st.execute(String.format("CALL SHPREAD('%s', 'BUILDINGS')", NoiseMapByReceiverMakerTest.class.getResource("buildings_pathfinding_test.shp").getFile()));
+
+            // create source point direction east->90°
+            st.execute(createSource(new GeometryFactory(new PrecisionModel(), 2154).createPoint(new Coordinate(348171.2,668309.0,1.0 )),
+                    91, new Orientation(90,0,0),0));
+
+            // create receiver
+            st.execute("create table receivers(id serial PRIMARY KEY, the_geom GEOMETRY(POINTZ))");
+            st.execute("insert into receivers(the_geom) values ('SRID=2154; POINTZ (348329.3 668304.8 1)')");
+
+            NoiseMapByReceiverMaker noiseMapByReceiverMaker = new NoiseMapByReceiverMaker("BUILDINGS",
+                    "ROADS_GEOM", "RECEIVERS");
+
+            noiseMapByReceiverMaker.setComputeHorizontalDiffraction(false);
+            noiseMapByReceiverMaker.setComputeVerticalDiffraction(true);
+            noiseMapByReceiverMaker.setSourceHasAbsoluteZCoordinates(true);
+            noiseMapByReceiverMaker.setReceiverHasAbsoluteZCoordinates(true);
+            noiseMapByReceiverMaker.setSoundReflectionOrder(1);
+            noiseMapByReceiverMaker.setMaximumPropagationDistance(1000);
+            noiseMapByReceiverMaker.setHeightField("HEIGHT");
+            noiseMapByReceiverMaker.getNoiseMapDatabaseParameters().exportRaysMethod = NoiseMapDatabaseParameters.ExportRaysMethods.TO_RAYS_TABLE;
+            noiseMapByReceiverMaker.getNoiseMapDatabaseParameters().raysTable = "RAYS";
+            noiseMapByReceiverMaker.getNoiseMapDatabaseParameters().exportCnossosPathWithAttenuation = true;
+            noiseMapByReceiverMaker.getNoiseMapDatabaseParameters().exportAttenuationMatrix = true;
+            noiseMapByReceiverMaker.getNoiseMapDatabaseParameters().mergeSources = false;
+
+            noiseMapByReceiverMaker.run(connection, new EmptyProgressVisitor());
+
+            NoiseMapDatabaseParameters parameters = noiseMapByReceiverMaker.getNoiseMapDatabaseParameters();
+
+            List<CnossosPath> pathsParameters = new ArrayList<>();
+            try(ResultSet rs = st.executeQuery("SELECT IDRECEIVER, PATH FROM " + parameters.raysTable + " ORDER BY IDRECEIVER")) {
+                while (rs.next()) {
+                    CnossosPath cnossosPath = NoiseMapWriter.jsonToPropagationPath(rs.getString("PATH"));
+                    pathsParameters.add(cnossosPath);
+                }
+            }
+            // Diffraction over the walls of the building, but no direct path
+            assertEquals(2 , pathsParameters.size());
+            // Homogenous path with diffraction over the building wall
+            assertEquals(PointPath.POINT_TYPE.DIFH, pathsParameters.get(0).getPointList().get(1).type);
+            // Favorable path with diffraction over the building wall
+            assertEquals(PointPath.POINT_TYPE.DIFH, pathsParameters.get(1).getPointList().get(1).type);
+        }
+    }
 }
