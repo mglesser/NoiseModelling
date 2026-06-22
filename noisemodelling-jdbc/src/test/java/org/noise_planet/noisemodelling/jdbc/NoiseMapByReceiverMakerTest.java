@@ -537,16 +537,19 @@ public class NoiseMapByReceiverMakerTest {
     @Test
     public void testReflexion() throws Exception {
         try (Statement st = connection.createStatement()) {
-            // Import buildings
-            st.execute(String.format("CALL SHPREAD('%s', 'BUILDINGS')", NoiseMapByReceiverMakerTest.class.getResource("buildings_pathfinding_test.shp").getFile()));
+             // create building table
+            st.execute("CREATE TABLE BUILDINGS(pk serial PRIMARY KEY, the_geom GEOMETRY(POLYGON), height real)");
+            st.execute("INSERT INTO BUILDINGS values (0, 'SRID=2154; POLYGON ((348222 6683040, 348265 6683028, 348253 6682985, 348211 6682997, 348222 6683040))', 20)");
+
 
             // create source point direction east->90°
-            st.execute(createSource(new GeometryFactory(new PrecisionModel(), 2154).createPoint(new Coordinate(348171.2,668309.0,1.0 )),
+            st.execute(createSource(new GeometryFactory(new PrecisionModel(), 2154).createPoint(new Coordinate(348162.758, 6683091.962,1.0 )),
                     91, new Orientation(90,0,0),0));
 
-            // create receiver
+            // create receiver(s)
             st.execute("create table receivers(id serial PRIMARY KEY, the_geom GEOMETRY(POINTZ))");
-            st.execute("insert into receivers(the_geom) values ('SRID=2154; POINTZ (348329.3 668304.8 1)')");
+            st.execute("insert into receivers values (100, 'SRID=2154; POINTZ (348340.937 6683042.522 1)')");
+            // st.execute("insert into receivers values (101, 'SRID=2154; POINTZ (348280.239 6683041.543 1)')");
 
             NoiseMapByReceiverMaker noiseMapByReceiverMaker = new NoiseMapByReceiverMaker("BUILDINGS",
                     "ROADS_GEOM", "RECEIVERS");
