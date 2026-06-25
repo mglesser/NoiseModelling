@@ -495,9 +495,8 @@ public class DelaunayReceiversMaker extends GridMapMaker {
         String sourceGeomName = geomFields.get(0);
         Geometry domainConstraint = geometryFactory.toGeometry(fetchEnvelope);
         Tuple<String, Integer> primaryKey = JDBCUtilities.getIntegerPrimaryKeyNameAndIndex(
-                connection.unwrap(Connection.class), new TableLocation(sourcesTableName, dbType));
-        int pkIndex = primaryKey.second();
-        if (pkIndex < 1) {
+                connection.unwrap(Connection.class), TableLocation.parse(sourcesTableName, dbType));
+        if (primaryKey == null) {
             throw new IllegalArgumentException(String.format("Source table %s does not contain a primary key", sourceTableIdentifier));
         }
         try (PreparedStatement st = connection.prepareStatement("SELECT * FROM " + sourcesTableName + " WHERE "

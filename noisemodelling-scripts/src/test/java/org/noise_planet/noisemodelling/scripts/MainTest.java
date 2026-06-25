@@ -24,6 +24,7 @@ import org.noise_planet.noisemodelling.runner.Main;
 import org.noise_planet.noisemodelling.scripts.Database_Manager.Clean_Database;
 import org.noise_planet.noisemodelling.webserver.utilities.Logging;
 
+import javax.sql.DataSource;
 import java.io.File;
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -128,9 +129,12 @@ public class MainTest {
         String buildingsPath = MainTest.class.getResource("buildings.shp").getPath();
         String roadsPath = MainTest.class.getResource("ROADS2.shp").getPath();
 
-        try (Connection connection = JdbcTestCase.createPostgisDataSourceFromEnv().getConnection()) {
-            new Clean_Database().exec(connection, Map.of("areYouSure", true));
-            assertFalse(JDBCUtilities.tableExists(connection, "RECEIVERS"), "Table RECEIVERS should not exist in PostGIS");
+        DataSource postgisDataSource = JdbcTestCase.createPostgisDataSourceFromEnv();
+
+        try (Connection connection = postgisDataSource.getConnection()) {
+            connection.createStatement().execute("CREATE SCHEMA IF NOT EXISTS TESTDELAUNAY");
+            new Clean_Database().exec(connection, Map.of("areYouSure", true, "schema", "testdelaunay"));
+            assertFalse(JDBCUtilities.tableExists(connection, "testdelaunay.receivers"), "Table RECEIVERS should not exist in PostGIS");
         }
 
         Main.main("-w", temp.getAbsolutePath(),
@@ -141,7 +145,13 @@ public class MainTest {
                 "--port", pgPort,
                 "--host", pgHost,
                 "--pathFile", buildingsPath,
-                "--tableName", "BUILDINGS");
+                "--tableName", "testdelaunay.buildings");
+
+        try(Connection connection = postgisDataSource.getConnection()) {
+            // Remove height field in BUILDINGS table (to check if it is working without this field)
+            connection.createStatement().execute("ALTER TABLE testdelaunay.buildings DROP COLUMN HEIGHT");
+        }
+
 
         Main.main("-w", temp.getAbsolutePath(),
                 "-d", pgDb,
@@ -151,7 +161,7 @@ public class MainTest {
                 "--port", pgPort,
                 "--host", pgHost,
                 "--pathFile", roadsPath,
-                "--tableName", "ROADS");
+                "--tableName", "testdelaunay.roads");
 
         Main.main("-w", temp.getAbsolutePath(),
                 "-d", pgDb,
@@ -160,12 +170,13 @@ public class MainTest {
                 "-s", "src/main/groovy/org/noise_planet/noisemodelling/scripts/Receivers/Delaunay_Grid.groovy",
                 "--port", pgPort,
                 "--host", pgHost,
-                "--tableBuilding", "BUILDINGS",
-                "--sourcesTableName", "ROADS"
+                "--tableBuilding", "testdelaunay.buildings",
+                "--sourcesTableName", "testdelaunay.roads",
+                "--outputTableName", "testdelaunay.receivers"
                 );
 
-        try (Connection connection = JdbcTestCase.createPostgisDataSourceFromEnv().getConnection()) {
-            assertTrue(JDBCUtilities.tableExists(connection, "RECEIVERS"), "Table RECEIVERS should exist in PostGIS");
+        try (Connection connection = postgisDataSource.getConnection()) {
+            assertTrue(JDBCUtilities.tableExists(connection, "testdelaunay.receivers"), "Table RECEIVERS should exist in PostGIS");
         }
     }
 }
