@@ -545,6 +545,8 @@ public class NoiseMapByReceiverMakerTest {
             // create source point direction east->90°
             st.execute(createSource(new GeometryFactory(new PrecisionModel(), 2154).createPoint(new Coordinate(348162.758, 6683091.962,1.0 )),
                     91, new Orientation(90,0,0),0));
+            //st.execute("insert into ROADS_GEOM values (201, 'SRID=2154; POINTZ (348203.511 6683058.790 1)', 91, new Orientation(90,0,0),0)");
+            // st.execute("SHOW COLUMNS FROM ROADS_GEOM");
 
             // create receiver(s)
             st.execute("create table receivers(id serial PRIMARY KEY, the_geom GEOMETRY(POINTZ))");
@@ -566,6 +568,7 @@ public class NoiseMapByReceiverMakerTest {
             noiseMapByReceiverMaker.getNoiseMapDatabaseParameters().exportCnossosPathWithAttenuation = true;
             noiseMapByReceiverMaker.getNoiseMapDatabaseParameters().exportAttenuationMatrix = true;
             noiseMapByReceiverMaker.getNoiseMapDatabaseParameters().mergeSources = false;
+            noiseMapByReceiverMaker.setThreadCount(1);
 
             noiseMapByReceiverMaker.run(connection, new EmptyProgressVisitor());
 
