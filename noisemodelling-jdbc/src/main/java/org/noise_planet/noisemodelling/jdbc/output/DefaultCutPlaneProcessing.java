@@ -11,8 +11,8 @@ import org.noise_planet.noisemodelling.pathfinder.utils.profiler.JVMMemoryMetric
 import org.noise_planet.noisemodelling.pathfinder.utils.profiler.ProfilerThread;
 import org.noise_planet.noisemodelling.pathfinder.utils.profiler.ProgressMetric;
 import org.noise_planet.noisemodelling.pathfinder.utils.profiler.ReceiverStatsMetric;
-import org.noise_planet.noisemodelling.propagation.cnossos.CnossosPropagationModelCreator;
-import org.noise_planet.noisemodelling.propagation.PropagationModelCreator;
+import org.noise_planet.noisemodelling.propagation.cnossos.CnossosPropagationModelFactory;
+import org.noise_planet.noisemodelling.propagation.PropagationModelFactory;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -31,7 +31,7 @@ public class DefaultCutPlaneProcessing implements IComputeRaysOutFactory {
     NoiseMapByReceiverMaker noiseMapByReceiverMaker;
     ThreadPool postProcessingThreadPool = new ThreadPool();
     Future<Boolean> noiseMapWriterFuture;
-    PropagationModelCreator propagationModelCreator = new CnossosPropagationModelCreator();
+    PropagationModelFactory propagationModelFactory = new CnossosPropagationModelFactory();
 
     /**
      * @param noiseMapDatabaseParameters Database settings
@@ -51,7 +51,7 @@ public class DefaultCutPlaneProcessing implements IComputeRaysOutFactory {
      */
     @Override
     public CutPlaneVisitorFactory create(SceneWithEmission scene) {
-        return new AttenuationOutputMultiThread(scene, propagationModelCreator, resultsCache, noiseMapDatabaseParameters, exitWhenDone, aborted);
+        return new AttenuationOutputMultiThread(scene, propagationModelFactory, resultsCache, noiseMapDatabaseParameters, exitWhenDone, aborted);
     }
 
     @Override
@@ -109,10 +109,10 @@ public class DefaultCutPlaneProcessing implements IComputeRaysOutFactory {
     /**
      * Setter for propagationModelCreator
      *
-     * @param propagationModelCreator interface for PropagationModel creation
+     * @param propagationModelFactory interface for PropagationModel creation
      */
-    public void setPropagationModelCreator(PropagationModelCreator propagationModelCreator){
-        this.propagationModelCreator = propagationModelCreator;
+    public void setPropagationModelCreator(PropagationModelFactory propagationModelFactory){
+        this.propagationModelFactory = propagationModelFactory;
     }
 
     /**
@@ -120,7 +120,7 @@ public class DefaultCutPlaneProcessing implements IComputeRaysOutFactory {
      *
      * @return interface for PropagationModel creation
      */
-    public PropagationModelCreator getPropagationModelCreator(){
-        return this.propagationModelCreator;
+    public PropagationModelFactory getPropagationModelCreator(){
+        return this.propagationModelFactory;
     }
 }

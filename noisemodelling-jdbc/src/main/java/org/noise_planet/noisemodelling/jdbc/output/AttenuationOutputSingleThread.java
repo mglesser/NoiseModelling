@@ -241,7 +241,7 @@ public class AttenuationOutputSingleThread implements CutPlaneVisitor {
     @Override
     public PathSearchStrategy onNewCutPlane(CutProfile cutProfile) {
         // Create a PropagationModel instance
-        propagationModel = multiThread.propagationModelCreator.create();
+        propagationModel = multiThread.propagationModelFactory.create();
         PathSearchStrategy strategy = PathSearchStrategy.CONTINUE;
         multiThread.cutProfileCount.addAndGet(1);
         final SceneWithEmission scene = multiThread.sceneWithEmission;
@@ -290,7 +290,7 @@ public class AttenuationOutputSingleThread implements CutPlaneVisitor {
             AtomicInteger cutProfileCount) {
         this.cutProfileCount = cutProfileCount;
         // Create a PropagationModel instance
-        propagationModel = multiThread.propagationModelCreator.create();
+        propagationModel = multiThread.propagationModelFactory.create();
         // Quickly evaluate the maximum expected power level at receiver location
         // using all nearby sources maximum emission in reflective direct field
         if(isMaximumErrorPruningEnabled() && !multiThread.sceneWithEmission.wjSources.isEmpty()) {

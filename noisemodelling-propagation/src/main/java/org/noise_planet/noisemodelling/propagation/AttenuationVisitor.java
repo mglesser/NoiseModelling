@@ -48,7 +48,7 @@ public class AttenuationVisitor implements CutPlaneVisitor {
     @Override
     public PathSearchStrategy onNewCutPlane(CutProfile cutProfile) {
         // Create a PropagationModel instance
-        propagationModel = multiThreadParent.propagationModelCreator.create();
+        propagationModel = multiThreadParent.propagationModelFactory.create();
         multiThreadParent.cutProfileCount.addAndGet(1);
         final SceneWithAttenuation scene = multiThreadParent.scene;
         if(scene.getCloseReceiverReflectionWallDistance() > 0

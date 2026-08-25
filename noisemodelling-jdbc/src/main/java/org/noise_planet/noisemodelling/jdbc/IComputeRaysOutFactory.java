@@ -3,7 +3,7 @@ package org.noise_planet.noisemodelling.jdbc;
 import org.h2gis.api.ProgressVisitor;
 import org.noise_planet.noisemodelling.jdbc.input.SceneWithEmission;
 import org.noise_planet.noisemodelling.pathfinder.CutPlaneVisitorFactory;
-import org.noise_planet.noisemodelling.propagation.PropagationModelCreator;
+import org.noise_planet.noisemodelling.propagation.PropagationModelFactory;
 
 import java.sql.Connection;
 import java.sql.SQLException;
@@ -47,14 +47,14 @@ public interface IComputeRaysOutFactory {
     /**
      * Setter for propagationModelCreator
      *
-     * @param propagationModelCreator interface for PropagationModel creation
+     * @param propagationModelFactory interface for PropagationModel creation
      */
-    void setPropagationModelCreator(PropagationModelCreator propagationModelCreator);
+    void setPropagationModelCreator(PropagationModelFactory propagationModelFactory);
 
     /**
      * Getter for propagationModelCreator
      *
      * @return interface for PropagationModel creation
      */
-    PropagationModelCreator getPropagationModelCreator();
+    PropagationModelFactory getPropagationModelCreator();
 }

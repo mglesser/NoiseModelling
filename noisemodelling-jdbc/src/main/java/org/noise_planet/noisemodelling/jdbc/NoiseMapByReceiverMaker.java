@@ -29,7 +29,6 @@ import org.noise_planet.noisemodelling.pathfinder.PathFinder;
 import org.noise_planet.noisemodelling.pathfinder.path.Scene;
 import org.noise_planet.noisemodelling.pathfinder.utils.documents.KMLDocument;
 import org.noise_planet.noisemodelling.pathfinder.utils.profiler.ProfilerThread;
-import org.noise_planet.noisemodelling.propagation.PropagationModelCreator;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
