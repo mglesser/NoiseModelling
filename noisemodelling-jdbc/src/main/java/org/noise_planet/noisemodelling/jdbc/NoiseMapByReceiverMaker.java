@@ -29,6 +29,8 @@ import org.noise_planet.noisemodelling.pathfinder.PathFinder;
 import org.noise_planet.noisemodelling.pathfinder.path.Scene;
 import org.noise_planet.noisemodelling.pathfinder.utils.documents.KMLDocument;
 import org.noise_planet.noisemodelling.pathfinder.utils.profiler.ProfilerThread;
+import org.noise_planet.noisemodelling.propagation.PropagationModelFactory;
+import org.noise_planet.noisemodelling.propagation.cnossos.CnossosPropagationModelFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -58,6 +60,7 @@ public class NoiseMapByReceiverMaker extends GridMapMaker {
     private int threadCount = 0;
     private ProfilerThread profilerThread;
     public String exportKmlName = "cell_%d_%d.kml";
+    public PropagationModelFactory propagationModel = new CnossosPropagationModelFactory();
 
     SceneDatabaseInputSettings sceneDatabaseInputSettings = new SceneDatabaseInputSettings();
 
@@ -437,5 +440,13 @@ public class NoiseMapByReceiverMaker extends GridMapMaker {
          * @return Scene to feed the data
          */
         SceneWithEmission create(Connection connection, CellIndex cellIndex, Set<Long> skipReceivers) throws SQLException;
+    }
+
+    /**
+     * Setter for the propagation model to be used
+     * @param propagationModel Propagation model
+     */
+    public void setPropagationModel(PropagationModelFactory propagationModel) {
+        this.propagationModel = propagationModel;
     }
 }
