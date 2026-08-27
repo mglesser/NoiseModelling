@@ -115,9 +115,9 @@ public class PathFinder {
 
     /**
      * Run computation and store the results in the given output.
-     * @param computeRaysOut Result output.
+     * @param computationProcessorManager Result output.
      */
-    public void run(PathFinderProcessorManager computeRaysOut) {
+    public void run(PathFinderProcessorManager computationProcessorManager) {
         ThreadPool threadManager = new ThreadPool(threadCount, threadCount + 1, Long.MAX_VALUE, TimeUnit.SECONDS);
         int maximumReceiverBatch = (int) ceil(data.receivers.size() / (double) threadCount);
         int endReceiverRange = 0;
@@ -131,7 +131,7 @@ public class PathFinder {
             }
             int newEndReceiver = min(endReceiverRange + maximumReceiverBatch, data.receivers.size());
             ThreadPathFinder batchThread = new ThreadPathFinder(endReceiverRange, newEndReceiver,
-                    this, cellProgress, computeRaysOut.subProcess(cellProgress), data);
+                    this, cellProgress, computationProcessorManager.subProcess(cellProgress), data);
             if (threadCount != 1) {
                 tasks.add(threadManager.submitBlocking(batchThread));
             } else {
