@@ -77,6 +77,8 @@ public class AttenuationOutputSingleThread implements PathFinderProcessor {
         this.multiThread = multiThreadParent;
         this.dbSettings = multiThreadParent.noiseMapDatabaseParameters;
         this.progressVisitor = progressVisitor;
+        // Create a PropagationModel instance
+        propagationModel = multiThread.propagationModelFactory.create();
     }
 
     /**
@@ -240,8 +242,7 @@ public class AttenuationOutputSingleThread implements PathFinderProcessor {
      */
     @Override
     public PathSearchStrategy onNewCutPlane(CutProfile cutProfile) {
-        // Create a PropagationModel instance
-        propagationModel = multiThread.propagationModelFactory.create();
+        propagationModel.onNewCutPlane();
         PathSearchStrategy strategy = PathSearchStrategy.CONTINUE;
         multiThread.cutProfileCount.addAndGet(1);
         final SceneWithEmission scene = multiThread.sceneWithEmission;

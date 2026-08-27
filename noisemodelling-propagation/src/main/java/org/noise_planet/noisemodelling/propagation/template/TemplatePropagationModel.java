@@ -33,6 +33,14 @@ public class TemplatePropagationModel implements PropagationModel {
     public TemplatePropagationModel(){}
 
     /**
+     * Initialize the attenuation computation
+     */
+    @Override
+    public void onNewCutPlane() {
+
+    }
+
+    /**
      * Compute the attenuation for a given cut-profile
      *
      * @param scene Geometrical information about the propagation scene

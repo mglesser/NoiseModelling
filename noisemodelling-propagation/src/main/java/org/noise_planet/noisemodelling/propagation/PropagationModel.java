@@ -11,17 +11,21 @@ package org.noise_planet.noisemodelling.propagation;
 
 import org.noise_planet.noisemodelling.pathfinder.PathFinder;
 import org.noise_planet.noisemodelling.pathfinder.profilebuilder.CutProfile;
-import org.noise_planet.noisemodelling.propagation.cnossos.CnossosPath;
 
 import java.util.List;
 
 /**
  * Interface for point to point propagation models.
  * Note : the instances of the different implementations of
- * the interface are thread-safe.
+ * the interface must be thread-safe.
  * @author Martin Glesser
  */
 public interface PropagationModel {
+
+    /**
+     * Called each time a new cut profile is detected
+     */
+    void onNewCutPlane();
 
     /**
      * Compute the attenuation for a given cut-profile

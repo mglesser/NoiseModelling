@@ -20,8 +20,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * CNOSSOS P2P propagation model
- * Note : the instances of the class are thread-safe.
+ * CNOSSOS propagation model
+ * Note : the instances of the class must be thread-safe.
  * @author Martin Glesser
  */
 public class CnossosPropagationModel implements PropagationModel {
@@ -31,6 +31,15 @@ public class CnossosPropagationModel implements PropagationModel {
      * Constructor for CnossosPropagationModel objects
      */
     public CnossosPropagationModel(){}
+
+    /**
+     * Initialize the list of Cnossos paths each time a new cut profile
+     * is detected
+     */
+    @Override
+    public void onNewCutPlane() {
+        cnossosPaths = new ArrayList<>();
+    }
 
     /**
      * Compute the attenuation for a list of paths
