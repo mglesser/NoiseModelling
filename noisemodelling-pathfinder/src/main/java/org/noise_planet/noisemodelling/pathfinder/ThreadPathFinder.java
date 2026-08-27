@@ -34,8 +34,8 @@ public final class ThreadPathFinder implements Callable<Boolean> {
      * @param startReceiver start receiver ID
      * @param endReceiver end  receiver ID
      * @param propagationProcess PathFinder instance
-     * @param visitor Progression info
-     * @param computationProcessor objects launching the computations performed at different steps of the path finding
+     * @param visitor progress visitor used for cancellation and progression managing
+     * @param computationProcessor object launching the computations performed at different steps of the path finding
      * @param data propagation parameters
      */
     public ThreadPathFinder(int startReceiver, int endReceiver, PathFinder propagationProcess,

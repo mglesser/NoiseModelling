@@ -165,11 +165,12 @@ public class PathFinder {
 
     /**
      * Compute the rays to the given receiver.
-     * @param receiverPointInfo     Receiver point.
-     * @param dataOut Computation output.
-     * @param visitor Progress visitor used for cancellation and progression managing.
+     * @param receiverPointInfo receiver point information
+     * @param computationProcessor object launching the computations performed at different steps of the path finding
+     * @param visitor progress visitor used for cancellation and progression managing
      */
-    public void computeRaysAtPosition(ReceiverPointInfo receiverPointInfo, PathFinderProcessor dataOut, ProgressVisitor visitor) {
+    public void computeRaysAtPosition(ReceiverPointInfo receiverPointInfo, PathFinderProcessor computationProcessor,
+                                      ProgressVisitor visitor) {
 
         if(data.profileBuilder.hasDem()) {
             // Check if the receiver has been positioned below the ground
@@ -257,7 +258,7 @@ public class PathFinder {
         // Provides full sources points list to output data in order to do preprocessing step to evaluate
         // the maximum expected power at receivers level
         AtomicInteger cutProfileCount = new AtomicInteger(0);
-        dataOut.startReceiver(receiverPointInfo, sourceList, cutProfileCount);
+        computationProcessor.startReceiver(receiverPointInfo, sourceList, cutProfileCount);
 
         long sourceCollectTime = 0;
         if(profilerThread != null) {
@@ -267,7 +268,7 @@ public class PathFinder {
         AtomicInteger processedSources = new AtomicInteger(0);
         // For each Pt Source - Pt Receiver
         for (SourcePointInfo sourcePointInfo : sourceList) {
-            PathFinderProcessor.PathSearchStrategy strategy = rcvSrcPropagation(sourcePointInfo, receiverPointInfo, dataOut, receiverMirrorIndex);
+            PathFinderProcessor.PathSearchStrategy strategy = rcvSrcPropagation(sourcePointInfo, receiverPointInfo, computationProcessor, receiverMirrorIndex);
             processedSources.addAndGet(1);
             // If the delta between already received power and maximal potential power received is inferior to data.maximumError
             if ((visitor != null && visitor.isCanceled()) ||
@@ -289,7 +290,7 @@ public class PathFinder {
         }
 
         // No more rays for this receiver
-        dataOut.finalizeReceiver(receiverPointInfo);
+        computationProcessor.finalizeReceiver(receiverPointInfo);
     }
 
     /**
