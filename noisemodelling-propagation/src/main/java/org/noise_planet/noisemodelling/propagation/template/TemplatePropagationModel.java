@@ -10,6 +10,9 @@
 package org.noise_planet.noisemodelling.propagation.template;
 
 import org.noise_planet.noisemodelling.pathfinder.PathFinder;
+import org.noise_planet.noisemodelling.pathfinder.PathFinderProcessor;
+import org.noise_planet.noisemodelling.pathfinder.path.MirrorReceiversCompute;
+import org.noise_planet.noisemodelling.pathfinder.path.Scene;
 import org.noise_planet.noisemodelling.pathfinder.profilebuilder.CutProfile;
 import org.noise_planet.noisemodelling.propagation.AttenuationParameters;
 import org.noise_planet.noisemodelling.propagation.PropagationModel;
@@ -38,6 +41,40 @@ public class TemplatePropagationModel implements PropagationModel {
     @Override
     public void onNewCutPlane() {
 
+    }
+
+    /**
+     * Launches the appropriate path finding methods for Cnossos propagation model
+     *
+     * @param src source point information
+     * @param rcv receiver point information
+     * @param receiverMirrorIndex reflexion information
+     * @param computationProcessor object launching the computations performed at different steps of the path finding
+     * @return Search strategy for the next steps of the path finding
+     */
+    @Override
+    public PathFinderProcessor.PathSearchStrategy rcvSrcPropagation(PathFinder.SourcePointInfo src,
+                                                                    PathFinder.ReceiverPointInfo rcv,
+                                                                    MirrorReceiversCompute receiverMirrorIndex,
+                                                                    PathFinder propagationProcess,
+                                                                    PathFinderProcessor computationProcessor){
+        PathFinderProcessor.PathSearchStrategy strategy = PathFinderProcessor.PathSearchStrategy.CONTINUE;
+        Scene data = propagationProcess.getData();
+        double propaDistance = src.getCoord().distance(rcv.getCoordinates());
+        if (propaDistance < data.maxSrcDist) {
+            // Process direct : horizontal and vertical diff
+            strategy = propagationProcess.directPath(src, rcv, data.computeVerticalDiffraction,
+                    data.computeHorizontalDiffraction, computationProcessor);
+            if(strategy.equals(PathFinderProcessor.PathSearchStrategy.SKIP_SOURCE) ||
+                    strategy.equals(PathFinderProcessor.PathSearchStrategy.SKIP_RECEIVER)) {
+                return strategy;
+            }
+            // Process reflection
+            if (data.reflexionOrder > 0) {
+                strategy = propagationProcess.computeReflexion(rcv, src, receiverMirrorIndex, computationProcessor, strategy);
+            }
+        }
+        return strategy;
     }
 
     /**

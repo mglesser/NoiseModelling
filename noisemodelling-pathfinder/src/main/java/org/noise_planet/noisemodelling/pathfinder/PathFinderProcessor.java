@@ -9,6 +9,7 @@
 
 package org.noise_planet.noisemodelling.pathfinder;
 
+import org.noise_planet.noisemodelling.pathfinder.path.MirrorReceiversCompute;
 import org.noise_planet.noisemodelling.pathfinder.profilebuilder.CutProfile;
 
 import java.util.Collection;
@@ -50,6 +51,18 @@ public interface PathFinderProcessor {
      * @return Search strategy for the next steps of the path finding
      */
     PathSearchStrategy onNewCutPlane(CutProfile cutProfile);
+
+     /**
+      * Called each time a new couple source/receiver has been found.
+      *
+      * @param src source point information
+      * @param rcv receiver point information
+      * @param receiverMirrorIndex reflexion information
+      * @param propagationProcess PathFinder instance
+      * @return Search strategy for the next steps of the path finding
+      */
+    PathSearchStrategy onNewRcvSrc(PathFinder.SourcePointInfo src, PathFinder.ReceiverPointInfo rcv,
+                                   MirrorReceiversCompute receiverMirrorIndex, PathFinder propagationProcess);
 
     /**
      * Called before looking for vertical cut planes between the receiver and the sources.

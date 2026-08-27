@@ -16,6 +16,8 @@ import org.noise_planet.noisemodelling.jdbc.input.SceneDatabaseInputSettings;
 import org.noise_planet.noisemodelling.jdbc.input.SceneWithEmission;
 import org.noise_planet.noisemodelling.pathfinder.PathFinderProcessor;
 import org.noise_planet.noisemodelling.pathfinder.PathFinder;
+import org.noise_planet.noisemodelling.pathfinder.path.MirrorReceiversCompute;
+import org.noise_planet.noisemodelling.pathfinder.path.Scene;
 import org.noise_planet.noisemodelling.pathfinder.profilebuilder.CutPointReceiver;
 import org.noise_planet.noisemodelling.pathfinder.profilebuilder.CutPointSource;
 import org.noise_planet.noisemodelling.pathfinder.profilebuilder.CutProfile;
@@ -79,6 +81,21 @@ public class AttenuationOutputSingleThread implements PathFinderProcessor {
         this.progressVisitor = progressVisitor;
         // Create a PropagationModel instance
         propagationModel = multiThread.propagationModelFactory.create();
+    }
+
+    /**
+     * Manage the each time a new couple source/receiver has been found.
+     *
+     * @param src source point information
+     * @param rcv receiver point information
+     * @param receiverMirrorIndex reflexion information
+     * @param propagationProcess PathFinder instance
+     * @return Search strategy for the next steps of the path finding
+     */
+    public PathSearchStrategy onNewRcvSrc(PathFinder.SourcePointInfo src, PathFinder.ReceiverPointInfo rcv,
+                                   MirrorReceiversCompute receiverMirrorIndex, PathFinder propagationProcess){
+        return propagationModel.rcvSrcPropagation(src,rcv, receiverMirrorIndex, propagationProcess, this);
+
     }
 
     /**
@@ -234,8 +251,6 @@ public class AttenuationOutputSingleThread implements PathFinderProcessor {
 
     /**
      * Manage attenuation computation each time a cutProfile is found.
-     * Note: in the case of CNOSSOS propagation model, a new instance of PropagationModel needs to be
-     * created for each cutProfile to ensure a new computation of the cnossosPaths.
      *
      * @param cutProfile vertical profile
      * @return Search strategy

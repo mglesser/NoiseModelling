@@ -268,7 +268,12 @@ public class PathFinder {
         AtomicInteger processedSources = new AtomicInteger(0);
         // For each Pt Source - Pt Receiver
         for (SourcePointInfo sourcePointInfo : sourceList) {
-            PathFinderProcessor.PathSearchStrategy strategy = rcvSrcPropagation(sourcePointInfo, receiverPointInfo, computationProcessor, receiverMirrorIndex);
+            PathFinderProcessor.PathSearchStrategy strategy = computationProcessor.onNewRcvSrc(
+                    sourcePointInfo,
+                    receiverPointInfo,
+                    receiverMirrorIndex,
+                    this);
+//            PathFinderProcessor.PathSearchStrategy strategy = rcvSrcPropagation(sourcePointInfo, receiverPointInfo, computationProcessor, receiverMirrorIndex);
             processedSources.addAndGet(1);
             // If the delta between already received power and maximal potential power received is inferior to data.maximumError
             if ((visitor != null && visitor.isCanceled()) ||
