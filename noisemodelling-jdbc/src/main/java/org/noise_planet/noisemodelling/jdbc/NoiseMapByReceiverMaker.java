@@ -22,7 +22,7 @@ import org.locationtech.jts.io.WKTWriter;
 import org.noise_planet.noisemodelling.jdbc.input.DefaultTableLoader;
 import org.noise_planet.noisemodelling.jdbc.input.SceneDatabaseInputSettings;
 import org.noise_planet.noisemodelling.jdbc.input.SceneWithEmission;
-import org.noise_planet.noisemodelling.jdbc.output.DefaultCutPlaneProcessing;
+import org.noise_planet.noisemodelling.jdbc.output.NoiseMapWritingManager;
 import org.noise_planet.noisemodelling.jdbc.utils.CellIndex;
 import org.noise_planet.noisemodelling.pathfinder.PathFinderProcessorManager;
 import org.noise_planet.noisemodelling.pathfinder.PathFinder;
@@ -55,7 +55,7 @@ public class NoiseMapByReceiverMaker extends GridMapMaker {
     /** If true, all processing are aborted and all threads will be shutdown */
     public AtomicBoolean aborted = new AtomicBoolean(false);
     private final NoiseMapDatabaseParameters noiseMapDatabaseParameters = new NoiseMapDatabaseParameters();
-    private IComputeRaysOutFactory computeRaysOutFactory;
+    private NoiseMapWritingManagerFactory computeRaysOutFactory;
     private final Logger logger = LoggerFactory.getLogger(NoiseMapByReceiverMaker.class);
     private int threadCount = 0;
     private ProfilerThread profilerThread;
@@ -74,7 +74,7 @@ public class NoiseMapByReceiverMaker extends GridMapMaker {
     public NoiseMapByReceiverMaker(String buildingsTableName, String sourcesTableName, String receiverTableName) {
         super(buildingsTableName, sourcesTableName);
         this.receiverTableName = receiverTableName;
-        computeRaysOutFactory = new DefaultCutPlaneProcessing(noiseMapDatabaseParameters, exitWhenDone, aborted);
+        computeRaysOutFactory = new NoiseMapWritingManager(noiseMapDatabaseParameters, exitWhenDone, aborted);
     }
 
     /**
@@ -173,14 +173,14 @@ public class NoiseMapByReceiverMaker extends GridMapMaker {
     /**
      * @param computeRaysOutFactory Factory to create output data handler for each cell
      */
-    public void setComputeRaysOutFactory(IComputeRaysOutFactory computeRaysOutFactory) {
+    public void setComputeRaysOutFactory(NoiseMapWritingManagerFactory computeRaysOutFactory) {
         this.computeRaysOutFactory = computeRaysOutFactory;
     }
 
     /**
-     * @return Factory to create an output data handler for each cell the default is {@link DefaultCutPlaneProcessing}
+     * @return Factory to create an output data handler for each cell the default is {@link NoiseMapWritingManager}
      */
-    public IComputeRaysOutFactory getComputeRaysOutFactory() {
+    public NoiseMapWritingManagerFactory getComputeRaysOutFactory() {
         return computeRaysOutFactory;
     }
 
@@ -321,7 +321,8 @@ public class NoiseMapByReceiverMaker extends GridMapMaker {
                     scene.receivers.size(), scene.sourceGeometries.size(), scene.profileBuilder.getBuildingCount());
         }
 
-        PathFinderProcessorManager computationProcessorManager = computeRaysOutFactory.create(scene);
+        PathFinderProcessorManager computationProcessorManager = computeRaysOutFactory.createProcessorManager(scene,
+                propagationModel);
 
         PathFinder computeRays = new PathFinder(scene, progression);
 

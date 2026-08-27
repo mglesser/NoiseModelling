@@ -9,9 +9,9 @@ import java.sql.Connection;
 import java.sql.SQLException;
 
 /**
- * A factory interface for creating objects that compute rays out for noise map computation.
+ * A factory interface for creating objects that manages the noise map computations and writing.
  */
-public interface IComputeRaysOutFactory {
+public interface NoiseMapWritingManagerFactory {
     /**
      * Called only once when the settings are set.
      *
@@ -32,29 +32,18 @@ public interface IComputeRaysOutFactory {
     /**
      * Called when all sub-cells have been processed
      *
-     * @throws SQLException
+     * @throws SQLException If an SQL exception occurs
      */
     void stop() throws SQLException;
 
     /**
-     * Creates an object that computes paths out for noise map computation.
+     * Creates an object that will manage the computations performed at different steps
+     * of the path finding.
      *
      * @param cellData the scene data for the current computation cell
-     * @return an object that computes paths out for noise map computation.
+     * @param propagationModelFactory the propagation model to be used
+     * @return an object that manages the computations performed at different steps of the path finding
      */
-    PathFinderProcessorManager create(SceneWithEmission cellData);
-
-    /**
-     * Setter for propagationModelCreator
-     *
-     * @param propagationModelFactory interface for PropagationModel creation
-     */
-    void setPropagationModelCreator(PropagationModelFactory propagationModelFactory);
-
-    /**
-     * Getter for propagationModelCreator
-     *
-     * @return interface for PropagationModel creation
-     */
-    PropagationModelFactory getPropagationModelCreator();
+    PathFinderProcessorManager createProcessorManager(SceneWithEmission cellData,
+                                                      PropagationModelFactory propagationModelFactory);
 }

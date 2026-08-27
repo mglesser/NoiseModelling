@@ -1,7 +1,7 @@
 package org.noise_planet.noisemodelling.jdbc.output;
 
 import org.h2gis.api.ProgressVisitor;
-import org.noise_planet.noisemodelling.jdbc.IComputeRaysOutFactory;
+import org.noise_planet.noisemodelling.jdbc.NoiseMapWritingManagerFactory;
 import org.noise_planet.noisemodelling.jdbc.NoiseMapByReceiverMaker;
 import org.noise_planet.noisemodelling.jdbc.NoiseMapDatabaseParameters;
 import org.noise_planet.noisemodelling.jdbc.input.SceneWithEmission;
@@ -11,7 +11,6 @@ import org.noise_planet.noisemodelling.pathfinder.utils.profiler.JVMMemoryMetric
 import org.noise_planet.noisemodelling.pathfinder.utils.profiler.ProfilerThread;
 import org.noise_planet.noisemodelling.pathfinder.utils.profiler.ProgressMetric;
 import org.noise_planet.noisemodelling.pathfinder.utils.profiler.ReceiverStatsMetric;
-import org.noise_planet.noisemodelling.propagation.cnossos.CnossosPropagationModelFactory;
 import org.noise_planet.noisemodelling.propagation.PropagationModelFactory;
 
 import java.sql.Connection;
@@ -19,7 +18,12 @@ import java.sql.SQLException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-public class DefaultCutPlaneProcessing implements IComputeRaysOutFactory {
+/**
+ * Manages SQL tables to store noise map computations and create PathFinderProcessorManager
+ * implementation instance to manage the computations that will be performed along the path
+ * finding process.
+ */
+public class NoiseMapWritingManager implements NoiseMapWritingManagerFactory {
     ResultsCache resultsCache = new ResultsCache();
     final NoiseMapDatabaseParameters noiseMapDatabaseParameters;
     NoiseMapWriter noiseMapWriter;
@@ -31,14 +35,15 @@ public class DefaultCutPlaneProcessing implements IComputeRaysOutFactory {
     NoiseMapByReceiverMaker noiseMapByReceiverMaker;
     ThreadPool postProcessingThreadPool = new ThreadPool();
     Future<Boolean> noiseMapWriterFuture;
-    PropagationModelFactory propagationModelFactory = new CnossosPropagationModelFactory();
 
     /**
+     * Constructor for NoiseMapWritingManager objects.
+     *
      * @param noiseMapDatabaseParameters Database settings
      * @param exitWhenDone Tell table writer thread to empty current stacks then stop waiting for new data
      * @param aborted If true, all processing are aborted and all threads will be shutdown
      */
-    public DefaultCutPlaneProcessing(NoiseMapDatabaseParameters noiseMapDatabaseParameters, AtomicBoolean exitWhenDone, AtomicBoolean aborted) {
+    public NoiseMapWritingManager(NoiseMapDatabaseParameters noiseMapDatabaseParameters, AtomicBoolean exitWhenDone, AtomicBoolean aborted) {
         this.noiseMapDatabaseParameters = noiseMapDatabaseParameters;
         this.exitWhenDone = exitWhenDone;
         this.aborted = aborted;
@@ -46,11 +51,12 @@ public class DefaultCutPlaneProcessing implements IComputeRaysOutFactory {
 
     /**
      *  Creates a new instance of IComputePathsOut using the provided Scene data and AttenuationParameters for different time periods.
+     *
      * @param scene       the scene data for the current computation thread.
      * @return A new instance of IComputePathsOut initialized with the provided parameters.
      */
     @Override
-    public PathFinderProcessorManager create(SceneWithEmission scene) {
+    public PathFinderProcessorManager createProcessorManager(SceneWithEmission scene, PropagationModelFactory propagationModelFactory) {
         return new AttenuationOutputMultiThread(scene, propagationModelFactory, resultsCache, noiseMapDatabaseParameters, exitWhenDone, aborted);
     }
 
@@ -104,23 +110,5 @@ public class DefaultCutPlaneProcessing implements IComputeRaysOutFactory {
         // Shutdown the thread pool
         // previously submitted tasks are executed, but no new tasks will be accepted.
         postProcessingThreadPool.shutdown();
-    }
-
-    /**
-     * Setter for propagationModelCreator
-     *
-     * @param propagationModelFactory interface for PropagationModel creation
-     */
-    public void setPropagationModelCreator(PropagationModelFactory propagationModelFactory){
-        this.propagationModelFactory = propagationModelFactory;
-    }
-
-    /**
-     * Getter for propagationModelCreator
-     *
-     * @return interface for PropagationModel creation
-     */
-    public PropagationModelFactory getPropagationModelCreator(){
-        return this.propagationModelFactory;
     }
 }
