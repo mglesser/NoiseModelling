@@ -36,7 +36,6 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
-import java.util.concurrent.atomic.AtomicLong;
 
 import static java.lang.Double.isNaN;
 import static java.lang.Math.*;
@@ -118,7 +117,7 @@ public class PathFinder {
      * Run computation and store the results in the given output.
      * @param computeRaysOut Result output.
      */
-    public void run(CutPlaneVisitorFactory computeRaysOut) {
+    public void run(PathFinderProcessorManager computeRaysOut) {
         ThreadPool threadManager = new ThreadPool(threadCount, threadCount + 1, Long.MAX_VALUE, TimeUnit.SECONDS);
         int maximumReceiverBatch = (int) ceil(data.receivers.size() / (double) threadCount);
         int endReceiverRange = 0;
@@ -170,7 +169,7 @@ public class PathFinder {
      * @param dataOut Computation output.
      * @param visitor Progress visitor used for cancellation and progression managing.
      */
-    public void computeRaysAtPosition(ReceiverPointInfo receiverPointInfo, CutPlaneVisitor dataOut, ProgressVisitor visitor) {
+    public void computeRaysAtPosition(ReceiverPointInfo receiverPointInfo, PathFinderProcessor dataOut, ProgressVisitor visitor) {
 
         if(data.profileBuilder.hasDem()) {
             // Check if the receiver has been positioned below the ground
@@ -268,12 +267,12 @@ public class PathFinder {
         AtomicInteger processedSources = new AtomicInteger(0);
         // For each Pt Source - Pt Receiver
         for (SourcePointInfo sourcePointInfo : sourceList) {
-            CutPlaneVisitor.PathSearchStrategy strategy = rcvSrcPropagation(sourcePointInfo, receiverPointInfo, dataOut, receiverMirrorIndex);
+            PathFinderProcessor.PathSearchStrategy strategy = rcvSrcPropagation(sourcePointInfo, receiverPointInfo, dataOut, receiverMirrorIndex);
             processedSources.addAndGet(1);
             // If the delta between already received power and maximal potential power received is inferior to data.maximumError
             if ((visitor != null && visitor.isCanceled()) ||
-                    strategy.equals(CutPlaneVisitor.PathSearchStrategy.SKIP_RECEIVER) ||
-                    strategy.equals(CutPlaneVisitor.PathSearchStrategy.PROCESS_SOURCE_BUT_SKIP_RECEIVER)) {
+                    strategy.equals(PathFinderProcessor.PathSearchStrategy.SKIP_RECEIVER) ||
+                    strategy.equals(PathFinderProcessor.PathSearchStrategy.PROCESS_SOURCE_BUT_SKIP_RECEIVER)) {
                 break; //Stop looking for more rays
             }
         }
@@ -301,18 +300,18 @@ public class PathFinder {
      * @param dataOut Output.
      * @return Continue or not looking for propagation paths
      */
-    private CutPlaneVisitor.PathSearchStrategy rcvSrcPropagation(SourcePointInfo src,
-                                                                 ReceiverPointInfo rcv,
-                                                                 CutPlaneVisitor dataOut,
-                                                                 MirrorReceiversCompute receiverMirrorIndex) {
-        CutPlaneVisitor.PathSearchStrategy strategy = CutPlaneVisitor.PathSearchStrategy.CONTINUE;
+    private PathFinderProcessor.PathSearchStrategy rcvSrcPropagation(SourcePointInfo src,
+                                                                     ReceiverPointInfo rcv,
+                                                                     PathFinderProcessor dataOut,
+                                                                     MirrorReceiversCompute receiverMirrorIndex) {
+        PathFinderProcessor.PathSearchStrategy strategy = PathFinderProcessor.PathSearchStrategy.CONTINUE;
         double propaDistance = src.getCoord().distance(rcv.getCoordinates());
         if (propaDistance < data.maxSrcDist) {
             // Process direct : horizontal and vertical diff
             strategy = directPath(src, rcv, data.computeVerticalDiffraction,
                     data.computeHorizontalDiffraction, dataOut);
-            if(strategy.equals(CutPlaneVisitor.PathSearchStrategy.SKIP_SOURCE) ||
-                    strategy.equals(CutPlaneVisitor.PathSearchStrategy.SKIP_RECEIVER)) {
+            if(strategy.equals(PathFinderProcessor.PathSearchStrategy.SKIP_SOURCE) ||
+                    strategy.equals(PathFinderProcessor.PathSearchStrategy.SKIP_RECEIVER)) {
                 return strategy;
             }
             // Process reflection
@@ -331,11 +330,11 @@ public class PathFinder {
      * @param horizontalDiffraction Enable horizontal diffraction
      * @return Calculated propagation paths.
      */
-    public CutPlaneVisitor.PathSearchStrategy directPath(SourcePointInfo src, ReceiverPointInfo rcv,
-                                                         boolean verticalDiffraction, boolean horizontalDiffraction,
-                                                         CutPlaneVisitor dataOut) {
+    public PathFinderProcessor.PathSearchStrategy directPath(SourcePointInfo src, ReceiverPointInfo rcv,
+                                                             boolean verticalDiffraction, boolean horizontalDiffraction,
+                                                             PathFinderProcessor dataOut) {
 
-        CutPlaneVisitor.PathSearchStrategy strategy = CutPlaneVisitor.PathSearchStrategy.CONTINUE;
+        PathFinderProcessor.PathSearchStrategy strategy = PathFinderProcessor.PathSearchStrategy.CONTINUE;
 
         CutProfile cutProfile = data.profileBuilder.getProfile(src.position, rcv.position, data.defaultGroundAttenuation, !verticalDiffraction);
         if(cutProfile.getSource() != null) {
@@ -355,8 +354,8 @@ public class PathFinder {
 
         if(verticalDiffraction || cutProfile.isFreeField()) {
             strategy = dataOut.onNewCutPlane(cutProfile);
-            if(strategy.equals(CutPlaneVisitor.PathSearchStrategy.SKIP_SOURCE) ||
-                    strategy.equals(CutPlaneVisitor.PathSearchStrategy.SKIP_RECEIVER)) {
+            if(strategy.equals(PathFinderProcessor.PathSearchStrategy.SKIP_SOURCE) ||
+                    strategy.equals(PathFinderProcessor.PathSearchStrategy.SKIP_RECEIVER)) {
                 return strategy;
             }
         }
@@ -372,8 +371,8 @@ public class PathFinder {
                     CutProfile cutProfileSide = computeVEdgeDiffraction(rcv, src, data, side, curved);
                     if (cutProfileSide != null) {
                         strategy = dataOut.onNewCutPlane(cutProfileSide);
-                        if(strategy.equals(CutPlaneVisitor.PathSearchStrategy.SKIP_SOURCE) ||
-                                strategy.equals(CutPlaneVisitor.PathSearchStrategy.SKIP_RECEIVER)) {
+                        if(strategy.equals(PathFinderProcessor.PathSearchStrategy.SKIP_SOURCE) ||
+                                strategy.equals(PathFinderProcessor.PathSearchStrategy.SKIP_RECEIVER)) {
                             return strategy;
                         }
                     }
@@ -671,11 +670,11 @@ public class PathFinder {
      * @param dataOut Where to push cut profile
      * @return Skip or continue looking for vertical cut
      */
-    public CutPlaneVisitor.PathSearchStrategy computeReflexion(ReceiverPointInfo rcv,
-                                                               SourcePointInfo src,
-                                                               MirrorReceiversCompute receiverMirrorIndex,
-                                                               CutPlaneVisitor dataOut, CutPlaneVisitor.PathSearchStrategy initialStrategy) {
-        CutPlaneVisitor.PathSearchStrategy strategy = initialStrategy;
+    public PathFinderProcessor.PathSearchStrategy computeReflexion(ReceiverPointInfo rcv,
+                                                                   SourcePointInfo src,
+                                                                   MirrorReceiversCompute receiverMirrorIndex,
+                                                                   PathFinderProcessor dataOut, PathFinderProcessor.PathSearchStrategy initialStrategy) {
+        PathFinderProcessor.PathSearchStrategy strategy = initialStrategy;
         // Compute receiver mirror
         LineIntersector linters = new RobustLineIntersector();
         //Keep only building walls which are not too far.
@@ -788,8 +787,8 @@ public class PathFinder {
             cutProfileReflexion.setProfileType(CutProfile.PROFILE_TYPE.REFLECTION);
 
             strategy = dataOut.onNewCutPlane(cutProfileReflexion);
-            if(strategy.equals(CutPlaneVisitor.PathSearchStrategy.SKIP_SOURCE) ||
-                    strategy.equals(CutPlaneVisitor.PathSearchStrategy.SKIP_RECEIVER)) {
+            if(strategy.equals(PathFinderProcessor.PathSearchStrategy.SKIP_SOURCE) ||
+                    strategy.equals(PathFinderProcessor.PathSearchStrategy.SKIP_RECEIVER)) {
                 return strategy;
             }
         }

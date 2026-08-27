@@ -25,7 +25,7 @@ public final class ThreadPathFinder implements Callable<Boolean> {
     int endReceiver; // Excluded
     PathFinder propagationProcess;
     ProgressVisitor visitor;
-    CutPlaneVisitor dataOut;
+    PathFinderProcessor dataOut;
     Scene data;
 
 
@@ -39,7 +39,7 @@ public final class ThreadPathFinder implements Callable<Boolean> {
      * @param data
      */
     public ThreadPathFinder(int startReceiver, int endReceiver, PathFinder propagationProcess,
-                            ProgressVisitor visitor, CutPlaneVisitor dataOut,
+                            ProgressVisitor visitor, PathFinderProcessor dataOut,
                             Scene data) {
         this.startReceiver = startReceiver;
         this.endReceiver = endReceiver;

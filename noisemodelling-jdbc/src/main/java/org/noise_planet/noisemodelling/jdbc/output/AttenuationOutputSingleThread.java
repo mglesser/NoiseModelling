@@ -14,7 +14,7 @@ import org.noise_planet.noisemodelling.jdbc.EmissionTableGenerator;
 import org.noise_planet.noisemodelling.jdbc.NoiseMapDatabaseParameters;
 import org.noise_planet.noisemodelling.jdbc.input.SceneDatabaseInputSettings;
 import org.noise_planet.noisemodelling.jdbc.input.SceneWithEmission;
-import org.noise_planet.noisemodelling.pathfinder.CutPlaneVisitor;
+import org.noise_planet.noisemodelling.pathfinder.PathFinderProcessor;
 import org.noise_planet.noisemodelling.pathfinder.PathFinder;
 import org.noise_planet.noisemodelling.pathfinder.profilebuilder.CutPointReceiver;
 import org.noise_planet.noisemodelling.pathfinder.profilebuilder.CutPointSource;
@@ -35,7 +35,7 @@ import static org.noise_planet.noisemodelling.pathfinder.utils.AcousticIndicator
  * Managed by a single thread, process all incoming vertical profile, compute attenuation and push on appropriate stack
  * for exporting result values in a thread safe way. It processes the receiver one at a time.
  */
-public class AttenuationOutputSingleThread implements CutPlaneVisitor {
+public class AttenuationOutputSingleThread implements PathFinderProcessor {
     private static final int UNKNOWN_SOURCE_ID = -1;
     AttenuationOutputMultiThread multiThread;
     NoiseMapDatabaseParameters dbSettings;

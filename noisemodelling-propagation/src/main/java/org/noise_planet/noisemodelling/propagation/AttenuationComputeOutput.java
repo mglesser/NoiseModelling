@@ -28,7 +28,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author Nicolas Fortin
  * @author Pierre Aumond
  */
-public class AttenuationComputeOutput implements CutPlaneVisitorFactory {
+public class AttenuationComputeOutput implements PathFinderProcessorManager {
     public ConcurrentLinkedDeque<ReceiverNoiseLevel> receiversAttenuationLevels = new ConcurrentLinkedDeque<>();
     public Deque<AttenuationOutput> attenuationOutputs = new ConcurrentLinkedDeque<>();
     public boolean exportPaths;
@@ -59,7 +59,7 @@ public class AttenuationComputeOutput implements CutPlaneVisitorFactory {
      * @return an instance of the interface IComputePathsOut
      */
     @Override
-    public CutPlaneVisitor subProcess(ProgressVisitor progressVisitor) {
+    public PathFinderProcessor subProcess(ProgressVisitor progressVisitor) {
         return new AttenuationVisitor(this);
     }
 

@@ -5,7 +5,7 @@ import org.noise_planet.noisemodelling.jdbc.IComputeRaysOutFactory;
 import org.noise_planet.noisemodelling.jdbc.NoiseMapByReceiverMaker;
 import org.noise_planet.noisemodelling.jdbc.NoiseMapDatabaseParameters;
 import org.noise_planet.noisemodelling.jdbc.input.SceneWithEmission;
-import org.noise_planet.noisemodelling.pathfinder.CutPlaneVisitorFactory;
+import org.noise_planet.noisemodelling.pathfinder.PathFinderProcessorManager;
 import org.noise_planet.noisemodelling.pathfinder.ThreadPool;
 import org.noise_planet.noisemodelling.pathfinder.utils.profiler.JVMMemoryMetric;
 import org.noise_planet.noisemodelling.pathfinder.utils.profiler.ProfilerThread;
@@ -50,7 +50,7 @@ public class DefaultCutPlaneProcessing implements IComputeRaysOutFactory {
      * @return A new instance of IComputePathsOut initialized with the provided parameters.
      */
     @Override
-    public CutPlaneVisitorFactory create(SceneWithEmission scene) {
+    public PathFinderProcessorManager create(SceneWithEmission scene) {
         return new AttenuationOutputMultiThread(scene, propagationModelFactory, resultsCache, noiseMapDatabaseParameters, exitWhenDone, aborted);
     }
 

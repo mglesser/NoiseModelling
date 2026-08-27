@@ -24,7 +24,7 @@ import org.noise_planet.noisemodelling.jdbc.input.SceneDatabaseInputSettings;
 import org.noise_planet.noisemodelling.jdbc.input.SceneWithEmission;
 import org.noise_planet.noisemodelling.jdbc.output.DefaultCutPlaneProcessing;
 import org.noise_planet.noisemodelling.jdbc.utils.CellIndex;
-import org.noise_planet.noisemodelling.pathfinder.CutPlaneVisitorFactory;
+import org.noise_planet.noisemodelling.pathfinder.PathFinderProcessorManager;
 import org.noise_planet.noisemodelling.pathfinder.PathFinder;
 import org.noise_planet.noisemodelling.pathfinder.path.Scene;
 import org.noise_planet.noisemodelling.pathfinder.utils.documents.KMLDocument;
@@ -56,7 +56,7 @@ public class NoiseMapByReceiverMaker extends GridMapMaker {
     public AtomicBoolean aborted = new AtomicBoolean(false);
     private final NoiseMapDatabaseParameters noiseMapDatabaseParameters = new NoiseMapDatabaseParameters();
     private IComputeRaysOutFactory computeRaysOutFactory;
-    private Logger logger = LoggerFactory.getLogger(NoiseMapByReceiverMaker.class);
+    private final Logger logger = LoggerFactory.getLogger(NoiseMapByReceiverMaker.class);
     private int threadCount = 0;
     private ProfilerThread profilerThread;
     public String exportKmlName = "cell_%d_%d.kml";
@@ -305,11 +305,10 @@ public class NoiseMapByReceiverMaker extends GridMapMaker {
      * @param cellIndex Computation area index
      * @param progression Progression info
      * @param skipReceivers Do not process the receivers primary keys in this set and once included add the new receivers primary in it
-     * @return Output data instance for this cell
      * @throws SQLException Sql exception instance
      */
-    public CutPlaneVisitorFactory evaluateCell(Connection connection, CellIndex cellIndex,
-                                        ProgressVisitor progression, Set<Long> skipReceivers) throws SQLException, IOException {
+    public void evaluateCell(Connection connection, CellIndex cellIndex,
+                                                   ProgressVisitor progression, Set<Long> skipReceivers) throws SQLException, IOException {
         SceneWithEmission scene = prepareCell(connection, cellIndex, skipReceivers);
 
         File sceneExportFolder = getNoiseMapDatabaseParameters().getSceneExportFolder();
@@ -318,12 +317,11 @@ public class NoiseMapByReceiverMaker extends GridMapMaker {
         }
 
         if(verbose) {
-            logger.info(String.format("This computation area contains %d receivers %d sound sources and %d buildings",
-                    scene.receivers.size(), scene.sourceGeometries.size(),
-                    scene.profileBuilder.getBuildingCount()));
+            logger.info("This computation area contains {} receivers {} sound sources and {} buildings",
+                    scene.receivers.size(), scene.sourceGeometries.size(), scene.profileBuilder.getBuildingCount());
         }
 
-        CutPlaneVisitorFactory computeRaysOut = computeRaysOutFactory.create(scene);
+        PathFinderProcessorManager computationProcessorManager = computeRaysOutFactory.create(scene);
 
         PathFinder computeRays = new PathFinder(scene, progression);
 
@@ -335,9 +333,7 @@ public class NoiseMapByReceiverMaker extends GridMapMaker {
             computeRays.setThreadCount(threadCount);
         }
 
-        computeRays.run(computeRaysOut);
-
-        return computeRaysOut;
+        computeRays.run(computationProcessorManager);
     }
 
     /**

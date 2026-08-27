@@ -2,7 +2,7 @@ package org.noise_planet.noisemodelling.jdbc;
 
 import org.h2gis.api.ProgressVisitor;
 import org.noise_planet.noisemodelling.jdbc.input.SceneWithEmission;
-import org.noise_planet.noisemodelling.pathfinder.CutPlaneVisitorFactory;
+import org.noise_planet.noisemodelling.pathfinder.PathFinderProcessorManager;
 import org.noise_planet.noisemodelling.propagation.PropagationModelFactory;
 
 import java.sql.Connection;
@@ -42,7 +42,7 @@ public interface IComputeRaysOutFactory {
      * @param cellData the scene data for the current computation cell
      * @return an object that computes paths out for noise map computation.
      */
-    CutPlaneVisitorFactory create(SceneWithEmission cellData);
+    PathFinderProcessorManager create(SceneWithEmission cellData);
 
     /**
      * Setter for propagationModelCreator
