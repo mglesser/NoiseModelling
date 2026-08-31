@@ -9,6 +9,7 @@
 package org.noise_planet.noisemodelling.pathfinder;
 
 import org.h2gis.api.ProgressVisitor;
+import org.noise_planet.noisemodelling.pathfinder.path.MirrorReceiversCompute;
 import org.noise_planet.noisemodelling.pathfinder.path.Scene;
 import org.noise_planet.noisemodelling.pathfinder.profilebuilder.CutProfile;
 
@@ -64,6 +65,11 @@ public class DefaultPathFinderProcessor implements PathFinderProcessor, PathFind
             cutProfiles.add(cutProfile);
         }
         return PathSearchStrategy.CONTINUE;
+    }
+
+    @Override
+    public PathSearchStrategy onNewRcvSrc(PathFinder.SourcePointInfo src, PathFinder.ReceiverPointInfo rcv, MirrorReceiversCompute receiverMirrorIndex, PathFinder propagationProcess) {
+        return null;
     }
 
     @Override

@@ -84,7 +84,8 @@ public class AttenuationOutputSingleThread implements PathFinderProcessor {
     }
 
     /**
-     * Manage the each time a new couple source/receiver has been found.
+     * Manage the call to the path finding methods each time a new couple
+     * source/receiver has been found.
      *
      * @param src source point information
      * @param rcv receiver point information

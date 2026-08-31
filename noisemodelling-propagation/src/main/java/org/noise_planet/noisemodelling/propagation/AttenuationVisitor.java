@@ -11,6 +11,7 @@ package org.noise_planet.noisemodelling.propagation;
 
 import org.noise_planet.noisemodelling.pathfinder.PathFinderProcessor;
 import org.noise_planet.noisemodelling.pathfinder.PathFinder;
+import org.noise_planet.noisemodelling.pathfinder.path.MirrorReceiversCompute;
 import org.noise_planet.noisemodelling.pathfinder.profilebuilder.CutProfile;
 import org.noise_planet.noisemodelling.pathfinder.utils.AcousticIndicatorsFunctions;
 
@@ -68,6 +69,11 @@ public class AttenuationVisitor implements PathFinderProcessor {
         }
 
         return PathSearchStrategy.CONTINUE;
+    }
+
+    @Override
+    public PathSearchStrategy onNewRcvSrc(PathFinder.SourcePointInfo src, PathFinder.ReceiverPointInfo rcv, MirrorReceiversCompute receiverMirrorIndex, PathFinder propagationProcess) {
+        return null;
     }
 
     @Override
