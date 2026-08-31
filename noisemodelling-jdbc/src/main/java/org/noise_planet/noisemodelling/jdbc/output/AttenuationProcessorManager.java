@@ -21,10 +21,10 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
- * This class is built on each new computation cell area. It will create for each thread (range of receivers) an instance
- * of AttenuationOutputSingleThread
+ * Creates, for each thread (range of receivers) an instance of AttenuationProcessor.
+ * This class is built on each new computation cell area.
  */
-public class AttenuationOutputMultiThread implements PathFinderProcessorManager {
+public class AttenuationProcessorManager implements PathFinderProcessorManager {
     public ResultsCache resultsCache = new ResultsCache();
     public SceneWithEmission sceneWithEmission;
     public NoiseMapDatabaseParameters noiseMapDatabaseParameters = new NoiseMapDatabaseParameters();
@@ -40,8 +40,8 @@ public class AttenuationOutputMultiThread implements PathFinderProcessorManager 
      * @param resultsCache Results cache
      * @param noiseMapDatabaseParameters Propagation parameters
      */
-    public AttenuationOutputMultiThread(SceneWithEmission inputData, PropagationModelFactory propagationModelFactory,
-                                        ResultsCache resultsCache, NoiseMapDatabaseParameters noiseMapDatabaseParameters, AtomicBoolean exitWhenDone, AtomicBoolean aborted) {
+    public AttenuationProcessorManager(SceneWithEmission inputData, PropagationModelFactory propagationModelFactory,
+                                       ResultsCache resultsCache, NoiseMapDatabaseParameters noiseMapDatabaseParameters, AtomicBoolean exitWhenDone, AtomicBoolean aborted) {
         this.resultsCache = resultsCache;
         this.sceneWithEmission = inputData;
         this.noiseMapDatabaseParameters = noiseMapDatabaseParameters;
@@ -51,12 +51,12 @@ public class AttenuationOutputMultiThread implements PathFinderProcessorManager 
     }
 
     /**
-     * Constructor for AttenuationOutputMultiThread with Cnossos propagation model
+     * Constructor for AttenuationProcessorManager with Cnossos propagation model
      * (for testing purpose).
      *
      * @param sceneWithEmission Geometrical information about the propagation scene
      */
-    public AttenuationOutputMultiThread(SceneWithEmission sceneWithEmission) {
+    public AttenuationProcessorManager(SceneWithEmission sceneWithEmission) {
         this.sceneWithEmission = sceneWithEmission;
         this.propagationModelFactory = new CnossosPropagationModelFactory();
     }
@@ -67,7 +67,7 @@ public class AttenuationOutputMultiThread implements PathFinderProcessorManager 
      */
     @Override
     public PathFinderProcessor subProcess(ProgressVisitor visitor) {
-        return new AttenuationOutputSingleThread(this, visitor);
+        return new AttenuationProcessor(this, visitor);
     }
 
 }

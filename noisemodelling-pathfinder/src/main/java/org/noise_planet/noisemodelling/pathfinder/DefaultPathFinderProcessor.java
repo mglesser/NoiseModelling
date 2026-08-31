@@ -69,7 +69,7 @@ public class DefaultPathFinderProcessor implements PathFinderProcessor, PathFind
 
     @Override
     public PathSearchStrategy onNewRcvSrc(PathFinder.SourcePointInfo src, PathFinder.ReceiverPointInfo rcv, MirrorReceiversCompute receiverMirrorIndex, PathFinder propagationProcess) {
-        return null;
+        return propagationProcess.cnossosRcvSrcPropagation(src, rcv, this, receiverMirrorIndex);
     }
 
     @Override

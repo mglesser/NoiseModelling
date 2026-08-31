@@ -17,7 +17,6 @@ import org.noise_planet.noisemodelling.jdbc.input.SceneWithEmission;
 import org.noise_planet.noisemodelling.pathfinder.PathFinderProcessor;
 import org.noise_planet.noisemodelling.pathfinder.PathFinder;
 import org.noise_planet.noisemodelling.pathfinder.path.MirrorReceiversCompute;
-import org.noise_planet.noisemodelling.pathfinder.path.Scene;
 import org.noise_planet.noisemodelling.pathfinder.profilebuilder.CutPointReceiver;
 import org.noise_planet.noisemodelling.pathfinder.profilebuilder.CutPointSource;
 import org.noise_planet.noisemodelling.pathfinder.profilebuilder.CutProfile;
@@ -34,12 +33,14 @@ import static org.noise_planet.noisemodelling.pathfinder.utils.AcousticIndicator
 
 
 /**
- * Managed by a single thread, process all incoming vertical profile, compute attenuation and push on appropriate stack
- * for exporting result values in a thread safe way. It processes the receiver one at a time.
+ * Launch the PropagationModel's methods to compute the attenuation
+ * and push on appropriate stack for exporting result values in a thread
+ * safe way. It processes the receiver one at a time. Managed by a single
+ * thread.
  */
-public class AttenuationOutputSingleThread implements PathFinderProcessor {
+public class AttenuationProcessor implements PathFinderProcessor {
     private static final int UNKNOWN_SOURCE_ID = -1;
-    AttenuationOutputMultiThread multiThread;
+    AttenuationProcessorManager multiThread;
     NoiseMapDatabaseParameters dbSettings;
     PropagationModel propagationModel;
     public List<AttenuationOutput> attenuationOutputs = new ArrayList<>();
@@ -68,14 +69,14 @@ public class AttenuationOutputSingleThread implements PathFinderProcessor {
     ProgressVisitor progressVisitor;
 
     /**
-     * Constructs a AttenuationOutputSingleThread object with a multithreaded parent
-     * AttenuationOutputMultiThread instance.
+     * Constructs a AttenuationProcessor object with a multithreaded parent
+     * AttenuationProcessorManager instance.
      * This class is not thread-safe
      *
      * @param multiThreadParent multi thread cell computation manager
      * @param progressVisitor progress information
      */
-    public AttenuationOutputSingleThread(AttenuationOutputMultiThread multiThreadParent, ProgressVisitor progressVisitor) {
+    public AttenuationProcessor(AttenuationProcessorManager multiThreadParent, ProgressVisitor progressVisitor) {
         this.multiThread = multiThreadParent;
         this.dbSettings = multiThreadParent.noiseMapDatabaseParameters;
         this.progressVisitor = progressVisitor;
@@ -95,7 +96,7 @@ public class AttenuationOutputSingleThread implements PathFinderProcessor {
      */
     public PathSearchStrategy onNewRcvSrc(PathFinder.SourcePointInfo src, PathFinder.ReceiverPointInfo rcv,
                                    MirrorReceiversCompute receiverMirrorIndex, PathFinder propagationProcess){
-        return propagationModel.rcvSrcPropagation(src,rcv, receiverMirrorIndex, propagationProcess, this);
+        return propagationModel.callRcvSrcPropagationMethod(src,rcv, receiverMirrorIndex, propagationProcess, this);
 
     }
 
@@ -258,7 +259,7 @@ public class AttenuationOutputSingleThread implements PathFinderProcessor {
      */
     @Override
     public PathSearchStrategy onNewCutPlane(CutProfile cutProfile) {
-        propagationModel.onNewCutPlane();
+        propagationModel.initialize();
         PathSearchStrategy strategy = PathSearchStrategy.CONTINUE;
         multiThread.cutProfileCount.addAndGet(1);
         final SceneWithEmission scene = multiThread.sceneWithEmission;

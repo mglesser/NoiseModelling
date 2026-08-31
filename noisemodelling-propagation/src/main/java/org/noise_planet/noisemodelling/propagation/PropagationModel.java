@@ -27,7 +27,7 @@ public interface PropagationModel {
     /**
      * Called each time a new cut profile is detected
      */
-    void onNewCutPlane();
+    void initialize();
 
     /**
      * Launches the path finding methods (direct path, diffracted path and/or reflected path)
@@ -39,11 +39,11 @@ public interface PropagationModel {
      * @param computationProcessor object launching the computations performed at different steps of the path finding
      * @return Search strategy for the next steps of the path finding
      */
-    PathFinderProcessor.PathSearchStrategy rcvSrcPropagation(PathFinder.SourcePointInfo src,
-                                                             PathFinder.ReceiverPointInfo rcv,
-                                                             MirrorReceiversCompute receiverMirrorIndex,
-                                                             PathFinder propagationProcess,
-                                                             PathFinderProcessor computationProcessor);
+    PathFinderProcessor.PathSearchStrategy callRcvSrcPropagationMethod(PathFinder.SourcePointInfo src,
+                                                                       PathFinder.ReceiverPointInfo rcv,
+                                                                       MirrorReceiversCompute receiverMirrorIndex,
+                                                                       PathFinder propagationProcess,
+                                                                       PathFinderProcessor computationProcessor);
 
     /**
      * Compute the attenuation for a given cut-profile

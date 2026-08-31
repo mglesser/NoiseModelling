@@ -299,6 +299,36 @@ public class PathFinder {
     }
 
     /**
+     * Calculation of the propagation between the given source and receiver according to CNOSSOS-EU
+     * methodology. The result is registered in the given output.
+     * @param src     Source point.
+     * @param rcv     Receiver point.
+     * @param computationProcessor Output.
+     * @return Continue or not looking for propagation paths
+     */
+    public PathFinderProcessor.PathSearchStrategy cnossosRcvSrcPropagation(SourcePointInfo src,
+                                                                           ReceiverPointInfo rcv,
+                                                                           PathFinderProcessor computationProcessor,
+                                                                           MirrorReceiversCompute receiverMirrorIndex) {
+        PathFinderProcessor.PathSearchStrategy strategy = PathFinderProcessor.PathSearchStrategy.CONTINUE;
+        double propaDistance = src.getCoord().distance(rcv.getCoordinates());
+        if (propaDistance < data.maxSrcDist) {
+            // Process direct : horizontal and vertical diff
+            strategy = directPath(src, rcv, data.computeVerticalDiffraction,
+                    data.computeHorizontalDiffraction, computationProcessor);
+            if(strategy.equals(PathFinderProcessor.PathSearchStrategy.SKIP_SOURCE) ||
+                    strategy.equals(PathFinderProcessor.PathSearchStrategy.SKIP_RECEIVER)) {
+                return strategy;
+            }
+            // Process reflection
+            if (data.reflexionOrder > 0) {
+                strategy = computeReflexion(rcv, src, receiverMirrorIndex, computationProcessor, strategy);
+            }
+        }
+        return strategy;
+    }
+
+    /**
      * Direct Path computation.
      * @param src Source point coordinate.
      * @param rcv Receiver point coordinate.

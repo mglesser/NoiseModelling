@@ -57,7 +57,7 @@ public class NoiseMapWritingManager implements NoiseMapWritingManagerFactory {
      */
     @Override
     public PathFinderProcessorManager createProcessorManager(SceneWithEmission scene, PropagationModelFactory propagationModelFactory) {
-        return new AttenuationOutputMultiThread(scene, propagationModelFactory, resultsCache, noiseMapDatabaseParameters, exitWhenDone, aborted);
+        return new AttenuationProcessorManager(scene, propagationModelFactory, resultsCache, noiseMapDatabaseParameters, exitWhenDone, aborted);
     }
 
     @Override

@@ -36,6 +36,8 @@ public class AttenuationVisitor implements PathFinderProcessor {
     public AttenuationVisitor(AttenuationComputeOutput multiThreadParent) {
         this.multiThreadParent = multiThreadParent;
         this.keepRays = multiThreadParent.exportPaths;
+        // Create a PropagationModel instance
+        propagationModel = multiThreadParent.propagationModelFactory.create();
     }
 
     /**
@@ -48,8 +50,7 @@ public class AttenuationVisitor implements PathFinderProcessor {
      */
     @Override
     public PathSearchStrategy onNewCutPlane(CutProfile cutProfile) {
-        // Create a PropagationModel instance
-        propagationModel = multiThreadParent.propagationModelFactory.create();
+        propagationModel.initialize();
         multiThreadParent.cutProfileCount.addAndGet(1);
         final SceneWithAttenuation scene = multiThreadParent.scene;
         if(scene.getCloseReceiverReflectionWallDistance() > 0

@@ -36,15 +36,16 @@ public class TemplatePropagationModel implements PropagationModel {
     public TemplatePropagationModel(){}
 
     /**
-     * Initialize the attenuation computation
+     * Initialize the attenuation computation each time a new cut plane is detected
      */
     @Override
-    public void onNewCutPlane() {
+    public void initialize() {
 
     }
 
     /**
-     * Launches the appropriate path finding methods for Cnossos propagation model
+     * Call the PathFinder method implementing the appropriate
+     * rcv to src propagation strategy for Template propagation model
      *
      * @param src source point information
      * @param rcv receiver point information
@@ -53,28 +54,14 @@ public class TemplatePropagationModel implements PropagationModel {
      * @return Search strategy for the next steps of the path finding
      */
     @Override
-    public PathFinderProcessor.PathSearchStrategy rcvSrcPropagation(PathFinder.SourcePointInfo src,
-                                                                    PathFinder.ReceiverPointInfo rcv,
-                                                                    MirrorReceiversCompute receiverMirrorIndex,
-                                                                    PathFinder propagationProcess,
-                                                                    PathFinderProcessor computationProcessor){
-        PathFinderProcessor.PathSearchStrategy strategy = PathFinderProcessor.PathSearchStrategy.CONTINUE;
-        Scene data = propagationProcess.getData();
-        double propaDistance = src.getCoord().distance(rcv.getCoordinates());
-        if (propaDistance < data.maxSrcDist) {
-            // Process direct : horizontal and vertical diff
-            strategy = propagationProcess.directPath(src, rcv, data.computeVerticalDiffraction,
-                    data.computeHorizontalDiffraction, computationProcessor);
-            if(strategy.equals(PathFinderProcessor.PathSearchStrategy.SKIP_SOURCE) ||
-                    strategy.equals(PathFinderProcessor.PathSearchStrategy.SKIP_RECEIVER)) {
-                return strategy;
-            }
-            // Process reflection
-            if (data.reflexionOrder > 0) {
-                strategy = propagationProcess.computeReflexion(rcv, src, receiverMirrorIndex, computationProcessor, strategy);
-            }
-        }
-        return strategy;
+    public PathFinderProcessor.PathSearchStrategy callRcvSrcPropagationMethod(PathFinder.SourcePointInfo src,
+                                                                              PathFinder.ReceiverPointInfo rcv,
+                                                                              MirrorReceiversCompute receiverMirrorIndex,
+                                                                              PathFinder propagationProcess,
+                                                                              PathFinderProcessor computationProcessor) {
+        // CNOSSOS propagation strategy is used, but another strategy can be
+        // defined in PathFinder and called from here
+        return propagationProcess.cnossosRcvSrcPropagation(src, rcv, computationProcessor, receiverMirrorIndex);
     }
 
     /**
