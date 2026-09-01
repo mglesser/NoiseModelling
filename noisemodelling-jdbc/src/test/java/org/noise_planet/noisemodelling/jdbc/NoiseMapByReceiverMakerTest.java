@@ -35,8 +35,11 @@ import org.noise_planet.noisemodelling.propagation.AttenuationParameters;
 import org.noise_planet.noisemodelling.propagation.AttenuationOutput;
 import org.noise_planet.noisemodelling.pathfinder.profilebuilder.GroundAbsorption;
 import org.noise_planet.noisemodelling.pathfinder.utils.geometry.Orientation;
+import org.noise_planet.noisemodelling.propagation.PropagationModelFactory;
 import org.noise_planet.noisemodelling.propagation.cnossos.CnossosAttenuationOutput;
 import org.noise_planet.noisemodelling.propagation.cnossos.PointPath;
+import org.noise_planet.noisemodelling.propagation.template.TemplatePropagationModel;
+import org.noise_planet.noisemodelling.propagation.template.TemplatePropagationModelFactory;
 
 import java.sql.Connection;
 import java.sql.ResultSet;
@@ -602,11 +605,13 @@ public class NoiseMapByReceiverMakerTest {
     }
 
     /**
+     * Basic propagation test for the template propagation model.
      * Source, receiver and building on the side
      * S            R
      *     -----
      *     |   |
      *     -----
+     *
      * @throws Exception
      */
     @Test
@@ -631,6 +636,7 @@ public class NoiseMapByReceiverMakerTest {
             NoiseMapByReceiverMaker noiseMapByReceiverMaker = new NoiseMapByReceiverMaker("BUILDINGS",
                     "ROADS_GEOM", "RECEIVERS");
 
+            noiseMapByReceiverMaker.setPropagationModel(new TemplatePropagationModelFactory());
             noiseMapByReceiverMaker.setComputeHorizontalDiffraction(false);
             noiseMapByReceiverMaker.setComputeVerticalDiffraction(true);
             noiseMapByReceiverMaker.setSoundReflectionOrder(1);
@@ -647,13 +653,13 @@ public class NoiseMapByReceiverMakerTest {
 
             NoiseMapDatabaseParameters parameters = noiseMapByReceiverMaker.getNoiseMapDatabaseParameters();
 
-            List<AttenuationOutput> attenuationOutputs = new ArrayList<>();
-            try(ResultSet rs = st.executeQuery("SELECT IDRECEIVER, PATH FROM " + parameters.raysTable + " ORDER BY IDRECEIVER")) {
-                while (rs.next()) {
-                    CnossosAttenuationOutput attenuationOutput = jsonToCnossosAttenuationOutput(rs.getString("PATH"));
-                    attenuationOutputs.add(attenuationOutput);
-                }
-            }
+//            List<AttenuationOutput> attenuationOutputs = new ArrayList<>();
+//            try(ResultSet rs = st.executeQuery("SELECT IDRECEIVER, PATH FROM " + parameters.raysTable + " ORDER BY IDRECEIVER")) {
+//                while (rs.next()) {
+//                    CnossosAttenuationOutput attenuationOutput = jsonToCnossosAttenuationOutput(rs.getString("PATH"));
+//                    attenuationOutputs.add(attenuationOutput);
+//                }
+//            }
         }
     }
 }

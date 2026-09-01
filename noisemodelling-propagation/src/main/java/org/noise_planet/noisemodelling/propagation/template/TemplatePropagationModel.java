@@ -14,10 +14,7 @@ import org.noise_planet.noisemodelling.pathfinder.PathFinderProcessor;
 import org.noise_planet.noisemodelling.pathfinder.path.MirrorReceiversCompute;
 import org.noise_planet.noisemodelling.pathfinder.path.Scene;
 import org.noise_planet.noisemodelling.pathfinder.profilebuilder.CutProfile;
-import org.noise_planet.noisemodelling.propagation.AttenuationParameters;
-import org.noise_planet.noisemodelling.propagation.PropagationModel;
-import org.noise_planet.noisemodelling.propagation.SceneWithAttenuation;
-import org.noise_planet.noisemodelling.propagation.AttenuationOutput;
+import org.noise_planet.noisemodelling.propagation.*;
 import org.noise_planet.noisemodelling.propagation.cnossos.CnossosPath;
 
 import java.util.ArrayList;
@@ -78,8 +75,10 @@ public class TemplatePropagationModel implements PropagationModel {
                                                       boolean isExportAttenuationMatrix) {
         // Attenuation computation here
         List<AttenuationOutput> attenuationOutputs = new ArrayList<>();
-        AttenuationOutput attenuationOutput = new AttenuationOutput(cutProfile);
-        attenuationOutput.aGlobal = new double[]{0};
+        AttenuationOutput attenuationOutput = new AttenuationOutput(cutProfile); // Store propagation path
+        attenuationOutput.setMeteoType(MeteoType.FAVOURABLE); // Store meteo type
+        attenuationOutput.aGlobal = new double[]{0, 0, 0, 0, 0, 0, 0, 0};
+        attenuationOutput.lineString = cutProfile.getPropagationPath();
         attenuationOutputs.add(attenuationOutput);
         //
         return attenuationOutputs;
