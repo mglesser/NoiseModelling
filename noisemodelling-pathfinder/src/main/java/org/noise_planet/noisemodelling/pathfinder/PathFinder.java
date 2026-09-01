@@ -273,7 +273,6 @@ public class PathFinder {
                     receiverPointInfo,
                     receiverMirrorIndex,
                     this);
-//            PathFinderProcessor.PathSearchStrategy strategy = rcvSrcPropagation(sourcePointInfo, receiverPointInfo, computationProcessor, receiverMirrorIndex);
             processedSources.addAndGet(1);
             // If the delta between already received power and maximal potential power received is inferior to data.maximumError
             if ((visitor != null && visitor.isCanceled()) ||
