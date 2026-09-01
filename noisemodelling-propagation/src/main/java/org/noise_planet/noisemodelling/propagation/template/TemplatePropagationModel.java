@@ -76,7 +76,7 @@ public class TemplatePropagationModel implements PropagationModel {
         // Attenuation computation here
         List<AttenuationOutput> attenuationOutputs = new ArrayList<>();
         AttenuationOutput attenuationOutput = new AttenuationOutput(cutProfile); // Store propagation path
-        attenuationOutput.setMeteoType(MeteoType.FAVOURABLE); // Store meteo type
+        attenuationOutput.setMeteoType(MeteoType.CUSTOM); // Store meteo type
         attenuationOutput.aGlobal = new double[]{0, 0, 0, 0, 0, 0, 0, 0};
         attenuationOutput.lineString = cutProfile.getPropagationPath();
         attenuationOutputs.add(attenuationOutput);

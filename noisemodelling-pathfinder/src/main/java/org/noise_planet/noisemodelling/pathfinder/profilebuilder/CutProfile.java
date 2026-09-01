@@ -519,6 +519,7 @@ public class CutProfile {
     /**
      * @return Propagation path as a geometry object
      */
+    @JsonIgnore
     public LineString getPropagationPath() {
         GeometryFactory geometryFactory = new GeometryFactory();
         Coordinate[] coordinates = getCutPoints().stream().map(CutPoint::getCoordinate).toArray(Coordinate[]::new);
