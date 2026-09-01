@@ -22,7 +22,7 @@ import java.util.List;
 
 /**
  * Template of propagation model. To be used as a basis
- * for new P2P model implementation.
+ * for new propagation model implementation.
  * @author Martin Glesser
  */
 public class TemplatePropagationModel implements PropagationModel {

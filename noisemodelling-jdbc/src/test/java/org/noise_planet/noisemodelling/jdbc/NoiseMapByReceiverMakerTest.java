@@ -660,7 +660,6 @@ public class NoiseMapByReceiverMakerTest {
             noiseMapByReceiverMaker.getNoiseMapDatabaseParameters().exportAttenuationOutput = true;
             noiseMapByReceiverMaker.getNoiseMapDatabaseParameters().exportAttenuationMatrix = true;
             noiseMapByReceiverMaker.getNoiseMapDatabaseParameters().mergeSources = false;
-            noiseMapByReceiverMaker.setThreadCount(1);
 
             // Run noise map computation
             noiseMapByReceiverMaker.run(connection, new EmptyProgressVisitor());
