@@ -54,14 +54,43 @@ public class AttenuationComputeOutputHarmonoiseTest {
      * Test case 1 from Harmonoise publication (hard/rigid ground and
      * non refracting atmosphere)
      * Ref: Salomons, E., Van Maercke, D., Defrance, J.,&amp;De Roo, F. (2011). The Harmonoise sound propagation model.
-     * Acta acustica united with acustica, 97(1), 62-74 (section 2.5)
+     * Acta acustica united with acustica, 97(1), 62-74 (section 3)
      */
     @Test
     public void test_harmonoise_case01() throws IOException {
 
-        double[] attenuation = computeHarmonoiseAttenuation("case_1_4");
+        double[] attenuation = computeHarmonoiseAttenuation("case_01");
 
         //Assertion
+        double[] referenceExcessAttenuation = {
+                6.036446469248293	,
+                6.10478359908884	,
+                6.10478359908884	,
+                6.10478359908884	,
+                6.10478359908884	,
+                6.10478359908884	,
+                6.10478359908884	,
+                6.036446469248293	,
+                5.9681093394077465	,
+                5.8997722095672	,
+                5.831435079726653	,
+                5.694760820045559	,
+                5.4897494305239185	,
+                5.148063781321184	,
+                4.533029612756266	,
+                3.4396355353075165	,
+                1.662870159453302	,
+                -1.8906605922551236	,
+                -10.979498861047835	,
+                -4.760820045558086	,
+                2.619589977220958	,
+                5.626423690205012	,
+                4.3963553530751724	,
+                -3.8724373576309787	,
+                4.191343963553532	,
+                1.457858769931665	,
+                4.259681093394079
+        }; // plotdigitized from publication, 1/3 oct band 25Hz - 10kHz
         assertEquals(0, attenuation[0]);
 
     }
