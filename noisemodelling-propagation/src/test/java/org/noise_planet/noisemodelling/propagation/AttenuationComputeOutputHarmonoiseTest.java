@@ -59,7 +59,7 @@ public class AttenuationComputeOutputHarmonoiseTest {
     @Test
     public void test_harmonoise_case01() throws IOException {
 
-        double[] attenuation = computeHarmonoiseAttenuation("case_01");
+        double[] attenuation = computeHarmonoiseAttenuation("case_05");
 
         //Assertion
         double[] referenceExcessAttenuation = {

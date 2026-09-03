@@ -77,7 +77,8 @@ public class HarmonoisePropagationModel implements PropagationModel {
         // Account for meteo by using curve ground analogy
         groundProfile.computeCurvedProfile(0);
         // Compute excess attenuation
-
+        HarmonoiseAttenuationOutput output = new HarmonoiseAttenuationOutput();
+        HarmonoiseAttenuation.computeExcessAttenuation(attenuationParameters, scene, output, false);
 
         // Attenuation computation here
         List<AttenuationOutput> attenuationOutputs = new ArrayList<>();
