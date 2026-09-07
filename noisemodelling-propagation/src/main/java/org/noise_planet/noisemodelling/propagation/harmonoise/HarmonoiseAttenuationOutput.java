@@ -18,5 +18,9 @@ import org.noise_planet.noisemodelling.propagation.AttenuationOutput;
  */
 public class HarmonoiseAttenuationOutput extends AttenuationOutput {
     HarmonoiseGroundProfile groundProfile;
+    double excessAttenuation = 0;
 
+    public HarmonoiseAttenuationOutput(HarmonoiseGroundProfile groundProfile){
+        this.groundProfile = groundProfile;
+    }
 }

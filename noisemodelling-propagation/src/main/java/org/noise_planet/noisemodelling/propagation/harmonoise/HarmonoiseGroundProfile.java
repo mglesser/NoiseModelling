@@ -13,12 +13,9 @@ import org.locationtech.jts.densify.Densifier;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LineString;
-import org.noise_planet.noisemodelling.pathfinder.profilebuilder.CutPoint;
 import org.noise_planet.noisemodelling.pathfinder.profilebuilder.CutProfile;
 import org.noise_planet.noisemodelling.pathfinder.utils.ComplexNumber;
 
-import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 import static java.lang.Math.*;
@@ -32,7 +29,7 @@ public class HarmonoiseGroundProfile {
     LineString profile; // 2D coordinates of ground profile vertices
     Coordinate source; // 3D coordinates of the source
     Coordinate receiver; // 3D coordinates of the receiver
-    List<Coordinate> vertices = new ArrayList<>();
+    Coordinate[] vertices;
 
     /**
      * Initialize HarmonoiseGroundProfile object from CutProfile object.
@@ -44,9 +41,9 @@ public class HarmonoiseGroundProfile {
         receiver = cutProfile.getReceiver().getCoordinate();
         // Get the whole 2D profile including ground points
         List<Integer> hullIndices = cutProfile.getConvexHullIndices(cutProfile.computePts2D());
-        Coordinate[] coordinates = cutProfile.computePts2DGround(hullIndices).toArray(new Coordinate[0]);
+        vertices = cutProfile.computePts2DGround(hullIndices).toArray(new Coordinate[0]);
         GeometryFactory geometryFactory = new GeometryFactory();
-        profile = geometryFactory.createLineString(coordinates);
+        profile = geometryFactory.createLineString(vertices);
     }
 
     /**
@@ -72,7 +69,7 @@ public class HarmonoiseGroundProfile {
         double yc = 0.5 * (profile.getStartPoint().getY() + profile.getEndPoint().getY()) + hm;
         ComplexNumber w0 = new ComplexNumber(xc, yc); // Eq. 75
         double deltaY = 0;
-        vertices = Arrays.asList(new Coordinate[profile.getNumPoints()]);
+        vertices = new Coordinate[profile.getNumPoints()];
         for (int i = 0; i < profile.getNumPoints(); i++) {
             ComplexNumber w = new ComplexNumber(profile.getCoordinateN(i).getX(), profile.getCoordinateN(i).getY());
             ComplexNumber wPrim = ComplexNumber.divide(
@@ -83,12 +80,20 @@ public class HarmonoiseGroundProfile {
             // Create new coordinate with transformed z (incl. profile translation)
             if (i == 0) {
                 deltaY = profile.getCoordinateN(i).getY() - wPrim.getIm();
-                vertices.set(i,
-                        new Coordinate(wPrim.getRe() + xc, profile.getCoordinateN(i).getY() , profile.getCoordinateN(i).getZ()));
+                vertices[i] =
+                        new Coordinate(wPrim.getRe() + xc, profile.getCoordinateN(i).getY() , profile.getCoordinateN(i).getZ());
             } else {
-                vertices.set(i,
-                        new Coordinate(wPrim.getRe() + xc, wPrim.getIm() + deltaY, profile.getCoordinateN(i).getZ()));
+                vertices[i] =
+                        new Coordinate(wPrim.getRe() + xc, wPrim.getIm() + deltaY, profile.getCoordinateN(i).getZ());
             }
         }
+    }
+
+    public Coordinate getSource() {
+        return source;
+    }
+
+    public Coordinate getReceiver() {
+        return receiver;
     }
 }

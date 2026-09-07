@@ -9,7 +9,6 @@
 
 package org.noise_planet.noisemodelling.propagation.harmonoise;
 
-import org.locationtech.jts.geom.Coordinate;
 import org.noise_planet.noisemodelling.pathfinder.PathFinder;
 import org.noise_planet.noisemodelling.pathfinder.PathFinderProcessor;
 import org.noise_planet.noisemodelling.pathfinder.path.MirrorReceiversCompute;
@@ -75,9 +74,9 @@ public class HarmonoisePropagationModel implements PropagationModel {
         // Get ground profile
         HarmonoiseGroundProfile groundProfile = new HarmonoiseGroundProfile(cutProfile);
         // Account for meteo by using curve ground analogy
-        groundProfile.computeCurvedProfile(0);
+//        groundProfile.computeCurvedProfile(0);
         // Compute excess attenuation
-        HarmonoiseAttenuationOutput output = new HarmonoiseAttenuationOutput();
+        HarmonoiseAttenuationOutput output = new HarmonoiseAttenuationOutput(groundProfile);
         HarmonoiseAttenuation.computeExcessAttenuation(attenuationParameters, scene, output, false);
 
         // Attenuation computation here
