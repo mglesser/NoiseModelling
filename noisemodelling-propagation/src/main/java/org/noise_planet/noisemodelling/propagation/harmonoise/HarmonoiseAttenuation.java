@@ -9,6 +9,7 @@
 
 package org.noise_planet.noisemodelling.propagation.harmonoise;
 
+import org.locationtech.jts.algorithm.Angle;
 import org.locationtech.jts.geom.Coordinate;
 import org.noise_planet.noisemodelling.propagation.AttenuationParameters;
 import org.noise_planet.noisemodelling.propagation.SceneWithAttenuation;
@@ -69,7 +70,8 @@ public class HarmonoiseAttenuation {
         if (indexMaxDistance == 0) { // No diffraction point above the line crossing the first and last points
             computeGroundAttenuation(attenuationOutput);
         }else {
-            computeDiffractionAttenuation(attenuationOutput);
+            computeDiffractionAttenuation(attenuationOutput, vertices[0], vertices[vertices.length-1],
+                    vertices[indexMaxDistance]);
             computeExcessAttenuation(data, scene, attenuationOutput,
                     Arrays.copyOfRange(vertices, 0, indexMaxDistance+1));
             computeExcessAttenuation(data, scene, attenuationOutput,
@@ -81,8 +83,22 @@ public class HarmonoiseAttenuation {
         attenuationOutput.excessAttenuation += 0;
     }
 
-    public static void computeDiffractionAttenuation(HarmonoiseAttenuationOutput attenuationOutput){
+    public static void computeDiffractionAttenuation(HarmonoiseAttenuationOutput attenuationOutput, Coordinate source,
+                                                     Coordinate receiver, Coordinate point){
         attenuationOutput.excessAttenuation += 0;
+        double sourceAngle = Angle.angle(point, source) - Angle.PI_OVER_2;
+        double receiverAngle = Angle.angle(point, receiver) + Angle.PI_OVER_2;
+        double theta = sourceAngle + receiverAngle;
+
+        double pathLenghtDiff;
+        if (theta <= Math.PI) {
+            double directPathLength = Math.sqrt(Math.pow(source.distance(point), 2)
+                    + Math.pow(receiver.distance(point), 2)
+                    - 2 * source.distance(point) * receiver.distance(point) * Math.cos(theta)); // Eq. 10
+            pathLenghtDiff = -(source.distance(point) + receiver.distance(point) - directPathLength); // Eq. 9
+        } else {
+            // Eq. 11
+        }
     }
 
 }
