@@ -49,7 +49,7 @@ public class HarmonoiseAttenuation {
      * @param scene Scene with attenuation data
      * @param vertices ground vertices (incl. src and rcv)
      */
-    public static void computeExcessAttenuation(SceneWithAttenuation scene,
+    private static void computeExcessAttenuation(SceneWithAttenuation scene,
                                                 HarmonoiseAttenuationOutput attenuationOutput, Coordinate[] vertices){
         double maxDistance = 0;
         int indexMaxDistance = 0;
@@ -66,7 +66,7 @@ public class HarmonoiseAttenuation {
             }
         }
         if (indexMaxDistance == 0) { // No diffraction point above the line crossing the first and last points
-            computeGroundAttenuation(attenuationOutput);
+            computeGroundAttenuation(scene, attenuationOutput, vertices);
         }else {
             computeDiffractionAttenuation(scene, attenuationOutput, vertices[0], vertices[vertices.length-1],
                     vertices[indexMaxDistance]);
@@ -87,7 +87,7 @@ public class HarmonoiseAttenuation {
      * @param receiver receiver point ("real" or secondary at diffraction edge)
      * @param point diffraction point
      */
-    public static void computeDiffractionAttenuation(SceneWithAttenuation scene,
+    private static void computeDiffractionAttenuation(SceneWithAttenuation scene,
                                                      HarmonoiseAttenuationOutput attenuationOutput, Coordinate source,
                                                      Coordinate receiver, Coordinate point){
         double sourceAngle = - (Angle.angle(point, source) - Angle.PI_OVER_2);
@@ -126,7 +126,7 @@ public class HarmonoiseAttenuation {
      * @param fresnelNumber Fresnel Number
      * @return diffraction attenuation
      */
-    public static double fresnelApproximation(double fresnelNumber){
+    private static double fresnelApproximation(double fresnelNumber){
         if (fresnelNumber < -0.25) {
             return 0;
         } else if (fresnelNumber < 0) {
@@ -140,7 +140,36 @@ public class HarmonoiseAttenuation {
         }
     }
 
-    public static void computeGroundAttenuation(HarmonoiseAttenuationOutput attenuationOutput){
+    public static void computeGroundAttenuation(SceneWithAttenuation scene,
+                                                HarmonoiseAttenuationOutput attenuationOutput,
+                                                Coordinate[] vertices){
+        if (hasConvexSegment(vertices)){
+            attenuationOutput.excessAttenuation += 0;
+        }
         attenuationOutput.excessAttenuation += 0;
+    }
+
+    /**
+     * Determine whether the ground profile contains convex segment or not
+     * Ref: Figure 3 and "Geometry" subsection of section 2.4.1 from Salomons et al.
+     *
+     * @param vertices vertices of the ground profile
+     * @return true if the profile contains at least one convex segment
+     */
+    private static boolean hasConvexSegment(Coordinate[] vertices){
+        int iEnd = vertices.length - 1;
+        boolean isConvex = false;
+        // Loop on segments
+        for (int i = 0; i < vertices.length - 2; i++) {
+            double localSourceHeight = vertices[i+1].distance(vertices[0])
+                    * Math.sin(Angle.angleBetween(vertices[0], vertices[i+1], vertices[i]));
+            double localReceiverHeight = vertices[i].distance(vertices[iEnd])
+                    * Math.sin(Angle.angleBetween(vertices[iEnd], vertices[i], vertices[i+1]));
+            if (localSourceHeight < 0 || localReceiverHeight < 0){
+                isConvex = true;
+                break;
+            }
+        }
+        return isConvex;
     }
 }
