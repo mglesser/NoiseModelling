@@ -77,18 +77,14 @@ public class HarmonoiseAttenuation {
         }
     }
 
-    public static void computeGroundAttenuation(HarmonoiseAttenuationOutput attenuationOutput){
-        attenuationOutput.excessAttenuation += 0;
-    }
-
     /**
      * Compute diffraction attenuation according to Harmonoise methodology
      * Ref: section 2.3 from Salomons et al.
      *
      * @param scene Scene with attenuation data
      * @param attenuationOutput Output of the attenuation computation
-     * @param source source point ("real" or intermediate)
-     * @param receiver receiver point ("real" or intermediate)
+     * @param source source point ("real" or secondary at diffraction edge)
+     * @param receiver receiver point ("real" or secondary at diffraction edge)
      * @param point diffraction point
      */
     public static void computeDiffractionAttenuation(SceneWithAttenuation scene,
@@ -144,4 +140,7 @@ public class HarmonoiseAttenuation {
         }
     }
 
+    public static void computeGroundAttenuation(HarmonoiseAttenuationOutput attenuationOutput){
+        attenuationOutput.excessAttenuation += 0;
+    }
 }
