@@ -1,0 +1,139 @@
+{
+  "cutPoints" : [ {
+    "type" : "Source",
+    "coordinate" : {
+      "x" : 0.0,
+      "y" : 0.0,
+      "z" : 0.75
+    },
+    "zGround" : 0.0,
+    "groundCoefficient" : 0.0,
+    "sourcePk" : -1,
+    "li" : 1.0,
+    "orientation" : {
+      "yaw" : 0.0,
+      "pitch" : 0.0,
+      "roll" : 0.0
+    }
+  }, {
+    "type" : "Topography",
+    "coordinate" : {
+      "x" : 5,
+      "y" : 0,
+      "z" : 0
+    },
+    "zGround" : 1,
+    "groundCoefficient" : 0.2
+  }, {
+    "type" : "Topography",
+    "coordinate" : {
+      "x" : 15,
+      "y" : 0,
+      "z" : 0
+    },
+    "zGround" : -1,
+    "groundCoefficient" : 0.2
+  }, {
+    "type" : "Topography",
+    "coordinate" : {
+      "x" : 20,
+      "y" : 0,
+      "z" : 0
+    },
+    "zGround" : 5,
+    "groundCoefficient" : 0.2
+  }, {
+    "type" : "Topography",
+    "coordinate" : {
+      "x" : 30,
+      "y" : 0,
+      "z" : 0
+    },
+    "zGround" : 3,
+    "groundCoefficient" : 0.2
+  }, {
+    "type" : "Topography",
+    "coordinate" : {
+      "x" : 33,
+      "y" : 0,
+      "z" : 0
+    },
+    "zGround" : 1.0,
+    "groundCoefficient" : 0.2
+  }, {
+    "type" : "Topography",
+    "coordinate" : {
+      "x" : 36,
+      "y" : 0,
+      "z" : 0
+    },
+    "zGround" : 2.0,
+    "groundCoefficient" : 0.2
+  }, {
+    "type" : "Topography",
+    "coordinate" : {
+      "x" : 40,
+      "y" : 0,
+      "z" : 0
+    },
+    "zGround" : 1.0,
+    "groundCoefficient" : 0.2
+  }, {
+    "type" : "Topography",
+    "coordinate" : {
+      "x" : 41,
+      "y" : 0,
+      "z" : 0
+    },
+    "zGround" : 6.0,
+    "groundCoefficient" : 0.2
+  }, {
+    "type" : "Topography",
+    "coordinate" : {
+      "x" : 45,
+      "y" : 0,
+      "z" : 0
+    },
+    "zGround" : 6.0,
+    "groundCoefficient" : 0.2
+  }, {
+    "type" : "Topography",
+    "coordinate" : {
+      "x" : 46,
+      "y" : 0,
+      "z" : 0
+    },
+    "zGround" : -3.0,
+    "groundCoefficient" : 0.2
+  }, {
+    "type" : "Topography",
+    "coordinate" : {
+      "x" : 50,
+      "y" : 0,
+      "z" : 0
+    },
+    "zGround" : 1.0,
+    "groundCoefficient" : 0.2
+  }, {
+    "type" : "Topography",
+    "coordinate" : {
+      "x" : 55,
+      "y" : 0,
+      "z" : 0
+    },
+    "zGround" : -2.0,
+    "groundCoefficient" : 0.2
+  }, {
+    "type" : "Receiver",
+    "coordinate" : {
+      "x" : 60.0,
+      "y" : 0.0,
+      "z" : 6.0
+    },
+    "zGround" : -1.0,
+    "groundCoefficient" : 0.0,
+    "receiverPk" : 0
+  } ],
+  "curvedPath" : false,
+  "profileType" : "DIRECT"
+}

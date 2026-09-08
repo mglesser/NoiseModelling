@@ -11,6 +11,11 @@ package org.noise_planet.noisemodelling.propagation.harmonoise;
 
 import org.noise_planet.noisemodelling.propagation.AttenuationOutput;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
+
 /**
  * Output of the Harmonoise attenuation computation (data class).
  *
@@ -19,8 +24,24 @@ import org.noise_planet.noisemodelling.propagation.AttenuationOutput;
 public class HarmonoiseAttenuationOutput extends AttenuationOutput {
     HarmonoiseGroundProfile groundProfile;
     double excessAttenuation = 0;
+    List<Double> diffractionAttenuation = new ArrayList<>();
 
     public HarmonoiseAttenuationOutput(HarmonoiseGroundProfile groundProfile){
         this.groundProfile = groundProfile;
+    }
+
+    /**
+     * Add frequency dependant attenuation to diffractionAttenuation
+     *
+     * @param attenuation attenuation to add
+     */
+    public void addDiffractionAttenuation(List<Double> attenuation){
+        if (diffractionAttenuation.isEmpty()) {
+            diffractionAttenuation = attenuation;
+        } else {
+            diffractionAttenuation = IntStream.range(0, diffractionAttenuation.size())
+                    .mapToObj(i -> diffractionAttenuation.get(i) + attenuation.get(i))
+                    .collect(Collectors.toList());
+        }
     }
 }
