@@ -162,9 +162,9 @@ public class HarmonoiseAttenuation {
         // Loop on segments
         for (int i = 0; i < vertices.length - 2; i++) {
             double localSourceHeight = vertices[i+1].distance(vertices[0])
-                    * Math.sin(Angle.angleBetween(vertices[0], vertices[i+1], vertices[i]));
+                    * Math.sin(Angle.angleBetweenOriented(vertices[0], vertices[i+1], vertices[i]));
             double localReceiverHeight = vertices[i].distance(vertices[iEnd])
-                    * Math.sin(Angle.angleBetween(vertices[iEnd], vertices[i], vertices[i+1]));
+                    * Math.sin(Angle.angleBetweenOriented(vertices[i+1], vertices[i], vertices[iEnd]));
             if (localSourceHeight < 0 || localReceiverHeight < 0){
                 isConvex = true;
                 break;
