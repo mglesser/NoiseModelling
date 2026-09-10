@@ -9,7 +9,6 @@
 
 package org.noise_planet.noisemodelling.propagation.harmonoise;
 
-import org.apache.commons.math3.complex.Complex;
 import org.locationtech.jts.algorithm.Angle;
 import org.locationtech.jts.geom.Coordinate;
 import org.noise_planet.noisemodelling.pathfinder.utils.ComplexNumber;
@@ -31,6 +30,8 @@ public class HarmonoiseAttenuation {
     //    public boolean exportAttenuationMatrix; // if true, store intermediate values for debugging purpose
 
     public HarmonoiseAttenuation(SceneWithAttenuation scene, HarmonoiseAttenuationOutput output) {
+        this.scene = scene;
+        this.attenuationOutput = output;
     }
 
     /**
@@ -66,9 +67,9 @@ public class HarmonoiseAttenuation {
             }
         }
         if (indexMaxDistance == 0) { // No diffraction point above the line crossing the first and last points
-            computeGroundAttenuation(scene, attenuationOutput, vertices);
+            computeGroundAttenuation(vertices);
         }else {
-            computeDiffractionAttenuation(scene, attenuationOutput, vertices[0], vertices[vertices.length-1],
+            computeDiffractionAttenuation(vertices[0], vertices[vertices.length-1],
                     vertices[indexMaxDistance]);
             computeExcessAttenuation(Arrays.copyOfRange(vertices, 0, indexMaxDistance+1));
             computeExcessAttenuation(Arrays.copyOfRange(vertices, indexMaxDistance, vertices.length));
@@ -79,15 +80,11 @@ public class HarmonoiseAttenuation {
      * Compute diffraction attenuation according to Harmonoise methodology
      * Ref: section 2.3 from Salomons et al.
      *
-     * @param scene Scene with attenuation data
-     * @param attenuationOutput Output of the attenuation computation
      * @param source source point ("real" or secondary at diffraction edge)
      * @param receiver receiver point ("real" or secondary at diffraction edge)
      * @param point diffraction point
      */
-    private static void computeDiffractionAttenuation(SceneWithAttenuation scene,
-                                                     HarmonoiseAttenuationOutput attenuationOutput, Coordinate source,
-                                                     Coordinate receiver, Coordinate point){
+    private void computeDiffractionAttenuation(Coordinate source, Coordinate receiver, Coordinate point){
         double sourceAngle = - (Angle.angle(point, source) - Angle.PI_OVER_2);
         double receiverAngle = Angle.angle(point, receiver) + Angle.PI_OVER_2;
         double theta = sourceAngle + receiverAngle;
@@ -138,9 +135,7 @@ public class HarmonoiseAttenuation {
         }
     }
 
-    private static void computeGroundAttenuation(SceneWithAttenuation scene,
-                                                HarmonoiseAttenuationOutput attenuationOutput,
-                                                Coordinate[] vertices){
+    private void computeGroundAttenuation(Coordinate[] vertices){
         if (hasConvexSegment(vertices)){
             attenuationOutput.excessAttenuation += 0;
         }
