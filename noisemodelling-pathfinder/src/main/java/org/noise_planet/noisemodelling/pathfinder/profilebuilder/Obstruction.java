@@ -22,7 +22,7 @@ public class Obstruction {
         if(alphas.size() != frequencyExact.size()) {
             alphas = new ArrayList<>();
             for (double freq : frequencyExact) {
-                alphas.add(WallAbsorption.getWallAlpha(g, freq));
+                alphas.add(SurfaceAbsorption.getWallAlpha(g, freq));
             }
         }
     }

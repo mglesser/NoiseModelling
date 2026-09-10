@@ -29,7 +29,7 @@ import org.noise_planet.noisemodelling.pathfinder.PathFinder;
 import org.noise_planet.noisemodelling.pathfinder.delaunay.LayerDelaunayError;
 import org.noise_planet.noisemodelling.pathfinder.profilebuilder.CutProfile;
 import org.noise_planet.noisemodelling.pathfinder.profilebuilder.ProfileBuilder;
-import org.noise_planet.noisemodelling.pathfinder.profilebuilder.WallAbsorption;
+import org.noise_planet.noisemodelling.pathfinder.profilebuilder.SurfaceAbsorption;
 import org.noise_planet.noisemodelling.pathfinder.utils.AcousticIndicatorsFunctions;
 import org.noise_planet.noisemodelling.propagation.AttenuationParameters;
 import org.noise_planet.noisemodelling.propagation.ReceiverNoiseLevel;
@@ -475,7 +475,7 @@ public class SceneWithEmissionTest {
                ProfileBuilder.DEFAULT_FREQUENCIES_THIRD_OCTAVE));
         List<Double> alphaWall = new ArrayList<>(alphaWallFrequencies.size());
         for(int frequency : alphaWallFrequencies) {
-            alphaWall.add(WallAbsorption.getWallAlpha(100000, frequency));
+            alphaWall.add(SurfaceAbsorption.getWallAlpha(100000, frequency));
         }
 
         ProfileBuilder profileBuilder = new ProfileBuilder()
@@ -626,7 +626,7 @@ public class SceneWithEmissionTest {
                 ProfileBuilder.DEFAULT_FREQUENCIES_THIRD_OCTAVE));
         List<Double> alphaWall = new ArrayList<>(alphaWallFrequencies.size());
         for(int frequency : alphaWallFrequencies) {
-            alphaWall.add(WallAbsorption.getWallAlpha(100000, frequency));
+            alphaWall.add(SurfaceAbsorption.getWallAlpha(100000, frequency));
         }
 
         ProfileBuilder profileBuilder = new ProfileBuilder()
