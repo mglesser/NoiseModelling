@@ -9,8 +9,10 @@
 
 package org.noise_planet.noisemodelling.propagation.harmonoise;
 
+import org.apache.commons.math3.complex.Complex;
 import org.locationtech.jts.algorithm.Angle;
 import org.locationtech.jts.geom.Coordinate;
+import org.noise_planet.noisemodelling.pathfinder.utils.ComplexNumber;
 import org.noise_planet.noisemodelling.propagation.SceneWithAttenuation;
 
 import java.util.Arrays;
@@ -24,33 +26,31 @@ import java.util.List;
  */
 
 public class HarmonoiseAttenuation {
+    SceneWithAttenuation scene; // Scene with attenuation data
+    HarmonoiseAttenuationOutput attenuationOutput; // Output of the attenuation computation
+    //    public boolean exportAttenuationMatrix; // if true, store intermediate values for debugging purpose
+
+    public HarmonoiseAttenuation(SceneWithAttenuation scene, HarmonoiseAttenuationOutput output) {
+    }
 
     /**
      * Recursive calculation scheme for excess attenuation
      * Ref: section 2.2.3 from Salomons et al.
-     *
-     * @param scene Scene with attenuation data
-     * @param attenuationOutput Output of the attenuation computation
-     * @param exportAttenuationMatrix if true, store intermediate values in attenuationOutput for debugging purpose
      */
-    public static void computeExcessAttenuation(SceneWithAttenuation scene,
-                                                 HarmonoiseAttenuationOutput attenuationOutput,
-                                                boolean exportAttenuationMatrix) {
+    public void computeExcessAttenuation() {
         Coordinate[] vertices = attenuationOutput.groundProfile.vertices;
         vertices[0].y = attenuationOutput.groundProfile.getSource().z;
         vertices[vertices.length-1].y = attenuationOutput.groundProfile.getReceiver().z;
-        computeExcessAttenuation(scene, attenuationOutput, vertices);
+        computeExcessAttenuation(vertices);
     }
 
     /**
      * Recursive calculation scheme for excess attenuation
      * Ref: section 2.2.3 from Salomons et al.
      *
-     * @param scene Scene with attenuation data
      * @param vertices ground vertices (incl. src and rcv)
      */
-    private static void computeExcessAttenuation(SceneWithAttenuation scene,
-                                                HarmonoiseAttenuationOutput attenuationOutput, Coordinate[] vertices){
+    private void computeExcessAttenuation(Coordinate[] vertices){
         double maxDistance = 0;
         int indexMaxDistance = 0;
         for (int i = 1; i < vertices.length - 1; i++) {
@@ -70,10 +70,8 @@ public class HarmonoiseAttenuation {
         }else {
             computeDiffractionAttenuation(scene, attenuationOutput, vertices[0], vertices[vertices.length-1],
                     vertices[indexMaxDistance]);
-            computeExcessAttenuation(scene, attenuationOutput,
-                    Arrays.copyOfRange(vertices, 0, indexMaxDistance+1));
-            computeExcessAttenuation(scene, attenuationOutput,
-                    Arrays.copyOfRange(vertices, indexMaxDistance, vertices.length));
+            computeExcessAttenuation(Arrays.copyOfRange(vertices, 0, indexMaxDistance+1));
+            computeExcessAttenuation(Arrays.copyOfRange(vertices, indexMaxDistance, vertices.length));
         }
     }
 
@@ -140,7 +138,7 @@ public class HarmonoiseAttenuation {
         }
     }
 
-    public static void computeGroundAttenuation(SceneWithAttenuation scene,
+    private static void computeGroundAttenuation(SceneWithAttenuation scene,
                                                 HarmonoiseAttenuationOutput attenuationOutput,
                                                 Coordinate[] vertices){
         if (hasConvexSegment(vertices)){
@@ -171,5 +169,27 @@ public class HarmonoiseAttenuation {
             }
         }
         return isConvex;
+    }
+
+    private ComplexNumber sphericalWaveReflectionCoefficient(ComplexNumber groundImpedance, double angle,
+                                                             double frequency, double distance){
+        ComplexNumber cosAngle = new ComplexNumber(Math.cos(angle),0);
+        ComplexNumber z =  ComplexNumber.multiply(groundImpedance, cosAngle);
+        ComplexNumber planeWaveReflectionCoefficient = ComplexNumber.divide(
+                ComplexNumber.subtract(z, new ComplexNumber(1,0)),
+                ComplexNumber.add(z, new ComplexNumber(1,0))
+        );
+        ComplexNumber kr = new ComplexNumber(2 * Math.PI * frequency / scene.defaultCnossosParameters.getCelerity()
+                * distance, 0);
+        ComplexNumber admittance = ComplexNumber.divide(new ComplexNumber(1, 0), groundImpedance);
+        ComplexNumber numericalDistance = ComplexNumber.multiply(
+            new ComplexNumber(0.5, 0.5),
+            ComplexNumber.multiply(
+                ComplexNumber.pow(kr, 0.5),
+                ComplexNumber.add(cosAngle, admittance)
+            )
+        );
+        ComplexNumber reflectionCoefficient = new ComplexNumber(1,1);
+        return reflectionCoefficient;
     }
 }
