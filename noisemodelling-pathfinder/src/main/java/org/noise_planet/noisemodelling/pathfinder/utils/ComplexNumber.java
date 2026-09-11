@@ -219,6 +219,19 @@ public class ComplexNumber
         return new ComplexNumber(a,b);
     }
     /**
+     * Calculates the square root of the <code>ComplexNumber</code>.
+     * @param z The input complex number
+     * @return a <code>ComplexNumber</code> which is sqrt(z)
+     */
+    public static ComplexNumber sqrt(ComplexNumber z)
+    {
+        ComplexNumber output = new ComplexNumber(z.getRe(),z.getIm());
+        double _real = Math.sqrt((output.mod() + output.getRe()) / 2);
+        double _imaginary = output.getIm() / Math.abs(output.getIm()) * Math.sqrt((output.mod() - output.getRe()) / 2);
+        output = new ComplexNumber(_real,_imaginary);
+        return output;
+    }
+    /**
      * Calculates the <code>ComplexNumber</code> to the passed integer power.
      * @param z The input complex number
      * @param power The power.
