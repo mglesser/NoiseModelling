@@ -28,10 +28,12 @@ public class HarmonoiseAttenuation {
     SceneWithAttenuation scene; // Scene with attenuation data
     HarmonoiseAttenuationOutput attenuationOutput; // Output of the attenuation computation
     //    public boolean exportAttenuationMatrix; // if true, store intermediate values for debugging purpose
+    HarmonoiseGroundProfile groundProfile;
 
     public HarmonoiseAttenuation(SceneWithAttenuation scene, HarmonoiseAttenuationOutput output) {
         this.scene = scene;
         this.attenuationOutput = output;
+        this.groundProfile = new HarmonoiseGroundProfile(output.getCutProfile());
     }
 
     /**
@@ -39,19 +41,18 @@ public class HarmonoiseAttenuation {
      * Ref: section 2.2.3 from Salomons et al.
      */
     public void computeExcessAttenuation() {
-        Coordinate[] vertices = attenuationOutput.groundProfile.vertices;
-        vertices[0].y = attenuationOutput.groundProfile.getSource().z;
-        vertices[vertices.length-1].y = attenuationOutput.groundProfile.getReceiver().z;
-        computeExcessAttenuation(vertices);
+        computeExcessAttenuation(0, groundProfile.getNVertices()-1);
     }
 
     /**
      * Recursive calculation scheme for excess attenuation
      * Ref: section 2.2.3 from Salomons et al.
      *
-     * @param vertices ground vertices (incl. src and rcv)
+     * @param iStart index of the first ground profile vertex
+     * @param iEnd index of the last ground profile vertex
      */
-    private void computeExcessAttenuation(Coordinate[] vertices){
+    private void computeExcessAttenuation(int iStart, int iEnd){
+        Coordinate[] vertices = groundProfile.getSrcRcvVertices(iStart, iEnd);
         double maxDistance = 0;
         int indexMaxDistance = 0;
         for (int i = 1; i < vertices.length - 1; i++) {
@@ -71,8 +72,8 @@ public class HarmonoiseAttenuation {
         }else {
             computeDiffractionAttenuation(vertices[0], vertices[vertices.length-1],
                     vertices[indexMaxDistance]);
-            computeExcessAttenuation(Arrays.copyOfRange(vertices, 0, indexMaxDistance+1));
-            computeExcessAttenuation(Arrays.copyOfRange(vertices, indexMaxDistance, vertices.length));
+            computeExcessAttenuation(iStart, indexMaxDistance);
+            computeExcessAttenuation(indexMaxDistance, iEnd);
         }
     }
 

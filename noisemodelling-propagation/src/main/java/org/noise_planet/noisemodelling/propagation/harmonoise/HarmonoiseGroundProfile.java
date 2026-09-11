@@ -16,6 +16,7 @@ import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LineString;
 import org.noise_planet.noisemodelling.pathfinder.profilebuilder.CutProfile;
 
+import java.util.Arrays;
 import java.util.List;
 
 import static java.lang.Math.*;
@@ -29,7 +30,7 @@ public class HarmonoiseGroundProfile {
     LineString profile; // 2D coordinates of ground profile vertices
     Coordinate source; // 3D coordinates of the source
     Coordinate receiver; // 3D coordinates of the receiver
-    Coordinate[] vertices;
+    private Coordinate[] vertices;
 
     /**
      * Initialize HarmonoiseGroundProfile object from CutProfile object.
@@ -37,6 +38,17 @@ public class HarmonoiseGroundProfile {
      * @param cutProfile 3D profile from source to receiver
      */
     public HarmonoiseGroundProfile(CutProfile cutProfile){
+
+        this(cutProfile, 0);
+    }
+
+    /**
+     * Initialize HarmonoiseGroundProfile object from CutProfile object.
+     *
+     * @param cutProfile 3D profile from source to receiver
+     * @param radius curvature radius of the equivalent ground profile
+     */
+    public HarmonoiseGroundProfile(CutProfile cutProfile, double radius){
         source = cutProfile.getSource().getCoordinate();
         receiver = cutProfile.getReceiver().getCoordinate();
         // Get the whole 2D profile including ground points
@@ -44,6 +56,9 @@ public class HarmonoiseGroundProfile {
         vertices = cutProfile.computePts2DGround(hullIndices).toArray(new Coordinate[0]);
         GeometryFactory geometryFactory = new GeometryFactory();
         profile = geometryFactory.createLineString(vertices);
+        if (radius != 0){
+            computeCurvedProfile(radius);
+        }
     }
 
     /**
@@ -53,7 +68,7 @@ public class HarmonoiseGroundProfile {
      * Note: This implementation yield similar results to the one from CurvedProfileGenerator.applyTransformation.
      * However, it works only on the whole ground profile (from zGroundSource to zGroundReceiver).
      */
-    public void computeCurvedProfile(double radius){
+    private void computeCurvedProfile(double radius){
         // Segment Profile (second paragraph of section 2.5)
         double dsr = source.distance(receiver);
         double maxSegmentLength = min( dsr/3 , max(50, dsr/20));
@@ -93,4 +108,33 @@ public class HarmonoiseGroundProfile {
     public Coordinate getReceiver() {
         return receiver;
     }
+
+    public Coordinate[] getVertices() {
+        return vertices;
+    }
+
+    public int getNVertices() {
+        return vertices.length;
+    }
+
+    /**
+     * @return ground profile vertices with first and last ground vertices replaced
+     * respectively by the source and the receiver vertices
+     */
+    public Coordinate[] getSrcRcvVertices() {
+        return getSrcRcvVertices(0, vertices.length-1);
+    }
+
+    /**
+     * @return ground profile vertices with first and last ground vertices replaced
+     * respectively by the source and the receiver vertices
+     */
+    public Coordinate[] getSrcRcvVertices(int iStart, int iEnd) {
+        Coordinate[] srcRcvVertices = vertices.clone();
+        srcRcvVertices[0].y = source.z;
+        srcRcvVertices[srcRcvVertices.length-1].y = receiver.z;
+        return Arrays.copyOfRange(srcRcvVertices, iStart, iEnd+1);
+    }
+
+
 }

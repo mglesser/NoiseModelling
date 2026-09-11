@@ -9,6 +9,7 @@
 
 package org.noise_planet.noisemodelling.propagation.harmonoise;
 
+import org.noise_planet.noisemodelling.pathfinder.profilebuilder.CutProfile;
 import org.noise_planet.noisemodelling.propagation.AttenuationOutput;
 
 import java.util.ArrayList;
@@ -22,12 +23,11 @@ import java.util.stream.IntStream;
  * @author Martin Glesser
  */
 public class HarmonoiseAttenuationOutput extends AttenuationOutput {
-    HarmonoiseGroundProfile groundProfile;
     double excessAttenuation = 0;
     List<Double> diffractionAttenuation = new ArrayList<>();
 
-    public HarmonoiseAttenuationOutput(HarmonoiseGroundProfile groundProfile){
-        this.groundProfile = groundProfile;
+    public HarmonoiseAttenuationOutput(CutProfile cutProfile){
+        this.cutProfile = cutProfile;
     }
 
     /**
