@@ -8,7 +8,7 @@
  */
 package org.noise_planet.noisemodelling.pathfinder.profilebuilder;
 
-import org.noise_planet.noisemodelling.pathfinder.utils.ComplexNumber;
+import org.apache.commons.math3.complex.Complex;
 
 /**
  * Collection of methods related to wall and ground absorption coefficients
@@ -56,7 +56,7 @@ public class SurfaceAbsorption {
      */
     public static double computeSurfaceImpedance(double sigma, double freq_l, String method)
     {
-        ComplexNumber Z;
+        Complex Z;
         switch (method) {
             default:
                 // Ref: Delany M. E. and Bazley E. N., Acoustical properties of fibrous absorbent
@@ -64,7 +64,7 @@ public class SurfaceAbsorption {
                 double s = Math.log(freq_l / sigma);
                 double x = 1. + 9.08 * Math.exp(-.75 * s);
                 double y = - 11.9 * Math.exp(-0.73 * s);
-                Z = new ComplexNumber(x, y);
+                Z = new Complex(x, y);
                 break;
                 // Another fit giving similar results is sometimes found in the literature with:
                 // x = 1 + 0.0571 * (rho_0 * s)^-0.754
@@ -79,12 +79,12 @@ public class SurfaceAbsorption {
      * @param impedance normalized ground impedance[]
      * @return ground absorption coefficient []
      */
-    static double computeGroundAbsorptionCoefficient(ComplexNumber impedance)         // TODO convert impedance to alpha
+    static double computeGroundAbsorptionCoefficient(Complex impedance)         // TODO convert impedance to alpha
     {
         double alpha ;
-        ComplexNumber z = ComplexNumber.divide(new ComplexNumber(1.0,0), impedance) ;
-        double x = z.getRe();
-        double y = z.getIm();
+        Complex z = impedance.reciprocal();
+        double x = z.getReal();
+        double y = z.getImaginary();
         double a1 = (x * x - y * y) / y ;
         double a2 = y / (x * x + y * y + x) ;
         double a3 = ((x + 1) *(x + 1) + y * y) / (x * x + y * y) ;

@@ -9,12 +9,12 @@
 
 package org.noise_planet.noisemodelling.propagation.harmonoise;
 
+import org.apache.commons.math3.complex.Complex;
 import org.locationtech.jts.densify.Densifier;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LineString;
 import org.noise_planet.noisemodelling.pathfinder.profilebuilder.CutProfile;
-import org.noise_planet.noisemodelling.pathfinder.utils.ComplexNumber;
 
 import java.util.List;
 
@@ -64,27 +64,24 @@ public class HarmonoiseGroundProfile {
         double hReceiver = receiver.z;
         double hm = (hSource + hReceiver) / 2;
         double c0 = 2* (hm + radius); // Eq. 77
-        ComplexNumber c = new ComplexNumber(0, c0); // Eq. 76
+        Complex c = new Complex(0, c0); // Eq. 76
         double xc = 0.5 * (profile.getStartPoint().getX() + profile.getEndPoint().getX());
         double yc = 0.5 * (profile.getStartPoint().getY() + profile.getEndPoint().getY()) + hm;
-        ComplexNumber w0 = new ComplexNumber(xc, yc); // Eq. 75
+        Complex w0 = new Complex(xc, yc); // Eq. 75
         double deltaY = 0;
         vertices = new Coordinate[profile.getNumPoints()];
         for (int i = 0; i < profile.getNumPoints(); i++) {
-            ComplexNumber w = new ComplexNumber(profile.getCoordinateN(i).getX(), profile.getCoordinateN(i).getY());
-            ComplexNumber wPrim = ComplexNumber.divide(
-                    ComplexNumber.multiply(c, ComplexNumber.subtract(w, w0)),
-                    ComplexNumber.add(c, ComplexNumber.subtract(w, w0))
-            ); // Eq. 74
+            Complex w = new Complex(profile.getCoordinateN(i).getX(), profile.getCoordinateN(i).getY());
+            Complex wPrim = c.multiply(w.subtract(w0)).divide(c.add(w.subtract(w0))); // Eq. 74
 
             // Create new coordinate with transformed z (incl. profile translation)
             if (i == 0) {
-                deltaY = profile.getCoordinateN(i).getY() - wPrim.getIm();
+                deltaY = profile.getCoordinateN(i).getY() - wPrim.getImaginary();
                 vertices[i] =
-                        new Coordinate(wPrim.getRe() + xc, profile.getCoordinateN(i).getY() , profile.getCoordinateN(i).getZ());
+                        new Coordinate(wPrim.getReal() + xc, profile.getCoordinateN(i).getY() , profile.getCoordinateN(i).getZ());
             } else {
                 vertices[i] =
-                        new Coordinate(wPrim.getRe() + xc, wPrim.getIm() + deltaY, profile.getCoordinateN(i).getZ());
+                        new Coordinate(wPrim.getReal() + xc, wPrim.getImaginary() + deltaY, profile.getCoordinateN(i).getZ());
             }
         }
     }
