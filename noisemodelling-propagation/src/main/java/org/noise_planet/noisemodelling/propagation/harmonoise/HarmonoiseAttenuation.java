@@ -59,7 +59,7 @@ public class HarmonoiseAttenuation {
             double crossProduct = (vertices[i].x - vertices[0].x) * (vertices[0].y - vertices[vertices.length-1].y)
                     + (vertices[i].y - vertices[0].y) * (vertices[vertices.length-1].x - vertices[0].x);
             if (crossProduct > 0) { // if the current point is above the line crossing the first and last points
-                double distance = vertices[0].distance(vertices[2]) + vertices[2].distance(vertices[vertices.length-1])
+                double distance = vertices[0].distance(vertices[i]) + vertices[i].distance(vertices[vertices.length-1])
                         - vertices[0].distance(vertices[vertices.length-1]); // Eq. 5
                 if (distance > maxDistance){
                     maxDistance = distance;
@@ -72,8 +72,8 @@ public class HarmonoiseAttenuation {
         }else {
             computeDiffractionAttenuation(vertices[0], vertices[vertices.length-1],
                     vertices[indexMaxDistance]);
-            computeExcessAttenuation(iStart, indexMaxDistance);
-            computeExcessAttenuation(indexMaxDistance, iEnd);
+            computeExcessAttenuation(iStart, iStart + indexMaxDistance);
+            computeExcessAttenuation(iStart + indexMaxDistance, iEnd);
         }
     }
 
