@@ -68,7 +68,7 @@ public class HarmonoiseAttenuation {
             }
         }
         if (indexMaxDistance == 0) { // No diffraction point above the line crossing the first and last points
-            computeGroundAttenuation(vertices);
+            computeGroundAttenuation(iStart, iEnd);
         }else {
             computeDiffractionAttenuation(vertices[0], vertices[vertices.length-1],
                     vertices[indexMaxDistance]);
@@ -136,8 +136,8 @@ public class HarmonoiseAttenuation {
         }
     }
 
-    private void computeGroundAttenuation(Coordinate[] vertices){
-        if (hasConvexSegment(vertices)){
+    private void computeGroundAttenuation(int iStart, int iEnd) {
+        if (hasConvexSegment(groundProfile.getSrcRcvVertices(iStart, iEnd))){
             attenuationOutput.excessAttenuation += 0;
         }
         attenuationOutput.excessAttenuation += 0;
@@ -266,5 +266,13 @@ public class HarmonoiseAttenuation {
         }
         // return boundary loss factor
         return w.multiply(new Complex(0,1).multiply(Math.sqrt(Math.PI))).multiply(z).add(1);
+    }
+
+    private Complex geometricalWeightingFactor(int iSeg, int iStart, int iEnd){
+        // Case 1 no diffraction
+        if (iStart == 0 && iEnd = groundProfile.getNVertices()-1){
+
+        }
+
     }
 }
