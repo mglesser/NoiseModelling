@@ -14,7 +14,6 @@ import org.locationtech.jts.algorithm.Angle;
 import org.locationtech.jts.geom.Coordinate;
 import org.noise_planet.noisemodelling.propagation.SceneWithAttenuation;
 
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -52,7 +51,7 @@ public class HarmonoiseAttenuation {
      * @param iEnd index of the last ground profile vertex
      */
     private void computeExcessAttenuation(int iStart, int iEnd){
-        Coordinate[] vertices = groundProfile.getSrcRcvVertices(iStart, iEnd);
+        Coordinate[] vertices = groundProfile.getVertices(iStart, iEnd);
         double maxDistance = 0;
         int indexMaxDistance = 0;
         for (int i = 1; i < vertices.length - 1; i++) {
@@ -137,7 +136,7 @@ public class HarmonoiseAttenuation {
     }
 
     private void computeGroundAttenuation(int iStart, int iEnd) {
-        if (hasConvexSegment(groundProfile.getSrcRcvVertices(iStart, iEnd))){
+        if (hasConvexSegment(groundProfile.getVertices(iStart, iEnd))){
             attenuationOutput.excessAttenuation += 0;
         }
         attenuationOutput.excessAttenuation += 0;
