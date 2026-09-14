@@ -27,10 +27,7 @@ import static java.lang.Math.*;
  */
 
 public class HarmonoiseGroundProfile {
-    LineString profile; // 2D coordinates of ground profile vertices
-    Coordinate source; // 3D coordinates of the source
-    Coordinate receiver; // 3D coordinates of the receiver
-    private Coordinate[] vertices;
+    private final Coordinate[] vertices;
 
     /**
      * Initialize HarmonoiseGroundProfile object from CutProfile object.
@@ -49,16 +46,16 @@ public class HarmonoiseGroundProfile {
      * @param radius curvature radius of the equivalent ground profile
      */
     public HarmonoiseGroundProfile(CutProfile cutProfile, double radius){
-        source = cutProfile.getSource().getCoordinate();
-        receiver = cutProfile.getReceiver().getCoordinate();
         // Get the whole 2D profile including ground points
         List<Integer> hullIndices = cutProfile.getConvexHullIndices(cutProfile.computePts2D());
-        vertices = cutProfile.computePts2DGround(hullIndices).toArray(new Coordinate[0]);
-        GeometryFactory geometryFactory = new GeometryFactory();
-        profile = geometryFactory.createLineString(vertices);
+        Coordinate[] groundVertices = cutProfile.computePts2DGround(hullIndices).toArray(new Coordinate[0]);
         if (radius != 0){
-            computeCurvedProfile(radius);
+            vertices = computeCurvedProfile(groundVertices, radius);
+        } else {
+            vertices = groundVertices;
         }
+        vertices[0].y = cutProfile.getSource().getCoordinate().getZ();
+        vertices[vertices.length-1].y = cutProfile.getReceiver().getCoordinate().getZ();
     }
 
     /**
@@ -68,7 +65,12 @@ public class HarmonoiseGroundProfile {
      * Note: This implementation yield similar results to the one from CurvedProfileGenerator.applyTransformation.
      * However, it works only on the whole ground profile (from zGroundSource to zGroundReceiver).
      */
-    private void computeCurvedProfile(double radius){
+    private Coordinate[] computeCurvedProfile(Coordinate[] groundProfile, double radius){
+        GeometryFactory geometryFactory = new GeometryFactory();
+        LineString profile = geometryFactory.createLineString(groundProfile);
+        Coordinate source = groundProfile[0];
+        Coordinate receiver = groundProfile[groundProfile.length-1];
+        Coordinate[] vertices;
         // Segment Profile (second paragraph of section 2.5)
         double dsr = source.distance(receiver);
         double maxSegmentLength = min( dsr/3 , max(50, dsr/20));
@@ -99,14 +101,7 @@ public class HarmonoiseGroundProfile {
                         new Coordinate(wPrim.getReal() + xc, wPrim.getImaginary() + deltaY, profile.getCoordinateN(i).getZ());
             }
         }
-    }
-
-    public Coordinate getSource() {
-        return source;
-    }
-
-    public Coordinate getReceiver() {
-        return receiver;
+        return vertices;
     }
 
     public Coordinate[] getVertices() {
@@ -121,20 +116,35 @@ public class HarmonoiseGroundProfile {
      * @return ground profile vertices with first and last ground vertices replaced
      * respectively by the source and the receiver vertices
      */
-    public Coordinate[] getSrcRcvVertices() {
-        return getSrcRcvVertices(0, vertices.length-1);
+    public Coordinate[] getVertices(int iStart, int iEnd) {
+        return Arrays.copyOfRange(vertices, iStart, iEnd+1);
     }
 
     /**
-     * @return ground profile vertices with first and last ground vertices replaced
-     * respectively by the source and the receiver vertices
+     * Getter for vertex coordinate.
+     *
+     * @param i index of the vertex
+     * @return coordinate of the vertex
      */
-    public Coordinate[] getSrcRcvVertices(int iStart, int iEnd) {
-        Coordinate[] srcRcvVertices = vertices.clone();
-        srcRcvVertices[0].y = source.z;
-        srcRcvVertices[srcRcvVertices.length-1].y = receiver.z;
-        return Arrays.copyOfRange(srcRcvVertices, iStart, iEnd+1);
+    public Coordinate getVertex(int i){
+        return vertices[i];
     }
 
+    public Coordinate getImageVertex(int iVertex, int iSeg) {
+        double x0 = vertices[iVertex].getX();
+        double y0 = vertices[iVertex].getY();
+        double x1 = vertices[iSeg].getX();
+        double x2 = vertices[iSeg+1].getX();
+        double y1 = vertices[iSeg].getY();
+        double y2 = vertices[iSeg+1].getY();
+        // Segment line equation: ax + by + c = 0
+        double a = 1 / (x2 - x1);
+        double b = 1 / (y1 - y2);
+        double c = y1 / (y2 - y1) - x1 / (x2 - x1);
+        // Image vertex coordinates
+        double xi = x0 - 2*a * (a*x0 + b*y0 + c) / (a*a + b*b);
+        double yi = y0 - 2*b * (a*x0 + b*y0 + c) / (a*a + b*b);
+        return new Coordinate(xi, yi);
+    }
 
 }
