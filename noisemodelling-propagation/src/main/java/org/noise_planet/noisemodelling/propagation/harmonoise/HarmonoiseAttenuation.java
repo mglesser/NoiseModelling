@@ -15,7 +15,7 @@ import org.locationtech.jts.geom.Coordinate;
 import org.noise_planet.noisemodelling.propagation.SceneWithAttenuation;
 
 import java.util.Arrays;
-import java.util.List;
+import java.util.stream.IntStream;
 
 /**
  * Compute excess attenuation according to Harmonoise propagation model
@@ -295,18 +295,58 @@ public class HarmonoiseAttenuation {
         return w.multiply(new Complex(0,1).multiply(Math.sqrt(Math.PI))).multiply(z).add(1);
     }
 
+    /**
+     * Compute the geometrical weighting factor corresponding to a segment
+     * Ref: "Geometrical weighting factor" subsection of section 2.4.1 from Salomons et al.
+     *
+     * @param iSeg index of the first index of the segment
+     * @param iStart first index of the ground profile or sub-profile
+     * @param iEnd last index of the ground profile or sub-profile
+     * @return geometrical weighting factor
+     */
     private Complex[] geometricalWeightingFactor(int iSeg, int iStart, int iEnd){
-        Complex[] weightingFactor = new Complex[scene.defaultCnossosParameters.getFrequenciesExact().size()];
-        // Case 1 no diffraction
-        if (iStart == 0 && iEnd == groundProfile.getNVertices()-1){
-            Complex[] pimage = directSoundPressure(
-                    groundProfile.getImageVertex(iStart, iSeg), groundProfile.getVertex(iEnd));
-            Complex[] p = directSoundPressure(groundProfile.getVertex(iStart), groundProfile.getVertex(iEnd));
-            for (int i = 0; i < p.length; i++) {
-                weightingFactor[i] = pimage[i].divide(p[i]);
+        int nFreq = scene.defaultCnossosParameters.getFrequenciesExact().size();
+        int lastVertex = groundProfile.getNVertices()-1;
+        Coordinate source = groundProfile.getVertex(0);
+        Coordinate sourceImage = groundProfile.getImageVertex(0, iSeg);
+        Coordinate receiver = groundProfile.getVertex(lastVertex);
+        Coordinate pointSourceSide = groundProfile.getVertex(iSeg);
+        Coordinate pointReceiverSide = groundProfile.getVertex(iSeg+1);
+        Complex[] pImage;
+        Complex[] p;
+        if (iStart == 0 && iEnd == lastVertex){ // Case 1 no diffraction
+            pImage = directSoundPressure(sourceImage, receiver);
+            p = directSoundPressure(source, receiver);
+        } else {
+            p = new Complex[nFreq];
+            pImage = new Complex[nFreq];
+            if (iStart == 0 && iEnd < lastVertex) { // Case 2 diffraction on the receiver side only
+                computeDiffractionAttenuation(sourceImage, receiver, pointReceiverSide, pImage);
+                computeDiffractionAttenuation(source, receiver, pointReceiverSide, p);
+            } else if (iStart > 0 && iEnd == lastVertex) { // Case 3 diffraction on the source side only
+                Coordinate receiverImage = groundProfile.getImageVertex(lastVertex, iSeg);
+                computeDiffractionAttenuation(source, receiverImage, pointSourceSide, pImage);
+                computeDiffractionAttenuation(source, receiver, pointSourceSide, p);
+            } else { // Case 4 diffraction on both sides
+                Coordinate pointSourceSideImage = groundProfile.getImageVertex(iStart, iSeg);
+                Coordinate pointReceiverSideImage = groundProfile.getImageVertex(iEnd, iSeg);
+                Complex[] pImage1 = pImage.clone();
+                Complex[] p1 = p.clone();
+                Complex[] pImage2 = pImage.clone();
+                Complex[] p2 = p.clone();
+                computeDiffractionAttenuation(source, pointSourceSide, pointReceiverSideImage, pImage1);
+                computeDiffractionAttenuation(source, pointSourceSide, pointReceiverSide, p1);
+                computeDiffractionAttenuation(pointSourceSideImage, pointReceiverSide, receiver, pImage2);
+                computeDiffractionAttenuation(pointSourceSide, pointReceiverSide, receiver, p2);
+                for (int i = 0; i < nFreq; i++) {
+                    pImage[i] = pImage1[i].multiply(pImage2[i]);
+                    p[i] = p1[i].multiply(p2[i]);
+                }
             }
         }
-        return weightingFactor;
+        return (Complex[]) IntStream.range(0, nFreq)
+                .mapToObj(i -> pImage[i].divide(p[i]))
+                .toArray();
     }
 
     /**
