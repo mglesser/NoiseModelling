@@ -14,6 +14,7 @@ import org.locationtech.jts.algorithm.Angle;
 import org.locationtech.jts.geom.Coordinate;
 import org.noise_planet.noisemodelling.propagation.SceneWithAttenuation;
 
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -77,14 +78,27 @@ public class HarmonoiseAttenuation {
     }
 
     /**
-     * Compute diffraction attenuation according to Harmonoise methodology
+     * Compute diffraction attenuation according to Harmonoise methodology and add it to AttenuationOutput
      * Ref: section 2.3 from Salomons et al.
      *
      * @param source source point ("real" or secondary at diffraction edge)
      * @param receiver receiver point ("real" or secondary at diffraction edge)
      * @param point diffraction point
      */
-    private void computeDiffractionAttenuation(Coordinate source, Coordinate receiver, Coordinate point){
+    private void computeDiffractionAttenuation(Coordinate source, Coordinate receiver, Coordinate point) {
+        computeDiffractionAttenuation(source, receiver, point, new Complex[0]);
+    }
+
+    /**
+     * Compute diffraction attenuation and diffracted sound pressure amplitude according to Harmonoise methodology
+     * Ref: section 2.3 from Salomons et al.
+     *
+     * @param source source point ("real" or secondary at diffraction edge)
+     * @param receiver receiver point ("real" or secondary at diffraction edge)
+     * @param point diffraction point
+     * @param diffractedPressure store the sound pressure if input size != 0
+     */
+    private void computeDiffractionAttenuation(Coordinate source, Coordinate receiver, Coordinate point, Complex[] diffractedPressure){
         double sourceAngle = - (Angle.angle(point, source) - Angle.PI_OVER_2);
         double receiverAngle = Angle.angle(point, receiver) + Angle.PI_OVER_2;
         double theta = sourceAngle + receiverAngle;
@@ -104,14 +118,28 @@ public class HarmonoiseAttenuation {
                     * (theta - Math.PI); // Eq. 13
             pathLengthDiff = directPathLength * (1.0/2 * Math.pow(epsilon,2) + 1.0/3 * Math.pow(epsilon,3)); // Eq. 11
         }
-        List<Double> fresnelNumber = scene.defaultCnossosParameters.getFrequenciesExact()
+        double[] fresnelNumber = scene.defaultCnossosParameters.getFrequenciesExact()
                 .stream()
-                .map(f -> 2 * pathLengthDiff / (scene.defaultCnossosParameters.getCelerity() / f))
-                .toList(); // Eq.8
-        List<Double> diffractionAttenuation = fresnelNumber.stream()
+                .mapToDouble(f -> 2 * pathLengthDiff / (scene.defaultCnossosParameters.getCelerity() / f))
+                .toArray(); // Eq.8
+        double[] diffractionAttenuation = Arrays.stream(fresnelNumber)
                 .map(HarmonoiseAttenuation::fresnelApproximation)
-                .toList();
-        attenuationOutput.addDiffractionAttenuation(diffractionAttenuation);
+                .toArray();
+        if (diffractedPressure.length == 0) {
+            attenuationOutput.addDiffractionAttenuation(diffractionAttenuation);
+        } else {
+            Complex[] expFactor = (Complex[]) scene.defaultCnossosParameters.getFrequenciesExact()
+                    .stream()
+                    .map(f -> (
+                            new Complex(
+                                    0,
+                                    2 * Math.PI * f / scene.defaultCnossosParameters.getCelerity() * directPathLength)
+                    ).exp().divide(directPathLength))
+                    .toArray();
+            for (int i = 0; i < diffractionAttenuation.length; i++) {
+                diffractedPressure[i] = expFactor[i].multiply(10 * Math.log10(diffractionAttenuation[i] / 20));
+            }
+        }
     }
 
     /**
@@ -267,11 +295,37 @@ public class HarmonoiseAttenuation {
         return w.multiply(new Complex(0,1).multiply(Math.sqrt(Math.PI))).multiply(z).add(1);
     }
 
-    private Complex geometricalWeightingFactor(int iSeg, int iStart, int iEnd){
+    private Complex[] geometricalWeightingFactor(int iSeg, int iStart, int iEnd){
+        Complex[] weightingFactor = new Complex[scene.defaultCnossosParameters.getFrequenciesExact().size()];
         // Case 1 no diffraction
-        if (iStart == 0 && iEnd = groundProfile.getNVertices()-1){
-
+        if (iStart == 0 && iEnd == groundProfile.getNVertices()-1){
+            Complex[] pimage = directSoundPressure(
+                    groundProfile.getImageVertex(iStart, iSeg), groundProfile.getVertex(iEnd));
+            Complex[] p = directSoundPressure(groundProfile.getVertex(iStart), groundProfile.getVertex(iEnd));
+            for (int i = 0; i < p.length; i++) {
+                weightingFactor[i] = pimage[i].divide(p[i]);
+            }
         }
+        return weightingFactor;
+    }
 
+    /**
+     * Compute the direct sound pressure amplitude from scr to rcv
+     * Ref: Eq. 25 from Salomons et al.
+     *
+     * @param src Source coordinate
+     * @param rcv Receiver coordinate
+     * @return direct field sound pressure amplitude
+     */
+    private Complex[] directSoundPressure(Coordinate src, Coordinate rcv){
+        double distance = src.distance(rcv);
+        return (Complex[]) scene.defaultCnossosParameters.getFrequenciesExact()
+                .stream()
+                .map(f -> (
+                        new Complex(
+                                0,
+                                2 * Math.PI * f / scene.defaultCnossosParameters.getCelerity() * distance)
+                ).exp().divide(distance))
+                .toArray();
     }
 }

@@ -24,7 +24,7 @@ import java.util.stream.IntStream;
  */
 public class HarmonoiseAttenuationOutput extends AttenuationOutput {
     double excessAttenuation = 0;
-    List<Double> diffractionAttenuation = new ArrayList<>();
+    double[] diffractionAttenuation = new double[0];
 
     public HarmonoiseAttenuationOutput(CutProfile cutProfile){
         this.cutProfile = cutProfile;
@@ -35,13 +35,13 @@ public class HarmonoiseAttenuationOutput extends AttenuationOutput {
      *
      * @param attenuation attenuation to add
      */
-    public void addDiffractionAttenuation(List<Double> attenuation){
-        if (diffractionAttenuation.isEmpty()) {
+    public void addDiffractionAttenuation(double[] attenuation){
+        if (diffractionAttenuation.length == 0) {
             diffractionAttenuation = attenuation;
         } else {
-            diffractionAttenuation = IntStream.range(0, diffractionAttenuation.size())
-                    .mapToObj(i -> diffractionAttenuation.get(i) + attenuation.get(i))
-                    .collect(Collectors.toList());
+            diffractionAttenuation = IntStream.range(0, diffractionAttenuation.length)
+                    .mapToDouble(i -> diffractionAttenuation[i] + attenuation[i])
+                    .toArray();
         }
     }
 }
