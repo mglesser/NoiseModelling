@@ -29,6 +29,7 @@ public class HarmonoiseAttenuation {
     SceneWithAttenuation scene; // Scene with attenuation data
     HarmonoiseAttenuationOutput attenuationOutput; // Output of the attenuation computation
     HarmonoiseGroundProfile groundProfile;
+    private double[] waveNumber;
 
     // To be exposed to user (input of the model)
     double stdHs = 0; // standard deviation on the source height
@@ -39,6 +40,10 @@ public class HarmonoiseAttenuation {
         this.scene = scene;
         this.attenuationOutput = output;
         this.groundProfile = new HarmonoiseGroundProfile(output.getCutProfile());
+        waveNumber = scene.defaultCnossosParameters.getFrequenciesExact()
+                .stream()
+                .mapToDouble(f -> 2 * Math.PI * f / scene.defaultCnossosParameters.getCelerity())
+                .toArray();
     }
 
     /**
@@ -133,18 +138,24 @@ public class HarmonoiseAttenuation {
         if (diffractedPressure.length == 0) {
             attenuationOutput.addDiffractionAttenuation(diffractionAttenuation);
         } else {
-            Complex[] expFactor = (Complex[]) scene.defaultCnossosParameters.getFrequenciesExact()
-                    .stream()
-                    .map(f -> (
-                            new Complex(
-                                    0,
-                                    2 * Math.PI * f / scene.defaultCnossosParameters.getCelerity() * directPathLength)
-                    ).exp().divide(directPathLength))
-                    .toArray();
+            Complex[] sphericalPressure = unitSphericalWavePressure(directPathLength);
             for (int i = 0; i < diffractionAttenuation.length; i++) {
-                diffractedPressure[i] = expFactor[i].multiply(10 * Math.log10(diffractionAttenuation[i] / 20));
+                diffractedPressure[i] = sphericalPressure[i].multiply(10 * Math.log10(diffractionAttenuation[i] / 20));
             }
         }
+    }
+
+    /**
+     * Return the sound pressure of unit-amplitude harmonic spherical wave
+     * p(r) = exp(ikr)/r
+     *
+     * @param distance radial distance r from the source [m]
+     * @return sound pressure p [Pa]
+     */
+    private Complex[] unitSphericalWavePressure(double distance){
+        return (Complex[]) Arrays.stream(waveNumber)
+                .mapToObj(k -> (new Complex(0,k * distance)).exp().divide(distance))
+                .toArray();
     }
 
     /**
@@ -320,8 +331,8 @@ public class HarmonoiseAttenuation {
         Complex[] pImage;
         Complex[] p;
         if (iStart == 0 && iEnd == lastVertex){ // Case 1 no diffraction
-            pImage = directSoundPressure(sourceImage, receiver);
-            p = directSoundPressure(source, receiver);
+            pImage = unitSphericalWavePressure(sourceImage.distance(receiver));
+            p = unitSphericalWavePressure(source.distance(receiver));
         } else {
             p = new Complex[nFreq];
             pImage = new Complex[nFreq];
@@ -351,26 +362,6 @@ public class HarmonoiseAttenuation {
         }
         return (Complex[]) IntStream.range(0, nFreq)
                 .mapToObj(i -> pImage[i].divide(p[i]))
-                .toArray();
-    }
-
-    /**
-     * Compute the direct sound pressure amplitude from scr to rcv
-     * Ref: Eq. 25 from Salomons et al.
-     *
-     * @param src Source coordinate
-     * @param rcv Receiver coordinate
-     * @return direct field sound pressure amplitude
-     */
-    private Complex[] directSoundPressure(Coordinate src, Coordinate rcv){
-        double distance = src.distance(rcv);
-        return (Complex[]) scene.defaultCnossosParameters.getFrequenciesExact()
-                .stream()
-                .map(f -> (
-                        new Complex(
-                                0,
-                                2 * Math.PI * f / scene.defaultCnossosParameters.getCelerity() * distance)
-                ).exp().divide(distance))
                 .toArray();
     }
 
@@ -412,10 +403,6 @@ public class HarmonoiseAttenuation {
         // Standard deviation of the phase difference's fluctuation
         double pathLengthDiff = sourceImage.distance(receiver) - source.distance(receiver);
         double stdPhaseTerm = stdFTerm + stdTermC0 + stdDTerm + stdHsTerm + stdHrTerm;
-        double[] waveNumber = scene.defaultCnossosParameters.getFrequenciesExact()
-                .stream()
-                .mapToDouble(f -> 2 * Math.PI * f / scene.defaultCnossosParameters.getCelerity())
-                .toArray();
         double[] stdPhase = Arrays.stream(waveNumber).map(k -> Math.sqrt(stdPhaseTerm) * k * pathLengthDiff).toArray();
         // coherence factor Ca
         double[] ca = Arrays.stream(stdPhase).map(s -> Math.exp(-0.5 * s * s )).toArray();
@@ -430,5 +417,62 @@ public class HarmonoiseAttenuation {
                 .map(k -> -3.0/8 * 0.364 * gammaT * k * k * Math.pow(rho, 5.0/3) * source.distance(receiver))
                 .toArray();
         return IntStream.range(0, ca.length).mapToDouble(i -> ca[i] * cb[i]).toArray();
+    }
+
+    /**
+     * Computes the Fresnel ellipse center and semi major axis for a Fresnel parameter of 8
+     * Ref: "Fresnel weighting" subsection of section 2.4.2 from Salomons et al.
+     *
+     * @param iSeg index of the first index of the segment
+     * @param iStart first index of the ground profile or sub-profile
+     * @param iEnd last index of the ground profile or sub-profile
+     * @param center local d coordinate of the ellipse center
+     * @param semiMajorAxis ellipse semi major axis length
+     */
+    private void fresnelEllipse(int iSeg, int iStart, int iEnd, double[] center, double[] semiMajorAxis){
+        double[] fresnelParam = new double[waveNumber.length];
+        Arrays.fill(fresnelParam, 8);
+        fresnelEllipse(iSeg, iStart, iEnd, fresnelParam,center, semiMajorAxis);
+    }
+
+    /**
+     * Computes the Fresnel ellipse center and semi major axis
+     * Ref: "Fresnel weighting" subsection of section 2.4.2 from Salomons et al.
+     *
+     * @param iSeg index of the first index of the segment
+     * @param iStart first index of the ground profile or sub-profile
+     * @param iEnd last index of the ground profile or sub-profile
+     * @param fresnelParam Fresnel parameter
+     * @param center local d coordinate of the ellipse center
+     * @param semiMajorAxis ellipse semi major axis length
+     */
+    private void fresnelEllipse(int iSeg, int iStart, int iEnd, double[] fresnelParam, double[] center, double[] semiMajorAxis){
+        Coordinate source = groundProfile.getVertex(iStart);
+        Coordinate receiver = groundProfile.getVertex(iEnd);
+        Coordinate imageReceiver = groundProfile.getImageVertex(iEnd, iSeg);
+        double srcRcvDistance = source.distance(receiver);
+        double srcImageReceiverDistance = source.distance(imageReceiver);
+        double localSourceHeight = groundProfile.getLocalSourceHeight(iSeg, iStart);
+        double localReceiverHeight = groundProfile.getLocalReceiverHeight(iSeg,iEnd );
+        double _term = Math.sqrt(Math.pow(localSourceHeight + localReceiverHeight, 2) + Math.pow(srcImageReceiverDistance, 2));
+        double[] d = IntStream.range(0, waveNumber.length)
+                .mapToDouble(i -> 2 * Math.PI / waveNumber[i] / fresnelParam[i] + _term)
+                .toArray(); // Eq. 41
+        center = Arrays.stream(d)
+                .map(di -> srcRcvDistance / 2 * (Math.pow(localSourceHeight,2) - Math.pow(localReceiverHeight,2))
+                        / (Math.pow(di,2) - Math.pow(srcRcvDistance,2)))
+                .toArray();
+        double[] dsSquare = Arrays.stream(center)
+                .map(df -> Math.pow(df, 2) + Math.pow(localSourceHeight,2))
+                .toArray();
+        double[] drSquare = Arrays.stream(center)
+                .map(df -> Math.pow(srcRcvDistance - df, 2) + Math.pow(localReceiverHeight,2))
+                .toArray();
+        semiMajorAxis = IntStream.range(0, d.length)
+                .mapToDouble(i -> 0.5 * Math.sqrt(
+                        (Math.pow(d[i],4) + Math.pow(dsSquare[i] - drSquare[i], 2) - 2 * Math.pow(d[i],2) * (dsSquare[i] + drSquare[i]))
+                        / (Math.pow(d[i],2) - Math.pow(srcRcvDistance,2))
+                ))
+                .toArray();
     }
 }
