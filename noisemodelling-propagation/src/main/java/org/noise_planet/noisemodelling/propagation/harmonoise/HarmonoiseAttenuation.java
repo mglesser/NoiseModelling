@@ -323,37 +323,37 @@ public class HarmonoiseAttenuation {
     private Complex[] geometricalWeightingFactor(int iSeg, int iStart, int iEnd){
         int nFreq = scene.defaultCnossosParameters.getFrequenciesExact().size();
         int lastVertex = groundProfile.getNVertices()-1;
-        Coordinate source = groundProfile.getVertex(0);
-        Coordinate sourceImage = groundProfile.getImageVertex(0, iSeg);
-        Coordinate receiver = groundProfile.getVertex(lastVertex);
-        Coordinate pointSourceSide = groundProfile.getVertex(iSeg);
-        Coordinate pointReceiverSide = groundProfile.getVertex(iSeg+1);
+        Coordinate realSource = groundProfile.getVertex(0);
+        Coordinate realSourceImage = groundProfile.getImageVertex(0, iSeg);
+        Coordinate realReceiver = groundProfile.getVertex(lastVertex);
+        Coordinate secondarySource = groundProfile.getVertex(iStart);
+        Coordinate secondaryReceiver = groundProfile.getVertex(iEnd);
         Complex[] pImage;
         Complex[] p;
         if (iStart == 0 && iEnd == lastVertex){ // Case 1 no diffraction
-            pImage = unitSphericalWavePressure(sourceImage.distance(receiver));
-            p = unitSphericalWavePressure(source.distance(receiver));
+            pImage = unitSphericalWavePressure(realSourceImage.distance(realReceiver));
+            p = unitSphericalWavePressure(realSource.distance(realReceiver));
         } else {
             p = new Complex[nFreq];
             pImage = new Complex[nFreq];
             if (iStart == 0 && iEnd < lastVertex) { // Case 2 diffraction on the receiver side only
-                computeDiffractionAttenuation(sourceImage, receiver, pointReceiverSide, pImage);
-                computeDiffractionAttenuation(source, receiver, pointReceiverSide, p);
+                computeDiffractionAttenuation(realSourceImage, realReceiver, secondaryReceiver, pImage);
+                computeDiffractionAttenuation(realSource, realReceiver, secondaryReceiver, p);
             } else if (iStart > 0 && iEnd == lastVertex) { // Case 3 diffraction on the source side only
                 Coordinate receiverImage = groundProfile.getImageVertex(lastVertex, iSeg);
-                computeDiffractionAttenuation(source, receiverImage, pointSourceSide, pImage);
-                computeDiffractionAttenuation(source, receiver, pointSourceSide, p);
+                computeDiffractionAttenuation(realSource, receiverImage, secondarySource, pImage);
+                computeDiffractionAttenuation(realSource, realReceiver, secondarySource, p);
             } else { // Case 4 diffraction on both sides
-                Coordinate pointSourceSideImage = groundProfile.getImageVertex(iStart, iSeg);
-                Coordinate pointReceiverSideImage = groundProfile.getImageVertex(iEnd, iSeg);
+                Coordinate secondarySourceImage = groundProfile.getImageVertex(iStart, iSeg);
+                Coordinate secondaryReceiverImage = groundProfile.getImageVertex(iEnd, iSeg);
                 Complex[] pImage1 = pImage.clone();
                 Complex[] p1 = p.clone();
                 Complex[] pImage2 = pImage.clone();
                 Complex[] p2 = p.clone();
-                computeDiffractionAttenuation(source, pointSourceSide, pointReceiverSideImage, pImage1);
-                computeDiffractionAttenuation(source, pointSourceSide, pointReceiverSide, p1);
-                computeDiffractionAttenuation(pointSourceSideImage, pointReceiverSide, receiver, pImage2);
-                computeDiffractionAttenuation(pointSourceSide, pointReceiverSide, receiver, p2);
+                computeDiffractionAttenuation(realSource, secondaryReceiverImage, secondarySource, pImage1);
+                computeDiffractionAttenuation(realSource, secondaryReceiver, secondarySource, p1);
+                computeDiffractionAttenuation(secondarySourceImage, realReceiver, secondaryReceiver, pImage2);
+                computeDiffractionAttenuation(secondarySource, realReceiver, secondaryReceiver, p2);
                 for (int i = 0; i < nFreq; i++) {
                     pImage[i] = pImage1[i].multiply(pImage2[i]);
                     p[i] = p1[i].multiply(p2[i]);
