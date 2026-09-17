@@ -10,6 +10,7 @@
 package org.noise_planet.noisemodelling.propagation.harmonoise;
 
 import org.apache.commons.math3.complex.Complex;
+import org.locationtech.jts.algorithm.Angle;
 import org.locationtech.jts.densify.Densifier;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
@@ -130,6 +131,13 @@ public class HarmonoiseGroundProfile {
         return vertices[i];
     }
 
+    /**
+     * Return the coordinates of the image of a vertex with respect to a ground segment plane
+     *
+     * @param iVertex index of the vertex
+     * @param iSeg index of the first point of the ground segment
+     * @return image of the vertex
+     */
     public Coordinate getImageVertex(int iVertex, int iSeg) {
         double x0 = vertices[iVertex].getX();
         double y0 = vertices[iVertex].getY();
@@ -147,4 +155,29 @@ public class HarmonoiseGroundProfile {
         return new Coordinate(xi, yi);
     }
 
+    /**
+     * Return the height of the (secondary) source relative to a ground segment plane
+     * @param iSeg index of the ground segment
+     * @param iSrc index of the (secondary) source
+     * @return local height of the source
+     */
+    public double getLocalSourceHeight(int iSeg, int iSrc){
+        Coordinate source = vertices[iSrc];
+        Coordinate segmentEnd = vertices[iSeg+1];
+        return segmentEnd.distance(source)
+                * Math.sin(Angle.angleBetweenOriented(source, segmentEnd, vertices[iSeg]));
+    }
+
+    /**
+     * Return the height of the (secondary) receiver relative to a ground segment plane
+     * @param iSeg index of the ground segment
+     * @param iRcv index of the (secondary) receiver
+     * @return local height of the receiver
+     */
+    public double getLocalReceiverHeight(int iSeg, int iRcv) {
+        Coordinate receiver = vertices[iRcv];
+        Coordinate segmentStart = vertices[iSeg];
+        return segmentStart.distance(receiver)
+                * Math.sin(Angle.angleBetweenOriented(vertices[iSeg + 1], segmentStart, receiver));
+    }
 }
