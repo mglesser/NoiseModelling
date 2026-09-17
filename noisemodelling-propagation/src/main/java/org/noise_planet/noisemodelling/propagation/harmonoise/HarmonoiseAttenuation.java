@@ -29,7 +29,7 @@ public class HarmonoiseAttenuation {
     SceneWithAttenuation scene; // Scene with attenuation data
     HarmonoiseAttenuationOutput attenuationOutput; // Output of the attenuation computation
     HarmonoiseGroundProfile groundProfile;
-    private double[] waveNumber;
+    private final double[] waveNumber;
 
     // To be exposed to user (input of the model)
     double stdHs = 0; // standard deviation on the source height
@@ -55,14 +55,14 @@ public class HarmonoiseAttenuation {
     }
 
     /**
-     * Recursive calculation scheme for excess attenuation
+     * Compute the excess attenuation for a ground profile from (secondary) source to (secondary) receiver
      * Ref: section 2.2.3 from Salomons et al.
      *
-     * @param iStart index of the first ground profile vertex
-     * @param iEnd index of the last ground profile vertex
+     * @param iSource index of the (secondary) source
+     * @param iReceiver index of the (secondary) receiver
      */
-    private void computeExcessAttenuation(int iStart, int iEnd){
-        Coordinate[] vertices = groundProfile.getVertices(iStart, iEnd);
+    private void computeExcessAttenuation(int iSource, int iReceiver){
+        Coordinate[] vertices = groundProfile.getVertices(iSource, iReceiver);
         double maxDistance = 0;
         int indexMaxDistance = 0;
         for (int i = 1; i < vertices.length - 1; i++) {
@@ -78,12 +78,12 @@ public class HarmonoiseAttenuation {
             }
         }
         if (indexMaxDistance == 0) { // No diffraction point above the line crossing the first and last points
-            computeGroundAttenuation(iStart, iEnd);
+            computeGroundAttenuation(iSource, iReceiver);
         }else {
             computeDiffractionAttenuation(vertices[0], vertices[vertices.length-1],
                     vertices[indexMaxDistance]);
-            computeExcessAttenuation(iStart, iStart + indexMaxDistance);
-            computeExcessAttenuation(iStart + indexMaxDistance, iEnd);
+            computeExcessAttenuation(iSource, iSource + indexMaxDistance);
+            computeExcessAttenuation(iSource + indexMaxDistance, iReceiver);
         }
     }
 
@@ -179,8 +179,8 @@ public class HarmonoiseAttenuation {
         }
     }
 
-    private void computeGroundAttenuation(int iStart, int iEnd) {
-        if (hasConvexSegment(groundProfile.getVertices(iStart, iEnd))){
+    private void computeGroundAttenuation(int iSource, int iReceiver) {
+        if (hasConvexSegment(groundProfile.getVertices(iSource, iReceiver))){
             attenuationOutput.excessAttenuation += 0;
         }
         attenuationOutput.excessAttenuation += 0;
@@ -194,14 +194,14 @@ public class HarmonoiseAttenuation {
      * @return true if the profile contains at least one convex segment
      */
     private static boolean hasConvexSegment(Coordinate[] vertices){
-        int iEnd = vertices.length - 1;
+        int iReceiver = vertices.length - 1;
         boolean isConvex = false;
         // Loop on segments
         for (int i = 0; i < vertices.length - 2; i++) {
             double localSourceHeight = vertices[i+1].distance(vertices[0])
                     * Math.sin(Angle.angleBetweenOriented(vertices[0], vertices[i+1], vertices[i]));
-            double localReceiverHeight = vertices[i].distance(vertices[iEnd])
-                    * Math.sin(Angle.angleBetweenOriented(vertices[i+1], vertices[i], vertices[iEnd]));
+            double localReceiverHeight = vertices[i].distance(vertices[iReceiver])
+                    * Math.sin(Angle.angleBetweenOriented(vertices[i+1], vertices[i], vertices[iReceiver]));
             if (localSourceHeight < 0 || localReceiverHeight < 0){
                 isConvex = true;
                 break;
@@ -316,36 +316,36 @@ public class HarmonoiseAttenuation {
      * Ref: "Geometrical weighting factor" subsection of section 2.4.1 from Salomons et al.
      *
      * @param iSeg index of the first index of the segment
-     * @param iStart first index of the ground profile or sub-profile
-     * @param iEnd last index of the ground profile or sub-profile
+     * @param iSource index of the (secondary) source
+     * @param iReceiver index of the (secondary) receiver
      * @return geometrical weighting factor
      */
-    private Complex[] geometricalWeightingFactor(int iSeg, int iStart, int iEnd){
+    private Complex[] geometricalWeightingFactor(int iSeg, int iSource, int iReceiver){
         int nFreq = scene.defaultCnossosParameters.getFrequenciesExact().size();
         int lastVertex = groundProfile.getNVertices()-1;
         Coordinate realSource = groundProfile.getVertex(0);
         Coordinate realSourceImage = groundProfile.getImageVertex(0, iSeg);
         Coordinate realReceiver = groundProfile.getVertex(lastVertex);
-        Coordinate secondarySource = groundProfile.getVertex(iStart);
-        Coordinate secondaryReceiver = groundProfile.getVertex(iEnd);
+        Coordinate secondarySource = groundProfile.getVertex(iSource);
+        Coordinate secondaryReceiver = groundProfile.getVertex(iReceiver);
         Complex[] pImage;
         Complex[] p;
-        if (iStart == 0 && iEnd == lastVertex){ // Case 1 no diffraction
+        if (iSource == 0 && iReceiver == lastVertex){ // Case 1 no diffraction
             pImage = unitSphericalWavePressure(realSourceImage.distance(realReceiver));
             p = unitSphericalWavePressure(realSource.distance(realReceiver));
         } else {
             p = new Complex[nFreq];
             pImage = new Complex[nFreq];
-            if (iStart == 0 && iEnd < lastVertex) { // Case 2 diffraction on the receiver side only
+            if (iSource == 0 && iReceiver < lastVertex) { // Case 2 diffraction on the receiver side only
                 computeDiffractionAttenuation(realSourceImage, realReceiver, secondaryReceiver, pImage);
                 computeDiffractionAttenuation(realSource, realReceiver, secondaryReceiver, p);
-            } else if (iStart > 0 && iEnd == lastVertex) { // Case 3 diffraction on the source side only
+            } else if (iSource > 0 && iReceiver == lastVertex) { // Case 3 diffraction on the source side only
                 Coordinate receiverImage = groundProfile.getImageVertex(lastVertex, iSeg);
                 computeDiffractionAttenuation(realSource, receiverImage, secondarySource, pImage);
                 computeDiffractionAttenuation(realSource, realReceiver, secondarySource, p);
             } else { // Case 4 diffraction on both sides
-                Coordinate secondarySourceImage = groundProfile.getImageVertex(iStart, iSeg);
-                Coordinate secondaryReceiverImage = groundProfile.getImageVertex(iEnd, iSeg);
+                Coordinate secondarySourceImage = groundProfile.getImageVertex(iSource, iSeg);
+                Coordinate secondaryReceiverImage = groundProfile.getImageVertex(iReceiver, iSeg);
                 Complex[] pImage1 = pImage.clone();
                 Complex[] p1 = p.clone();
                 Complex[] pImage2 = pImage.clone();
@@ -370,14 +370,14 @@ public class HarmonoiseAttenuation {
      * Ref: "Coherence factor" subsection of section 2.4.1 from Salomons et al.
      *
      * @param iSeg index of the first index of the segment
-     * @param iStart first index of the ground profile or sub-profile
-     * @param iEnd last index of the ground profile or sub-profile
+     * @param iSource index of the (secondary) source
+     * @param iReceiver index of the (secondary) receiver
      * @return coherence factor
      */
-    private double[] coherenceFactor(int iSeg, int iStart, int iEnd){
-        Coordinate source = groundProfile.getVertex(iStart);
-        Coordinate sourceImage = groundProfile.getImageVertex(iStart, iSeg);
-        Coordinate receiver = groundProfile.getVertex(iEnd);
+    private double[] coherenceFactor(int iSeg, int iSource, int iReceiver){
+        Coordinate source = groundProfile.getVertex(iSource);
+        Coordinate sourceImage = groundProfile.getImageVertex(iSource, iSeg);
+        Coordinate receiver = groundProfile.getVertex(iReceiver);
         double sourceHeight = source.getY();
         double receiverHeight = receiver.getY();
         // Standard deviation of the frequency integration
@@ -393,11 +393,11 @@ public class HarmonoiseAttenuation {
         double stdDTerm = 0;
         // Standard deviation of the source and receiver heights
         double stdHsTerm = 0;
-        if (iStart == 0){ // The source of the portion of profile is the real source
+        if (iSource == 0){ // The source of the portion of profile is the real source
             stdHsTerm = Math.min(1, Math.pow(stdHs / sourceHeight,2));
         }
         double stdHrTerm = 0;
-        if (iEnd == groundProfile.getNVertices()-1){ // The source of the portion of profile is the real source
+        if (iReceiver == groundProfile.getNVertices()-1){ // The source of the portion of profile is the real source
             stdHrTerm = Math.min(1, Math.pow(stdHr / receiverHeight,2));
         }
         // Standard deviation of the phase difference's fluctuation
@@ -424,15 +424,15 @@ public class HarmonoiseAttenuation {
      * Ref: "Fresnel weighting" subsection of section 2.4.2 from Salomons et al.
      *
      * @param iSeg index of the first index of the segment
-     * @param iStart first index of the ground profile or sub-profile
-     * @param iEnd last index of the ground profile or sub-profile
+     * @param iSource index of the (secondary) source
+     * @param iReceiver index of the (secondary) receiver
      * @param center local d coordinate of the ellipse center
      * @param semiMajorAxis ellipse semi major axis length
      */
-    private void fresnelEllipse(int iSeg, int iStart, int iEnd, double[] center, double[] semiMajorAxis){
+    private void fresnelEllipse(int iSeg, int iSource, int iReceiver, double[] center, double[] semiMajorAxis){
         double[] fresnelParam = new double[waveNumber.length];
         Arrays.fill(fresnelParam, 8);
-        fresnelEllipse(iSeg, iStart, iEnd, fresnelParam,center, semiMajorAxis);
+        fresnelEllipse(iSeg, iSource, iReceiver, fresnelParam,center, semiMajorAxis);
     }
 
     /**
@@ -440,20 +440,20 @@ public class HarmonoiseAttenuation {
      * Ref: "Fresnel weighting" subsection of section 2.4.2 from Salomons et al.
      *
      * @param iSeg index of the first index of the segment
-     * @param iStart first index of the ground profile or sub-profile
-     * @param iEnd last index of the ground profile or sub-profile
+     * @param iSource index of the (secondary) source
+     * @param iReceiver index of the (secondary) receiver
      * @param fresnelParam Fresnel parameter
      * @param center local d coordinate of the ellipse center
      * @param semiMajorAxis ellipse semi major axis length
      */
-    private void fresnelEllipse(int iSeg, int iStart, int iEnd, double[] fresnelParam, double[] center, double[] semiMajorAxis){
-        Coordinate source = groundProfile.getVertex(iStart);
-        Coordinate receiver = groundProfile.getVertex(iEnd);
-        Coordinate imageReceiver = groundProfile.getImageVertex(iEnd, iSeg);
+    private void fresnelEllipse(int iSeg, int iSource, int iReceiver, double[] fresnelParam, double[] center, double[] semiMajorAxis){
+        Coordinate source = groundProfile.getVertex(iSource);
+        Coordinate receiver = groundProfile.getVertex(iReceiver);
+        Coordinate imageReceiver = groundProfile.getImageVertex(iReceiver, iSeg);
         double srcRcvDistance = source.distance(receiver);
         double srcImageReceiverDistance = source.distance(imageReceiver);
-        double localSourceHeight = groundProfile.getLocalSourceHeight(iSeg, iStart);
-        double localReceiverHeight = groundProfile.getLocalReceiverHeight(iSeg,iEnd );
+        double localSourceHeight = groundProfile.getLocalSourceHeight(iSeg, iSource);
+        double localReceiverHeight = groundProfile.getLocalReceiverHeight(iSeg,iReceiver );
         double _term = Math.sqrt(Math.pow(localSourceHeight + localReceiverHeight, 2) + Math.pow(srcImageReceiverDistance, 2));
         double[] d = IntStream.range(0, waveNumber.length)
                 .mapToDouble(i -> 2 * Math.PI / waveNumber[i] / fresnelParam[i] + _term)
