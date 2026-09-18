@@ -15,6 +15,7 @@ import org.locationtech.jts.densify.Densifier;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LineString;
+import org.locationtech.jts.math.Vector2D;
 import org.noise_planet.noisemodelling.pathfinder.profilebuilder.CutProfile;
 
 import java.util.Arrays;
@@ -29,6 +30,16 @@ import static java.lang.Math.*;
 
 public class HarmonoiseGroundProfile {
     private final Coordinate[] vertices;
+
+    /**
+     * Initialize HarmonoiseGroundProfile object from an array of vertices.
+     * (for testing purpose)
+     *
+     * @param vertices 2D ground profile vertices
+     */
+    public HarmonoiseGroundProfile(Coordinate[] vertices){
+        this.vertices = vertices;
+    }
 
     /**
      * Initialize HarmonoiseGroundProfile object from CutProfile object.
@@ -180,4 +191,39 @@ public class HarmonoiseGroundProfile {
         return segmentStart.distance(receiver)
                 * Math.sin(Angle.angleBetweenOriented(vertices[iSeg + 1], segmentStart, receiver));
     }
+
+    /**
+     * Return the abscissa of a point in a local coordinate system with the origin at the
+     * normal projection of the source on the ground segment plane and the abscissa along the plane
+     *
+     * @param iPoint index of the point
+     * @param iSeg index of the ground segment
+     * @param iSource index of the (secondary) source
+     * @return local abscissa (or local distance)
+     */
+    public double getLocalAbscissa(int iPoint, int iSeg, int iSource){
+        double thetaPoint;
+        if (iPoint == iSeg+1) {
+            thetaPoint = 0;
+        } else {
+            thetaPoint = Angle.angleBetween(vertices[iPoint], vertices[iSeg + 1], vertices[iSeg]);
+        }
+        double thetaSource = Angle.angleBetween(vertices[iSource], vertices[iSeg+1], vertices[iSeg]);
+        return vertices[iSeg+1].distance(vertices[iSource]) * Math.cos(thetaSource)
+                - vertices[iSeg+1].distance(vertices[iPoint]) * Math.cos(thetaPoint);
+    }
+
+    /**
+     * Return the ordinate of a point in a local coordinate system with the origin at the
+     * normal projection of the source on the ground segment plane and the abscissa along the plane
+     * @param iPoint index of the point
+     * @param iSeg index of the ground segment
+     * @return local abscissa (or local height)
+     */
+    public double getLocalOrdinate(int iPoint, int iSeg){
+        double theta = Angle.angleBetweenOriented(vertices[iPoint], vertices[iSeg+1], vertices[iSeg]);
+        return vertices[iSeg+1].distance(vertices[iPoint]) * Math.sin(theta);
+    }
+
+
 }
