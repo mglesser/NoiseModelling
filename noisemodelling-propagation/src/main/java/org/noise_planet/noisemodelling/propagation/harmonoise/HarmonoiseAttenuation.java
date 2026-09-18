@@ -496,4 +496,12 @@ public class HarmonoiseAttenuation {
         }
         return output;
     }
+
+//    private double[] fresnelWeighting(int iSeg, int iSource, int iReceiver){
+//        double[] center = new double[0];
+//        double[] semiMajorAxis = new double[0];
+//        fresnelEllipse(iSeg, iSource, iReceiver, center, semiMajorAxis);
+//
+//
+//    }
 }
