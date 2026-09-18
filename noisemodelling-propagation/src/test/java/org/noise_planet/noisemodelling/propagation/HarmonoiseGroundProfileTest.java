@@ -58,7 +58,7 @@ public class HarmonoiseGroundProfileTest {
             assertEquals(origin.distance(projections[i]), d, 0.001);
         }
         // Test side effects - source = first point of the segment
-        int i = 4;get
+        int i = 4;
         d = profile.getLocalAbscissa(i,2, 2);
         assertEquals(profile.getVertex(2).distance(projections[i]), d);
     }
