@@ -475,4 +475,25 @@ public class HarmonoiseAttenuation {
                 ))
                 .toArray();
     }
+
+    /**
+     * Fresnel weighting function used for Fresnel weighting
+     * Ref: Eq. 45 from Salomons et al.
+     *
+     * @param x input parameter
+     * @return Fresnel weighting
+     */
+    private double[] fresnelFunction(double[] x){
+        double[] output = new double[waveNumber.length];
+        for (int i = 0; i < waveNumber.length; i++) {
+            if (x[i] <= 1){
+                output[i] = 0;
+            } else if (x[i] >= 1){
+                output[i] = 1;
+            } else {
+                output[i] = 1 - 1/Math.PI * (Math.acos(x[i]) - x[i] * Math.sqrt(1 - Math.pow(x[i], 2)));
+            }
+        }
+        return output;
+    }
 }
