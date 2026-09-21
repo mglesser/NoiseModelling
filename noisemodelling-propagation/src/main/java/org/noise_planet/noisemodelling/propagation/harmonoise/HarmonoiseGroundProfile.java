@@ -167,32 +167,6 @@ public class HarmonoiseGroundProfile {
     }
 
     /**
-     * Return the height of the (secondary) source relative to a ground segment plane
-     * @param iSeg index of the ground segment
-     * @param iSrc index of the (secondary) source
-     * @return local height of the source
-     */
-    public double getLocalSourceHeight(int iSeg, int iSrc){
-        Coordinate source = vertices[iSrc];
-        Coordinate segmentEnd = vertices[iSeg+1];
-        return segmentEnd.distance(source)
-                * Math.sin(Angle.angleBetweenOriented(source, segmentEnd, vertices[iSeg]));
-    }
-
-    /**
-     * Return the height of the (secondary) receiver relative to a ground segment plane
-     * @param iSeg index of the ground segment
-     * @param iRcv index of the (secondary) receiver
-     * @return local height of the receiver
-     */
-    public double getLocalReceiverHeight(int iSeg, int iRcv) {
-        Coordinate receiver = vertices[iRcv];
-        Coordinate segmentStart = vertices[iSeg];
-        return segmentStart.distance(receiver)
-                * Math.sin(Angle.angleBetweenOriented(vertices[iSeg + 1], segmentStart, receiver));
-    }
-
-    /**
      * Return the abscissa of a point in a local coordinate system with the origin at the
      * normal projection of the source on the ground segment plane and the abscissa along the plane
      *
@@ -220,10 +194,8 @@ public class HarmonoiseGroundProfile {
      * @param iSeg index of the ground segment
      * @return local abscissa (or local height)
      */
-    public double getLocalOrdinate(int iPoint, int iSeg){
-        double theta = Angle.angleBetweenOriented(vertices[iPoint], vertices[iSeg+1], vertices[iSeg]);
-        return vertices[iSeg+1].distance(vertices[iPoint]) * Math.sin(theta);
+    public double getLocalOrdinate(int iPoint, int iSeg) {
+        double theta = Angle.angleBetweenOriented(vertices[iPoint], vertices[iSeg + 1], vertices[iSeg]);
+        return vertices[iSeg + 1].distance(vertices[iPoint]) * Math.sin(theta);
     }
-
-
 }

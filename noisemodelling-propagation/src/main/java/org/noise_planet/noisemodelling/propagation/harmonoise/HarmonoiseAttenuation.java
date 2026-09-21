@@ -452,8 +452,8 @@ public class HarmonoiseAttenuation {
         Coordinate imageReceiver = groundProfile.getImageVertex(iReceiver, iSeg);
         double srcRcvDistance = source.distance(receiver);
         double srcImageReceiverDistance = source.distance(imageReceiver);
-        double localSourceHeight = groundProfile.getLocalSourceHeight(iSeg, iSource);
-        double localReceiverHeight = groundProfile.getLocalReceiverHeight(iSeg,iReceiver );
+        double localSourceHeight = groundProfile.getLocalOrdinate(iSource, iSeg);
+        double localReceiverHeight = groundProfile.getLocalOrdinate(iReceiver, iSeg);
         double _term = Math.sqrt(Math.pow(localSourceHeight + localReceiverHeight, 2) + Math.pow(srcImageReceiverDistance, 2));
         double[] d = IntStream.range(0, waveNumber.length)
                 .mapToDouble(i -> 2 * Math.PI / waveNumber[i] / fresnelParam[i] + _term)
