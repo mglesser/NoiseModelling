@@ -198,4 +198,29 @@ public class HarmonoiseGroundProfile {
         double theta = Angle.angleBetweenOriented(vertices[iPoint], vertices[iSeg + 1], vertices[iSeg]);
         return vertices[iSeg + 1].distance(vertices[iPoint]) * Math.sin(theta);
     }
+
+    /**
+     * Return the reflexion angle between source and receiver with respect to the normal on the ground
+     * segment surface
+     *
+     * @param iSeg iSeg index of the ground segment
+     * @param iSource index of the (secondary) source
+     * @param iReceiver index of the (secondary) receiver
+     * @return reflexion angle in radian
+     */
+    public double getReflexionAngle(int iSeg, int iSource, int iReceiver) throws IllegalArgumentException {
+        if (isConvexSegment(iSeg, iSource, iReceiver)) {
+            throw new IllegalArgumentException("Reflexion angle cannot be computed for convex segments");
+        } else {
+            Vector2D reflexionPlane = new Vector2D(vertices[iSeg], vertices[iSeg + 1]);
+            Vector2D imageSourceReceiverPlane = new Vector2D(this.getImageVertex(iSource, iSeg), vertices[iReceiver]);
+            return Math.PI / 2 - reflexionPlane.angle(imageSourceReceiverPlane);
+        }
+    }
+
+    public boolean isConvexSegment(int iSeg, int iSource, int iReceiver){
+        double localSourceHeight = getLocalOrdinate(iSource, iSeg);
+        double localReceiverHeight = getLocalOrdinate(iReceiver, iSeg);
+        return localSourceHeight < 0 || localReceiverHeight < 0;
+    }
 }

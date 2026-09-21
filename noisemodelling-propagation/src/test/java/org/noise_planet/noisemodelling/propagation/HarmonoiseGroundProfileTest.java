@@ -62,4 +62,16 @@ public class HarmonoiseGroundProfileTest {
         d = profile.getLocalAbscissa(i,2, 2);
         assertEquals(profile.getVertex(2).distance(projections[i]), d);
     }
+
+    @Test
+    public void getReflectionAngleTest() throws IllegalArgumentException {
+        double angle = profile.getReflexionAngle(2, 0, profile.getNVertices()-1);
+        assertEquals(1.030, angle, 0.001);
+        try {
+            double angle1 = profile.getReflexionAngle(2, 1, profile.getNVertices() - 1);
+        } catch (IllegalArgumentException e) {
+            assertEquals("Reflexion angle cannot be computed for convex segments", e.getMessage());
+
+        }
+    }
 }
