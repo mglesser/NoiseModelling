@@ -16,8 +16,11 @@ import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.math.Vector2D;
+import org.noise_planet.noisemodelling.pathfinder.profilebuilder.CutPoint;
 import org.noise_planet.noisemodelling.pathfinder.profilebuilder.CutProfile;
+import org.noise_planet.noisemodelling.pathfinder.profilebuilder.SurfaceAbsorption;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -29,7 +32,8 @@ import static java.lang.Math.*;
  */
 
 public class HarmonoiseGroundProfile {
-    private final Coordinate[] vertices;
+    private Coordinate[] vertices;
+    private double[] flowResistivity;
 
     /**
      * Initialize HarmonoiseGroundProfile object from an array of vertices.
@@ -59,15 +63,19 @@ public class HarmonoiseGroundProfile {
      */
     public HarmonoiseGroundProfile(CutProfile cutProfile, double radius){
         // Get the whole 2D profile including ground points
-        List<Integer> hullIndices = cutProfile.getConvexHullIndices(cutProfile.computePts2D());
-        Coordinate[] groundVertices = cutProfile.computePts2DGround(hullIndices).toArray(new Coordinate[0]);
-        if (radius != 0){
-            vertices = computeCurvedProfile(groundVertices, radius);
-        } else {
-            vertices = groundVertices;
-        }
-        vertices[0].y = cutProfile.getSource().getCoordinate().getZ();
-        vertices[vertices.length-1].y = cutProfile.getReceiver().getCoordinate().getZ();
+        extractVertices(cutProfile);
+        // TODO : Manage geometry densification
+        // Densify per segment to update flowResistivity array
+        // TODO : Manage ground curvature
+    }
+
+    private void extractVertices(CutProfile cutProfile){
+        List<Integer> indices = new ArrayList<>(0);
+        vertices = cutProfile.computePts2DGround(0, indices).toArray(new Coordinate[0]);
+        flowResistivity = indices.stream()
+                .mapToDouble(i -> cutProfile.cutPoints.get(i).groundCoefficient)
+                .toArray();
+        // TODO : Manage flow resistivity for all cutPoints type
     }
 
     /**
@@ -218,9 +226,30 @@ public class HarmonoiseGroundProfile {
         }
     }
 
+    /**
+     * Check if a segment is convex according to Harmonoise definition
+     *
+     * @param iSeg index of the ground segment
+     * @param iSource index of the (secondary) source
+     * @param iReceiver index of the (secondary) receiver
+     * @return true if the segment is convex
+     */
     public boolean isConvexSegment(int iSeg, int iSource, int iReceiver){
         double localSourceHeight = getLocalOrdinate(iSource, iSeg);
         double localReceiverHeight = getLocalOrdinate(iReceiver, iSeg);
         return localSourceHeight < 0 || localReceiverHeight < 0;
+    }
+
+    /**
+     * Get ground segment normalized ground impedance
+     *
+     * @param iSeg index of the ground segment
+     * @param frequency frequency axis
+     * @return ground impedance
+     */
+    public Complex[] getGroundImpedance(int iSeg, double[] frequency) {
+        return (Complex[]) Arrays.stream(frequency)
+                .mapToObj(f -> SurfaceAbsorption.computeSurfaceImpedance(flowResistivity[iSeg], f))
+                .toArray();
     }
 }
