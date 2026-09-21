@@ -497,11 +497,52 @@ public class HarmonoiseAttenuation {
         return output;
     }
 
-//    private double[] fresnelWeighting(int iSeg, int iSource, int iReceiver){
-//        double[] center = new double[0];
-//        double[] semiMajorAxis = new double[0];
-//        fresnelEllipse(iSeg, iSource, iReceiver, center, semiMajorAxis);
-//
-//
-//    }
+    /**
+     * Computes the (unmodified) Fresnel weightings of a ground segment
+     * Ref: "Fresnel weighting" subsection of section 2.4.2 from Salomons et al.
+     *
+     * @param iSeg index of the first index of the segment
+     * @param iSource index of the (secondary) source
+     * @param iReceiver index of the (secondary) receiver
+     */
+    private double[] fresnelWeighting(int iSeg, int iSource, int iReceiver){
+        double[] f1;
+        double[] f2;
+        if (iSeg == 0){
+            f1 = new double[waveNumber.length];
+            Arrays.fill(f1, 0);
+        } else {
+            f1 = new double[0];
+        }
+        if (iSeg+1 == groundProfile.getNVertices()-1){
+            f2 = new double[waveNumber.length];
+            Arrays.fill(f2, 1);
+        } else {
+            f2 = new double[0];
+        }
+        double[] center = new double[waveNumber.length];
+        double[] semiMajorAxis = new double[waveNumber.length];
+        if (f1.length == 0 || f2.length == 0){
+            fresnelEllipse(iSeg, iSource, iReceiver, center, semiMajorAxis);
+        }
+        if (f1.length == 0){
+            double[] xi1 = IntStream.range(0, waveNumber.length)
+                    .mapToDouble(i -> (
+                            groundProfile.getLocalAbscissa(iSeg, iSeg, iSource) - center[i]) / semiMajorAxis[i]
+                    ).toArray();
+            f1 = fresnelFunction(xi1);
+        }
+        if (f2.length == 0){
+            double[] xi2 = IntStream.range(0, center.length)
+                    .mapToDouble(i -> (
+                            groundProfile.getLocalAbscissa(iSeg+1, iSeg, iSource) - center[i]) / semiMajorAxis[i]
+                    ).toArray();
+            f2 = fresnelFunction(xi2);
+        }
+        double[] finalF = f2;
+        double[] finalF1 = f1;
+        return IntStream.range(0, waveNumber.length)
+                .mapToDouble(i -> finalF[i] - finalF1[i])
+                .toArray();
+    }
 }
