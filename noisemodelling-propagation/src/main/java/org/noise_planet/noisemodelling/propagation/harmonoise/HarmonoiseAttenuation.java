@@ -39,11 +39,11 @@ public class HarmonoiseAttenuation {
     public HarmonoiseAttenuation(SceneWithAttenuation scene, HarmonoiseAttenuationOutput output) {
         this.scene = scene;
         this.attenuationOutput = output;
-        this.groundProfile = new HarmonoiseGroundProfile(output.getCutProfile());
         waveNumber = scene.defaultCnossosParameters.getFrequenciesExact()
                 .stream()
                 .mapToDouble(f -> 2 * Math.PI * f / scene.defaultCnossosParameters.getCelerity())
                 .toArray();
+        this.groundProfile = new HarmonoiseGroundProfile(output.getCutProfile(), waveNumber.length);
     }
 
     /**
@@ -180,6 +180,15 @@ public class HarmonoiseAttenuation {
     }
 
     private void computeGroundAttenuation(int iSource, int iReceiver) {
+        // Pre-compute spherical wave reflexion coefficients and Fresnel parameters
+        for (int k = iSource; k < iReceiver; k++) {
+            groundProfile.setReflectionCoefficient(k, sphericalWaveReflectionCoefficient(k, iSource, iReceiver));
+            double[] center = new double[waveNumber.length];
+            double[] semiMajorAxis = new double[waveNumber.length];
+            fresnelEllipse(k, iSource, iReceiver, center, semiMajorAxis);
+            groundProfile.setFresnelEllipseCenter(k, center);
+            groundProfile.setGetFresnelEllipseSemiMajorAxis(k, semiMajorAxis);
+        }
         if (hasConvexSegment(groundProfile.getVertices(iSource, iReceiver))){
             attenuationOutput.excessAttenuation += 0;
         }
@@ -230,7 +239,7 @@ public class HarmonoiseAttenuation {
         Complex[] groundImpedance = groundProfile.getGroundImpedance(iSeg, frequencies);
         Complex[] reflectionCoefficient = new Complex[frequencies.size()];
         for (int i = 0; i < frequencies.size(); i++) {
-            Complex z =  groundImpedance[i].multiply(Math.cos(angle));
+            Complex z = groundImpedance[i].multiply(Math.cos(angle));
             Complex planeWaveReflectionCoefficient = z.subtract(1).divide(z.add(1));
             double kr = 2 * Math.PI * frequencies.get(i) / scene.defaultCnossosParameters.getCelerity() * distance;
             Complex admittance = groundImpedance[i].reciprocal();
@@ -505,53 +514,76 @@ public class HarmonoiseAttenuation {
     }
 
     /**
-     * Computes the (unmodified) Fresnel weightings of a ground segment
+     * Computes the (unmodified) Fresnel weightings of a ground segment at a given frequency
      * Ref: "Fresnel weighting" subsection of section 2.4.2 from Salomons et al.
+     * /!\ groundProfile.fresnelEllipseCenter and groundProfile.fresnelEllipseSemiMajorAxis must have been pre-computed
+     * before calling the present method
      *
      * @param iSeg index of the first index of the segment
      * @param iSource index of the (secondary) source
      * @param iReceiver index of the (secondary) receiver
+     * @param iFreq index of the frequency
      */
-    private double[] fresnelWeighting(int iSeg, int iSource, int iReceiver){
-        double[] f1;
-        double[] f2;
-        if (iSeg == 0){
-            f1 = new double[waveNumber.length];
-            Arrays.fill(f1, 0);
+    private double[] fresnelWeighting(int iSeg, int iSource, int iReceiver, int iFreq){
+        double f1;
+        double f2;
+        double center = groundProfile.getFresnelEllipseCenter(iSeg, iFreq);
+        double semiMajorAxis = groundProfile.getFresnelEllipseSemiMajorAxis(iSeg, iFreq);
+        if (iSeg == iSource){
+            f1 = 0;
         } else {
-            f1 = new double[0];
-        }
-        if (iSeg+1 == groundProfile.getNVertices()-1){
-            f2 = new double[waveNumber.length];
-            Arrays.fill(f2, 1);
-        } else {
-            f2 = new double[0];
-        }
-        double[] center = new double[waveNumber.length];
-        double[] semiMajorAxis = new double[waveNumber.length];
-        if (f1.length == 0 || f2.length == 0){
-            fresnelEllipse(iSeg, iSource, iReceiver, center, semiMajorAxis);
-        }
-        if (f1.length == 0){
-            double[] xi1 = IntStream.range(0, waveNumber.length)
-                    .mapToDouble(i -> (
-                            groundProfile.getLocalAbscissa(iSeg, iSeg, iSource) - center[i]) / semiMajorAxis[i]
-                    ).toArray();
+            double xi1 = (groundProfile.getLocalAbscissa(iSeg, iSeg, iSource) - center) / semiMajorAxis;
             f1 = fresnelFunction(xi1);
         }
-        if (f2.length == 0){
-            double[] xi2 = IntStream.range(0, center.length)
-                    .mapToDouble(i -> (
-                            groundProfile.getLocalAbscissa(iSeg+1, iSeg, iSource) - center[i]) / semiMajorAxis[i]
-                    ).toArray();
+        if (iSeg+1 == iReceiver){
+            f2 = 1;
+        } else {
+            double xi2 = (groundProfile.getLocalAbscissa(iSeg, iSeg, iSource) - center) / semiMajorAxis;
             f2 = fresnelFunction(xi2);
         }
-        double[] finalF = f2;
-        double[] finalF1 = f1;
-        return IntStream.range(0, waveNumber.length)
-                .mapToDouble(i -> finalF[i] - finalF1[i])
-                .toArray();
+        return f2 - f1;
     }
 
-//    private double[] phaseDifference(int iSeg, int iSource, int iReceiver, )
+    private double[] modifiedFresnelWeighting(int iSeg, int iSource, int iReceiver){
+        double[] center = new double[waveNumber.length];
+        double[] semiMajorAxis = new double[waveNumber.length];
+        fresnelEllipse(iSeg, iSource, iReceiver, center, semiMajorAxis);
+
+    }
+
+    /**
+     *  Return, for a given (sub)profile and reflection plane, the phase difference between direct and reflected sound
+     * /!\ groundProfile.reflectionCoefficient must have been pre-computed before calling the present method
+     *
+     * @param iSeg index of the reflection plane segment
+     * @param iSource index of the (secondary) source
+     * @param iReceiver index of the (secondary) receiver
+     * @param iFreq index of the frequency
+     * @return phase difference
+     */
+    private double phaseDifference(int iSeg, int iSource, int iReceiver, int iFreq){
+        Coordinate source = groundProfile.getVertex(iSource);
+        Coordinate receiver = groundProfile.getVertex(iReceiver);
+        Coordinate imageSource = groundProfile.getImageVertex(iSource, iSeg);
+        Complex reflectionCoefficient = groundProfile.getReflectionCoefficient[iSeg][iFreq];
+        return reflectionCoefficient.getArgument() +
+                waveNumber[iFreq] * (imageSource.distance(receiver) - source.distance(receiver));
+    }
+
+
+    double[] transitionFrequency(int iSource, int iReceiver){
+        List<Double> frequencies = scene.defaultCnossosParameters.getFrequenciesExact();
+        int iMin;
+        int iMax;
+        for (int i = 0; i < frequencies.size(); i++) {
+            for (int k = iSource; k < iReceiver; k++) {
+                double
+                if
+            }
+
+        }
+        while (phaseDifference(iSeg, iSource, iReceiver, frequencies.get(i)) >= Math.PI){
+
+        }
+    }
 }
