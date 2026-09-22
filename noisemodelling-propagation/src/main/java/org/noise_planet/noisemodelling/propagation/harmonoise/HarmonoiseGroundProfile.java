@@ -247,9 +247,9 @@ public class HarmonoiseGroundProfile {
      * @param frequency frequency axis
      * @return ground impedance
      */
-    public Complex[] getGroundImpedance(int iSeg, double[] frequency) {
-        return (Complex[]) Arrays.stream(frequency)
-                .mapToObj(f -> SurfaceAbsorption.computeSurfaceImpedance(flowResistivity[iSeg], f))
+    public Complex[] getGroundImpedance(int iSeg, List<Double> frequency) {
+        return (Complex[]) frequency.stream()
+                .map(f -> SurfaceAbsorption.computeSurfaceImpedance(flowResistivity[iSeg], f))
                 .toArray();
     }
 }

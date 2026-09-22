@@ -216,26 +216,33 @@ public class HarmonoiseAttenuation {
      * Ref: K. Attenborough, K. M. Li, and K. Horoshenkov, Predicting Outdoor Sound. Taylor & Francis, 2006.
      * doi: 10.1201/9781482295023. (section 2.3)
      *
-     * @param groundImpedance normalized ground impedance[]
-     * @param angle reflection angle with respect to the normal on the segment
-     * @param frequency frequency [Hz]
-     * @param distance total distance between the image source and the receiver, through the segment
-     * @param hm (hS + hR) / 2
+     * @param iSeg index of the first index of the reflection plane segment
+     * @param iSource index of the (secondary) source
+     * @param iReceiver index of the (secondary) receiver
      * @return spherical wave reflection coefficient
      */
-    private Complex sphericalWaveReflectionCoefficient(Complex groundImpedance, double angle,
-                                                             double frequency, double distance, double hm){
-        Complex z =  groundImpedance.multiply(Math.cos(angle));
-        Complex planeWaveReflectionCoefficient = z.subtract(1).divide(z.add(1));
-        double kr = 2 * Math.PI * frequency / scene.defaultCnossosParameters.getCelerity() * distance;
-        Complex admittance = groundImpedance.reciprocal();
-        Complex numericalDistance = admittance.multiply(Math.sqrt(kr))
-                .multiply(new Complex(0.5, 0.5));
-        double hG = scene.defaultCnossosParameters.celerity / frequency / 32;
-        double nG = 1 - 0.7 * Math.exp(-hm / hG);
-        return boundaryLossFactor(numericalDistance).pow(nG)
-                .multiply(new Complex(1).subtract(planeWaveReflectionCoefficient))
-                .add(planeWaveReflectionCoefficient);
+    private Complex[] sphericalWaveReflectionCoefficient(int iSeg, int iSource, int iReceiver){
+        double angle = groundProfile.getReflexionAngle(iSeg, iSource, iReceiver);
+        List<Double> frequencies = scene.defaultCnossosParameters.getFrequenciesExact();
+        double distance = groundProfile.getImageVertex(iSource, iSeg).distance(groundProfile.getVertex(iReceiver));
+        double hm = (groundProfile.getLocalOrdinate(iSource, iSeg)
+                + groundProfile.getLocalOrdinate(iReceiver, iSeg)) / 2;
+        Complex[] groundImpedance = groundProfile.getGroundImpedance(iSeg, frequencies);
+        Complex[] reflectionCoefficient = new Complex[frequencies.size()];
+        for (int i = 0; i < frequencies.size(); i++) {
+            Complex z =  groundImpedance[i].multiply(Math.cos(angle));
+            Complex planeWaveReflectionCoefficient = z.subtract(1).divide(z.add(1));
+            double kr = 2 * Math.PI * frequencies.get(i) / scene.defaultCnossosParameters.getCelerity() * distance;
+            Complex admittance = groundImpedance[i].reciprocal();
+            Complex numericalDistance = admittance.multiply(Math.sqrt(kr))
+                    .multiply(new Complex(0.5, 0.5));
+            double hG = scene.defaultCnossosParameters.celerity / frequencies.get(i) / 32;
+            double nG = 1 - 0.7 * Math.exp(-hm / hG);
+            reflectionCoefficient[i] = boundaryLossFactor(numericalDistance).pow(nG)
+                    .multiply(new Complex(1).subtract(planeWaveReflectionCoefficient))
+                    .add(planeWaveReflectionCoefficient);
+        }
+        return reflectionCoefficient;
     }
 
     /**
@@ -545,4 +552,6 @@ public class HarmonoiseAttenuation {
                 .mapToDouble(i -> finalF[i] - finalF1[i])
                 .toArray();
     }
+
+//    private double[] phaseDifference(int iSeg, int iSource, int iReceiver, )
 }
