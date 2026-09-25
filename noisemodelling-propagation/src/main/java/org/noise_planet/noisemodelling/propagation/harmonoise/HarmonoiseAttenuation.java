@@ -183,16 +183,14 @@ public class HarmonoiseAttenuation {
         // Pre-compute spherical wave reflexion coefficients and Fresnel parameters
         for (int k = iSource; k < iReceiver; k++) {
             groundProfile.setReflectionCoefficient(k, sphericalWaveReflectionCoefficient(k, iSource, iReceiver));
-            double[] center = new double[waveNumber.length];
-            double[] semiMajorAxis = new double[waveNumber.length];
-            fresnelEllipse(k, iSource, iReceiver, center, semiMajorAxis);
-            groundProfile.setFresnelEllipseCenter(k, center);
-            groundProfile.setGetFresnelEllipseSemiMajorAxis(k, semiMajorAxis);
         }
         if (hasConvexSegment(groundProfile.getVertices(iSource, iReceiver))){
             attenuationOutput.excessAttenuation += 0;
+        } else {
+            double transitionFrequency = transitionFrequency(iSource, iReceiver);
+            attenuationOutput.excessAttenuation += 0;
         }
-        attenuationOutput.excessAttenuation += 0;
+
     }
 
     /**
@@ -442,13 +440,12 @@ public class HarmonoiseAttenuation {
      * @param iSeg index of the first index of the segment
      * @param iSource index of the (secondary) source
      * @param iReceiver index of the (secondary) receiver
+     * @param iFreq index of the frequency
      * @param center local d coordinate of the ellipse center
      * @param semiMajorAxis ellipse semi major axis length
      */
-    private void fresnelEllipse(int iSeg, int iSource, int iReceiver, double[] center, double[] semiMajorAxis){
-        double[] fresnelParam = new double[waveNumber.length];
-        Arrays.fill(fresnelParam, 8);
-        fresnelEllipse(iSeg, iSource, iReceiver, fresnelParam,center, semiMajorAxis);
+    private void fresnelEllipse(int iSeg, int iSource, int iReceiver, int iFreq, double center, double semiMajorAxis){
+        fresnelEllipse(iSeg, iSource, iReceiver, iFreq, 8,center, semiMajorAxis);
     }
 
     /**
@@ -458,11 +455,12 @@ public class HarmonoiseAttenuation {
      * @param iSeg index of the first index of the segment
      * @param iSource index of the (secondary) source
      * @param iReceiver index of the (secondary) receiver
+     * @param iFreq index of the frequency
      * @param fresnelParam Fresnel parameter
      * @param center local d coordinate of the ellipse center
      * @param semiMajorAxis ellipse semi major axis length
      */
-    private void fresnelEllipse(int iSeg, int iSource, int iReceiver, double[] fresnelParam, double[] center, double[] semiMajorAxis){
+    private void fresnelEllipse(int iSeg, int iSource, int iReceiver, int iFreq, double fresnelParam, double center, double semiMajorAxis){
         Coordinate source = groundProfile.getVertex(iSource);
         Coordinate receiver = groundProfile.getVertex(iReceiver);
         Coordinate imageReceiver = groundProfile.getImageVertex(iReceiver, iSeg);
@@ -471,25 +469,15 @@ public class HarmonoiseAttenuation {
         double localSourceHeight = groundProfile.getLocalOrdinate(iSource, iSeg);
         double localReceiverHeight = groundProfile.getLocalOrdinate(iReceiver, iSeg);
         double _term = Math.sqrt(Math.pow(localSourceHeight + localReceiverHeight, 2) + Math.pow(srcImageReceiverDistance, 2));
-        double[] d = IntStream.range(0, waveNumber.length)
-                .mapToDouble(i -> 2 * Math.PI / waveNumber[i] / fresnelParam[i] + _term)
-                .toArray(); // Eq. 41
-        center = Arrays.stream(d)
-                .map(di -> srcRcvDistance / 2 * (Math.pow(localSourceHeight,2) - Math.pow(localReceiverHeight,2))
-                        / (Math.pow(di,2) - Math.pow(srcRcvDistance,2)))
-                .toArray();
-        double[] dsSquare = Arrays.stream(center)
-                .map(df -> Math.pow(df, 2) + Math.pow(localSourceHeight,2))
-                .toArray();
-        double[] drSquare = Arrays.stream(center)
-                .map(df -> Math.pow(srcRcvDistance - df, 2) + Math.pow(localReceiverHeight,2))
-                .toArray();
-        semiMajorAxis = IntStream.range(0, d.length)
-                .mapToDouble(i -> 0.5 * Math.sqrt(
-                        (Math.pow(d[i],4) + Math.pow(dsSquare[i] - drSquare[i], 2) - 2 * Math.pow(d[i],2) * (dsSquare[i] + drSquare[i]))
-                        / (Math.pow(d[i],2) - Math.pow(srcRcvDistance,2))
-                ))
-                .toArray();
+        double d = 2 * Math.PI / waveNumber[iFreq] / fresnelParam + _term; // Eq. 41
+        double denominator = Math.pow(d, 2) - Math.pow(srcRcvDistance, 2);
+        center = srcRcvDistance / 2 * (Math.pow(localSourceHeight,2) - Math.pow(localReceiverHeight,2))
+                / denominator;
+        double dsSquare = Math.pow(center, 2) + Math.pow(localSourceHeight,2);
+        double drSquare = Math.pow(srcRcvDistance - center, 2) + Math.pow(localReceiverHeight,2);
+        semiMajorAxis = 0.5 * Math.sqrt(
+                (Math.pow(d,4) + Math.pow(dsSquare - drSquare, 2) - 2 * Math.pow(d,2) * (dsSquare + drSquare))
+                        / denominator);
     }
 
     /**
@@ -499,61 +487,87 @@ public class HarmonoiseAttenuation {
      * @param x input parameter
      * @return Fresnel weighting
      */
-    private double[] fresnelFunction(double[] x){
-        double[] output = new double[waveNumber.length];
-        for (int i = 0; i < waveNumber.length; i++) {
-            if (x[i] <= 1){
-                output[i] = 0;
-            } else if (x[i] >= 1){
-                output[i] = 1;
+    private double fresnelFunction(double x){
+        double output;
+            if (x <= 1){
+                output = 0;
+            } else if (x >= 1){
+                output = 1;
             } else {
-                output[i] = 1 - 1/Math.PI * (Math.acos(x[i]) - x[i] * Math.sqrt(1 - Math.pow(x[i], 2)));
+                output = 1 - 1/Math.PI * (Math.acos(x) - x * Math.sqrt(1 - Math.pow(x, 2)));
             }
-        }
         return output;
     }
 
     /**
-     * Computes the (unmodified) Fresnel weightings of a ground segment at a given frequency
+     * Computes the Fresnel weightings of a ground segment at a given frequency
      * Ref: "Fresnel weighting" subsection of section 2.4.2 from Salomons et al.
-     * /!\ groundProfile.fresnelEllipseCenter and groundProfile.fresnelEllipseSemiMajorAxis must have been pre-computed
-     * before calling the present method
      *
      * @param iSeg index of the first index of the segment
      * @param iSource index of the (secondary) source
      * @param iReceiver index of the (secondary) receiver
-     * @param iFreq index of the frequency
+     * @param xi1 input parameter of the Fresnel function
+     * @param xi2 input parameter of the Fresnel function
      */
-    private double[] fresnelWeighting(int iSeg, int iSource, int iReceiver, int iFreq){
+    private double fresnelWeighting(int iSeg, int iSource, int iReceiver, double xi1, double xi2){
         double f1;
         double f2;
-        double center = groundProfile.getFresnelEllipseCenter(iSeg, iFreq);
-        double semiMajorAxis = groundProfile.getFresnelEllipseSemiMajorAxis(iSeg, iFreq);
         if (iSeg == iSource){
             f1 = 0;
         } else {
-            double xi1 = (groundProfile.getLocalAbscissa(iSeg, iSeg, iSource) - center) / semiMajorAxis;
             f1 = fresnelFunction(xi1);
         }
         if (iSeg+1 == iReceiver){
             f2 = 1;
         } else {
-            double xi2 = (groundProfile.getLocalAbscissa(iSeg, iSeg, iSource) - center) / semiMajorAxis;
             f2 = fresnelFunction(xi2);
         }
         return f2 - f1;
     }
 
-    private double[] modifiedFresnelWeighting(int iSeg, int iSource, int iReceiver){
-        double[] center = new double[waveNumber.length];
-        double[] semiMajorAxis = new double[waveNumber.length];
-        fresnelEllipse(iSeg, iSource, iReceiver, center, semiMajorAxis);
-
+    /**
+     * Return the frequency dependant modified Fresnel weightings for a given (sub)profile
+     * Ref: "Modified Fresnel weighting" subsection of section 2.4.2 from Salomons et al.
+     *
+     * @param iSeg index of the ground segment
+     * @param iSource index of the (secondary) source
+     * @param iReceiver index of the (secondary) receiver
+     * @param transitionFrequency transition frequency
+     * @return modified Fresnel weightings
+     */
+    private double[] modifiedFresnelWeighting(int iSeg, int iSource, int iReceiver, double transitionFrequency){
+        Coordinate source = groundProfile.getVertex(iSource);
+        Coordinate receiver = groundProfile.getVertex(iReceiver);
+        double localSourceHeight = groundProfile.getLocalOrdinate(iSource, iSeg);
+        double localReceiverHeight = groundProfile.getLocalOrdinate(iReceiver, iSeg);
+        double dsr = source.distance(receiver);
+        double dsp = dsr * localReceiverHeight / (localSourceHeight + localReceiverHeight);
+        List<Double> frequency = scene.defaultCnossosParameters.getFrequenciesExact();
+        double[] nf = frequency.stream()
+                .mapToDouble(f -> 32 * (1 - Math.exp(Math.pow(transitionFrequency,2)/Math.pow(f,2))))
+                .toArray();
+        double[] modifiedWeighting = new double[frequency.size()];
+        double center = 1;
+        double semiMajorAxis = 1;
+        double alpha, dc, xiC, xi1, xi2, xi1Prim, xi2Prim;
+        for (int i = 0; i < frequency.size(); i++) {
+            fresnelEllipse(iSeg, iSource, iReceiver, i, nf[i], center, semiMajorAxis);
+            alpha = Math.pow((1 + Math.pow(frequency.get(i) / transitionFrequency, 2)), -1);
+            dc = alpha * center + (1 - alpha) * dsp;
+            xiC = (dc - center) / semiMajorAxis;
+            xi1 = (groundProfile.getLocalAbscissa(iSeg, iSeg, iSource) - center) / semiMajorAxis;
+            xi2 = (groundProfile.getLocalAbscissa(iSeg+1, iSeg, iSource) - center) / semiMajorAxis;
+            xi1Prim = (xi1 - xiC) / (1 - xi1*xiC);
+            xi2Prim = (xi2 - xiC) / (1 - xi2*xiC);
+            modifiedWeighting[i] = fresnelWeighting(iSeg, iSource,iReceiver, xi1Prim, xi2Prim);
+        }
+    return modifiedWeighting;
     }
 
     /**
      *  Return, for a given (sub)profile and reflection plane, the phase difference between direct and reflected sound
      * /!\ groundProfile.reflectionCoefficient must have been pre-computed before calling the present method
+     * Ref: Eq. 57 from Salomons et al.
      *
      * @param iSeg index of the reflection plane segment
      * @param iSource index of the (secondary) source
@@ -565,25 +579,68 @@ public class HarmonoiseAttenuation {
         Coordinate source = groundProfile.getVertex(iSource);
         Coordinate receiver = groundProfile.getVertex(iReceiver);
         Coordinate imageSource = groundProfile.getImageVertex(iSource, iSeg);
-        Complex reflectionCoefficient = groundProfile.getReflectionCoefficient[iSeg][iFreq];
+        Complex reflectionCoefficient = groundProfile.getReflectionCoefficient(iSeg, iFreq);
         return reflectionCoefficient.getArgument() +
                 waveNumber[iFreq] * (imageSource.distance(receiver) - source.distance(receiver));
     }
 
-
-    double[] transitionFrequency(int iSource, int iReceiver){
-        List<Double> frequencies = scene.defaultCnossosParameters.getFrequenciesExact();
-        int iMin;
-        int iMax;
-        for (int i = 0; i < frequencies.size(); i++) {
+    /**
+     * Return the transition frequency for a given (sub)profile
+     * /!\ groundProfile.reflectionCoefficient must have been pre-computed before calling the present method
+     * Eq. 53 to 58 from Salomons et al.
+     *
+     * @param iSource index of the (secondary) source
+     * @param iReceiver index of the (secondary) receiver
+     * @return transition frequency
+     */
+    double transitionFrequency(int iSource, int iReceiver){
+        List<Double> frequency = scene.defaultCnossosParameters.getFrequenciesExact();
+        double fMin = 0;
+        double fMax = 0;
+        double maxPhaseDiff = 0;
+        double phaseDiffPrevious = 0;
+        double phaseDiff = 0;
+        double center = 1;
+        double semiMajorAxis = 1;
+        for (int i = 0; i < frequency.size(); i++) {
             for (int k = iSource; k < iReceiver; k++) {
-                double
-                if
+                if (groundProfile.isConvexSegment(k, iSource, iReceiver)){
+                    continue;
+                }
+                fresnelEllipse(k, iSource, iReceiver, i, center, semiMajorAxis);
+                double xi1 = (groundProfile.getLocalAbscissa(k, k, iSource) - center) / semiMajorAxis;
+                double xi2 = (groundProfile.getLocalAbscissa(k+1, k, iSource) - center) / semiMajorAxis;
+                if (fresnelWeighting(k, iSource, iReceiver,xi1, xi2) == 0){
+                    continue;
+                }
+                phaseDiffPrevious = phaseDiff;
+                phaseDiff = phaseDifference(k, iSource, iReceiver, i);
+                if (phaseDiff > maxPhaseDiff){
+                    maxPhaseDiff = phaseDiff;
+                }
             }
-
+            if (maxPhaseDiff > Math.PI/2 && fMin == 0) {
+                if (i == 0){
+                    fMin = frequency.getFirst() / 2;
+                } else if (i == frequency.size()){
+                    fMin = frequency.getLast() ;
+                } else {
+                    fMin = frequency.get(i-1) + (frequency.get(i) - frequency.get(i-1))
+                            * (Math.PI/2 - phaseDiffPrevious) / (phaseDiff - phaseDiffPrevious) ;
+                }
+            }
+            if (maxPhaseDiff > Math.PI) {
+                if (i == 0){
+                    fMin = frequency.getFirst();
+                } else if (i == frequency.size()){
+                    fMin = frequency.get(frequency.size()-2) * 2 ;
+                } else {
+                    fMin = frequency.get(i-1) + (frequency.get(i) - frequency.get(i-1))
+                            * (Math.PI - phaseDiffPrevious) / (phaseDiff - phaseDiffPrevious) ;
+                }
+                break;
+            }
         }
-        while (phaseDifference(iSeg, iSource, iReceiver, frequencies.get(i)) >= Math.PI){
-
-        }
+        return Math.sqrt(fMin * fMax);
     }
 }

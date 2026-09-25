@@ -16,7 +16,6 @@ import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.math.Vector2D;
-import org.noise_planet.noisemodelling.pathfinder.profilebuilder.CutPoint;
 import org.noise_planet.noisemodelling.pathfinder.profilebuilder.CutProfile;
 import org.noise_planet.noisemodelling.pathfinder.profilebuilder.SurfaceAbsorption;
 
@@ -35,8 +34,6 @@ public class HarmonoiseGroundProfile {
     private Coordinate[] vertices;
     private double[] flowResistivity;
     private Complex[][] reflectionCoefficient;
-    private double[][] fresnelEllipseCenter;
-    private double[][] fresnelEllipseSemiMajorAxis;
 
     /**
      * Initialize HarmonoiseGroundProfile object from an array of vertices.
@@ -72,8 +69,6 @@ public class HarmonoiseGroundProfile {
         // Densify per segment to update flowResistivity array
         // TODO : Manage ground curvature
         reflectionCoefficient = new Complex[getNVertices()-1][nFreq];
-        fresnelEllipseCenter = new double[getNVertices()-1][nFreq];
-        fresnelEllipseSemiMajorAxis = new double[getNVertices()-1][nFreq];
     }
 
     private void extractVertices(CutProfile cutProfile){
@@ -271,42 +266,12 @@ public class HarmonoiseGroundProfile {
     }
 
     /**
-     * Set the frequency dependant fresnelEllipseCenter for segment iSeg
-     *
-     * @param iSeg index of the ground segment
-     * @param center Fresnel ellipse center
-     */
-    public void setFresnelEllipseCenter(int iSeg, double[] center) {
-        this.fresnelEllipseCenter[iSeg] = center;
-    }
-
-    /**
-     * Return the Fresnel ellipse center of a segment at a given frequency
+     * Return the reflection coefficient at a given frequency
      * @param iSeg index of the ground segment
      * @param iFreq index of the frequency
-     * @return Fresnel ellipse center
+     * @return reflection coefficient
      */
-    public double getFresnelEllipseCenter(int iSeg, int iFreq) {
-        return fresnelEllipseCenter[iSeg][iFreq];
-    }
-
-    /**
-     * Set the frequency dependant Fresnel ellipse semi major axis for segment iSeg
-     *
-     * @param iSeg index of the ground segment
-     * @param axis Fresnel ellipse semi major axis
-     */
-    public void setGetFresnelEllipseSemiMajorAxis(int iSeg, double[] axis) {
-        this.fresnelEllipseSemiMajorAxis[iSeg] = axis;
-    }
-
-    /**
-     * Return the Fresnel ellipse semi major axis of a segment at a given frequency
-     * @param iSeg index of the ground segment
-     * @param iFreq index of the frequency
-     * @return Fresnel ellipse semi major axis
-     */
-    public double getFresnelEllipseSemiMajorAxis(int iSeg, int iFreq) {
-        return fresnelEllipseSemiMajorAxis[iSeg][iFreq];
+    public Complex getReflectionCoefficient(int iSeg, int iFreq) {
+        return reflectionCoefficient[iSeg][iFreq];
     }
 }
