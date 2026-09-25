@@ -221,8 +221,9 @@ public class HarmonoiseAttenuation {
         Arrays.fill(flatGroundAttenuation, 0);
         for (int iSeg = 0; iSeg < nbSeg; iSeg++) {
             int finalISeg = iSeg;
-            double[] attenuation = IntStream.range(0, nbFreq)
-                    .mapToDouble(i -> flatGroundAttenuation[i]
+            double[] finalFlatGroundAttenuation = flatGroundAttenuation;
+            flatGroundAttenuation = IntStream.range(0, nbFreq)
+                    .mapToDouble(i -> finalFlatGroundAttenuation[i]
                             + modifiedFresnelWeighting[finalISeg][i] * 10 * Math.log10(
                                     Math.pow(
                                             groundProfile.getReflectionCoefficient(finalISeg, i)
@@ -239,6 +240,51 @@ public class HarmonoiseAttenuation {
                     .toArray();
         }
         return flatGroundAttenuation;
+    }
+
+    /**
+     * Return the ground attenuation of a (sub)profile for valley-shaped terrain
+     * Ref: Eq. 21 from Salomons et al.
+     *
+     * @param geometricalWeightingFactor geometrical weighting factors for all segments of the (sub)profile
+     * @param coherenceFactor coherence factor for all segments of the (sub)profile
+     * @param modifiedFresnelWeighting modified Fresnel weighing for all segments of the (sub)profile
+     * @return round attenuation for valley-shaped terrain
+     */
+    private double[] valleyGroundAttenuation(Complex[][] geometricalWeightingFactor, double[][] coherenceFactor,
+                                           double[][] modifiedFresnelWeighting) {
+        int nbSeg = geometricalWeightingFactor.length;
+        int nbFreq = geometricalWeightingFactor[0].length;
+        Complex[] sum1 = new Complex[nbFreq];
+        Arrays.fill(sum1, new Complex(0));
+        double[] sum2 = new double[nbFreq];
+        Arrays.fill(sum2, 0);
+        for (int iSeg = 0; iSeg < nbSeg; iSeg++) {
+            int finalISeg = iSeg;
+            Complex[] finalSum1 = sum1;
+            sum1 = (Complex[]) IntStream.range(0, nbFreq)
+                    .mapToObj(i -> finalSum1[i].add(
+                            groundProfile.getReflectionCoefficient(finalISeg, i)
+                                    .multiply(geometricalWeightingFactor[finalISeg][i])
+                                    .multiply(coherenceFactor[finalISeg][i])
+                                    .multiply(modifiedFresnelWeighting[finalISeg][i])
+                            )
+                    ).toArray();
+            double[] finalSum2 = sum2;
+            sum2 = IntStream.range(0, nbFreq)
+                    .mapToDouble(i -> finalSum2[i] + Math.pow(
+                            groundProfile.getReflectionCoefficient(finalISeg, i)
+                                    .multiply(geometricalWeightingFactor[finalISeg][i])
+                                    .abs(),2
+                            ) * (1 - Math.pow(coherenceFactor[finalISeg][i],2))
+                            * modifiedFresnelWeighting[finalISeg][i]
+                    ).toArray();
+        }
+        Complex[] finalSum1 = sum1;
+        double[] finalSum2 = sum2;
+        return IntStream.range(0, nbFreq)
+                .mapToDouble(i -> Math.log10(Math.pow(finalSum1[i].add(1).abs(),2) + finalSum2[i]))
+                .toArray();
     }
 
     /**
