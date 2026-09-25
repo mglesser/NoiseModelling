@@ -180,17 +180,65 @@ public class HarmonoiseAttenuation {
     }
 
     private void computeGroundAttenuation(int iSource, int iReceiver) {
-        // Pre-compute spherical wave reflexion coefficients and Fresnel parameters
-        for (int k = iSource; k < iReceiver; k++) {
-            groundProfile.setReflectionCoefficient(k, sphericalWaveReflectionCoefficient(k, iSource, iReceiver));
-        }
+
         if (hasConvexSegment(groundProfile.getVertices(iSource, iReceiver))){
             attenuationOutput.excessAttenuation += 0;
         } else {
-            double transitionFrequency = transitionFrequency(iSource, iReceiver);
-            attenuationOutput.excessAttenuation += 0;
+            concaveGroundAttenuation(iSource, iReceiver);
         }
 
+    }
+
+    private void concaveGroundAttenuation(int iSource, int iReceiver){
+        double transitionFrequency = transitionFrequency(iSource, iReceiver);
+        // Pre-computation
+        Complex[][] geometricalWeightingFactor = new Complex[groundProfile.getNVertices()-1][waveNumber.length];
+        double[][] coherenceFactor = new double[groundProfile.getNVertices()-1][waveNumber.length];
+        double[][] modifiedFresnelWeighting = new double[groundProfile.getNVertices()-1][waveNumber.length];
+        for (int k = iSource; k < iReceiver; k++) {
+            groundProfile.setReflectionCoefficient(k, sphericalWaveReflectionCoefficient(k, iSource, iReceiver));
+            geometricalWeightingFactor[k] = geometricalWeightingFactor(k, iSource, iReceiver);
+            coherenceFactor[k] = coherenceFactor(k, iSource, iReceiver);
+            modifiedFresnelWeighting[k] = modifiedFresnelWeighting(k, iSource, iReceiver, transitionFrequency);
+        }
+
+    }
+
+    /**
+     * Return the ground attenuation of a (sub)profile for relatively flat ground
+     * Ref: Eq. 19 and 20 from Salomons et al.
+     *
+     * @param geometricalWeightingFactor geometrical weighting factors for all segments of the (sub)profile
+     * @param coherenceFactor coherence factor for all segments of the (sub)profile
+     * @param modifiedFresnelWeighting modified Fresnel weighing for all segments of the (sub)profile
+     * @return round attenuation for relatively flat ground
+     */
+    private double[] flatGroundAttenuation(Complex[][] geometricalWeightingFactor, double[][] coherenceFactor,
+                                           double[][] modifiedFresnelWeighting) {
+        int nbSeg = geometricalWeightingFactor.length;
+        int nbFreq = geometricalWeightingFactor[0].length;
+        double[] flatGroundAttenuation = new double[nbFreq];
+        Arrays.fill(flatGroundAttenuation, 0);
+        for (int iSeg = 0; iSeg < nbSeg; iSeg++) {
+            int finalISeg = iSeg;
+            double[] attenuation = IntStream.range(0, nbFreq)
+                    .mapToDouble(i -> flatGroundAttenuation[i]
+                            + modifiedFresnelWeighting[finalISeg][i] * 10 * Math.log10(
+                                    Math.pow(
+                                            groundProfile.getReflectionCoefficient(finalISeg, i)
+                                                    .multiply(geometricalWeightingFactor[finalISeg][i])
+                                                    .multiply(coherenceFactor[finalISeg][i])
+                                                    .add(1).abs(),2
+                                    ) + Math.pow(
+                                            groundProfile.getReflectionCoefficient(finalISeg, i)
+                                                    .multiply(geometricalWeightingFactor[finalISeg][i])
+                                                    .abs(),2
+                                    ) * (1 - Math.pow(coherenceFactor[finalISeg][i],2))
+                            )
+                    )
+                    .toArray();
+        }
+        return flatGroundAttenuation;
     }
 
     /**
