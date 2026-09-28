@@ -191,17 +191,33 @@ public class HarmonoiseAttenuation {
 
     private void concaveGroundAttenuation(int iSource, int iReceiver){
         double transitionFrequency = transitionFrequency(iSource, iReceiver);
+        List<Double> frequency = scene.defaultCnossosParameters.getFrequenciesExact();
         // Pre-computation
         Complex[][] geometricalWeightingFactor = new Complex[groundProfile.getNVertices()-1][waveNumber.length];
         double[][] coherenceFactor = new double[groundProfile.getNVertices()-1][waveNumber.length];
         double[][] modifiedFresnelWeighting = new double[groundProfile.getNVertices()-1][waveNumber.length];
+        double[] nw = new double[waveNumber.length];
+        Arrays.fill(nw, 0);
         for (int k = iSource; k < iReceiver; k++) {
             groundProfile.setReflectionCoefficient(k, sphericalWaveReflectionCoefficient(k, iSource, iReceiver));
             geometricalWeightingFactor[k] = geometricalWeightingFactor(k, iSource, iReceiver);
             coherenceFactor[k] = coherenceFactor(k, iSource, iReceiver);
             modifiedFresnelWeighting[k] = modifiedFresnelWeighting(k, iSource, iReceiver, transitionFrequency);
+            double[] finalNw = nw;
+            int finalK = k;
+            nw = IntStream.range(0, waveNumber.length)
+                    .mapToDouble(i -> finalNw[i] * modifiedFresnelWeighting[finalK][i])
+                    .toArray();
         }
-
+        double[] concaveGroundAttenuation = new double[waveNumber.length];
+        for (int i = 0; i < frequency.size(); i++) {
+            double xg = nw[i] / Math.sqrt(1 + Math.pow(frequency.get(i) / transitionFrequency, 2));
+            double fg = 1 - Math.exp(-1 / Math.pow(xg,2));
+            concaveGroundAttenuation[i] =
+                    fg * flatGroundAttenuation(geometricalWeightingFactor, coherenceFactor, modifiedFresnelWeighting)[i]
+                    + (1- fg) * valleyGroundAttenuation(geometricalWeightingFactor, coherenceFactor, modifiedFresnelWeighting)[i];
+        }
+        attenuationOutput.addGroundAttenuation(concaveGroundAttenuation);
     }
 
     /**

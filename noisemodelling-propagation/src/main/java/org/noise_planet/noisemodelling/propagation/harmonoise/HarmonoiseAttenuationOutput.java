@@ -25,6 +25,7 @@ import java.util.stream.IntStream;
 public class HarmonoiseAttenuationOutput extends AttenuationOutput {
     double excessAttenuation = 0;
     double[] diffractionAttenuation = new double[0];
+    double[] groundAttenuation = new double[0];
 
     public HarmonoiseAttenuationOutput(CutProfile cutProfile){
         this.cutProfile = cutProfile;
@@ -41,6 +42,21 @@ public class HarmonoiseAttenuationOutput extends AttenuationOutput {
         } else {
             diffractionAttenuation = IntStream.range(0, diffractionAttenuation.length)
                     .mapToDouble(i -> diffractionAttenuation[i] + attenuation[i])
+                    .toArray();
+        }
+    }
+
+    /**
+     * Add frequency dependant attenuation to groundAttenuation
+     *
+     * @param attenuation attenuation to add
+     */
+    public void addGroundAttenuation(double[] attenuation){
+        if (groundAttenuation.length == 0) {
+            groundAttenuation = attenuation;
+        } else {
+            groundAttenuation = IntStream.range(0, groundAttenuation.length)
+                    .mapToDouble(i -> groundAttenuation[i] + attenuation[i])
                     .toArray();
         }
     }
