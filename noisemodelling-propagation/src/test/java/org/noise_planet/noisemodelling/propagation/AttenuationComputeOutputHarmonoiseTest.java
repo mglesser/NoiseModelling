@@ -20,16 +20,23 @@ public class AttenuationComputeOutputHarmonoiseTest {
     private static final double HUMIDITY = 70;
     private static final double TEMPERATURE = 10;
 
-    private static CutProfile loadCutProfile(InputStream inputStream) throws IOException {
-        ObjectMapper mapper = new ObjectMapper();
-        return mapper.readValue(inputStream, CutProfile.class);
-    }
-
-    private static double[] computeHarmonoiseAttenuation(String utName)
-            throws IOException {
+    private static CutProfile loadCutProfile(String utName) throws IOException {
         //Get test data
         URL url = AttenuationComputeOutputHarmonoiseTest.class.getResource("harmonoise/" + utName + ".json");
 
+        //Out and computation settings
+        CutProfile cutProfile;
+        Assertions.assertNotNull(url);
+        try(InputStream inputStream = url.openStream()) {
+            ObjectMapper mapper = new ObjectMapper();
+            return mapper.readValue(inputStream, CutProfile.class);
+        } catch (IOException e) {
+            throw new IOException(e);
+        }
+    }
+
+    private static double[] computeHarmonoiseAttenuation(CutProfile cutProfile)
+            throws IOException {
         //Create profile builder
         ProfileBuilder profileBuilder = new ProfileBuilder()
                 .finishFeeding();
@@ -46,14 +53,6 @@ public class AttenuationComputeOutputHarmonoiseTest {
         sceneWithAttenuation.defaultCnossosParameters.setHumidity(HUMIDITY);
         sceneWithAttenuation.defaultCnossosParameters.setTemperature(TEMPERATURE);
 
-
-        //Out and computation settings
-        CutProfile cutProfile;
-        Assertions.assertNotNull(url);
-        try(InputStream inputStream = url.openStream()) {
-            cutProfile = loadCutProfile(inputStream);
-        }
-
         PropagationModel propagationModel = new HarmonoisePropagationModel();
 
         return propagationModel.computeAttenuation(sceneWithAttenuation, cutProfile,
@@ -69,7 +68,8 @@ public class AttenuationComputeOutputHarmonoiseTest {
     @Test
     public void test_harmonoise_case01() throws IOException {
 
-        double[] attenuation = computeHarmonoiseAttenuation("case_01");
+        CutProfile cutProfile = loadCutProfile("case_01");
+        double[] attenuation = computeHarmonoiseAttenuation(cutProfile);
 
         //Assertion
         double[] referenceExcessAttenuation = {
@@ -113,8 +113,8 @@ public class AttenuationComputeOutputHarmonoiseTest {
      */
     @Test
     public void test_harmonoise_case05() throws IOException {
-
-        double[] attenuation = computeHarmonoiseAttenuation("case_05");
+        CutProfile cutProfile = loadCutProfile("case_05");
+        double[] attenuation = computeHarmonoiseAttenuation(cutProfile);
     }
 
     /**
@@ -125,7 +125,7 @@ public class AttenuationComputeOutputHarmonoiseTest {
      */
     @Test
     public void test_harmonoise_case07() throws IOException {
-
-        double[] attenuation = computeHarmonoiseAttenuation("case_07");
+        CutProfile cutProfile = loadCutProfile("case_07");
+        double[] attenuation = computeHarmonoiseAttenuation(cutProfile);
     }
 }

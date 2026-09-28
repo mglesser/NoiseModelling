@@ -28,7 +28,8 @@ public class SurfaceAbsorption {
             //value = GetWallImpedance(20000 * Math.pow (10., -2 * Math.pow (wallAlpha, 3./5.)),freq_lvl);
             value= wallAlpha;
         } else {
-            value = computeSurfaceImpedance(Math.min(20000, Math.max(20, wallAlpha)),freq_lvl);
+            Complex impedance = computeSurfaceImpedance(Math.min(20000, Math.max(20, wallAlpha)),freq_lvl);
+            value = computeGroundAbsorptionCoefficient(impedance);
         }
         return value;
     }
@@ -42,7 +43,7 @@ public class SurfaceAbsorption {
      * @param freq_l frequency [Hz]
      * @return normalized ground impedance[]
      */
-    public static double computeSurfaceImpedance(double sigma, double freq_l){
+    public static Complex computeSurfaceImpedance(double sigma, double freq_l){
         return computeSurfaceImpedance(sigma, freq_l, "delany-bazley");
     }
 
@@ -54,7 +55,7 @@ public class SurfaceAbsorption {
      * @param method ground impedance model
      * @return normalized ground impedance[]
      */
-    public static double computeSurfaceImpedance(double sigma, double freq_l, String method)
+    public static Complex computeSurfaceImpedance(double sigma, double freq_l, String method)
     {
         Complex Z;
         switch (method) {
@@ -64,13 +65,13 @@ public class SurfaceAbsorption {
                 double s = Math.log(freq_l / sigma);
                 double x = 1. + 9.08 * Math.exp(-.75 * s);
                 double y = - 11.9 * Math.exp(-0.73 * s);
-                Z = new Complex(x, y);
-                break;
                 // Another fit giving similar results is sometimes found in the literature with:
                 // x = 1 + 0.0571 * (rho_0 * s)^-0.754
                 // y = 0.0870 * (rho_0 * s)^-0.732
+                Z = new Complex(x, y);
+                break;
         }
-        return computeGroundAbsorptionCoefficient(Z);
+        return Z;
     }
 
     /**

@@ -153,9 +153,11 @@ public class HarmonoiseAttenuation {
      * @return sound pressure p [Pa]
      */
     private Complex[] unitSphericalWavePressure(double distance){
-        return (Complex[]) Arrays.stream(waveNumber)
-                .mapToObj(k -> (new Complex(0,k * distance)).exp().divide(distance))
-                .toArray();
+        Complex[] pressure = new Complex[waveNumber.length];
+        for (int i = 0; i < waveNumber.length; i++) {
+            pressure[i] = new Complex(0,waveNumber[i] * distance).exp().divide(distance);
+        }
+        return pressure;
     }
 
     /**
@@ -190,16 +192,20 @@ public class HarmonoiseAttenuation {
     }
 
     private void concaveGroundAttenuation(int iSource, int iReceiver){
-        double transitionFrequency = transitionFrequency(iSource, iReceiver);
-        List<Double> frequency = scene.defaultCnossosParameters.getFrequenciesExact();
-        // Pre-computation
+        // Pre-computation of the reflexion coefficient necessary to compute the transition frequency
+        for (int k = iSource; k < iReceiver; k++) {
+            groundProfile.setReflectionCoefficient(k, sphericalWaveReflectionCoefficient(k, iSource, iReceiver));
+        }
+        // Initialization
         Complex[][] geometricalWeightingFactor = new Complex[groundProfile.getNVertices()-1][waveNumber.length];
         double[][] coherenceFactor = new double[groundProfile.getNVertices()-1][waveNumber.length];
         double[][] modifiedFresnelWeighting = new double[groundProfile.getNVertices()-1][waveNumber.length];
         double[] nw = new double[waveNumber.length];
         Arrays.fill(nw, 0);
+        // Computation
+        List<Double> frequency = scene.defaultCnossosParameters.getFrequenciesExact();
+        double transitionFrequency = transitionFrequency(iSource, iReceiver);
         for (int k = iSource; k < iReceiver; k++) {
-            groundProfile.setReflectionCoefficient(k, sphericalWaveReflectionCoefficient(k, iSource, iReceiver));
             geometricalWeightingFactor[k] = geometricalWeightingFactor(k, iSource, iReceiver);
             coherenceFactor[k] = coherenceFactor(k, iSource, iReceiver);
             modifiedFresnelWeighting[k] = modifiedFresnelWeighting(k, iSource, iReceiver, transitionFrequency);
@@ -276,30 +282,21 @@ public class HarmonoiseAttenuation {
         double[] sum2 = new double[nbFreq];
         Arrays.fill(sum2, 0);
         for (int iSeg = 0; iSeg < nbSeg; iSeg++) {
-            int finalISeg = iSeg;
-            Complex[] finalSum1 = sum1;
-            sum1 = (Complex[]) IntStream.range(0, nbFreq)
-                    .mapToObj(i -> finalSum1[i].add(
-                            groundProfile.getReflectionCoefficient(finalISeg, i)
-                                    .multiply(geometricalWeightingFactor[finalISeg][i])
-                                    .multiply(coherenceFactor[finalISeg][i])
-                                    .multiply(modifiedFresnelWeighting[finalISeg][i])
-                            )
-                    ).toArray();
-            double[] finalSum2 = sum2;
-            sum2 = IntStream.range(0, nbFreq)
-                    .mapToDouble(i -> finalSum2[i] + Math.pow(
-                            groundProfile.getReflectionCoefficient(finalISeg, i)
-                                    .multiply(geometricalWeightingFactor[finalISeg][i])
-                                    .abs(),2
-                            ) * (1 - Math.pow(coherenceFactor[finalISeg][i],2))
-                            * modifiedFresnelWeighting[finalISeg][i]
-                    ).toArray();
+            for (int iFreq = 0; iFreq < nbFreq; iFreq++) {
+                sum1[iFreq] = sum1[iFreq].add(
+                        groundProfile.getReflectionCoefficient(iSeg, iFreq)
+                        .multiply(geometricalWeightingFactor[iSeg][iFreq])
+                        .multiply(coherenceFactor[iSeg][iFreq])
+                        .multiply(modifiedFresnelWeighting[iSeg][iFreq])
+                );
+                sum2[iFreq] += Math.pow(groundProfile.getReflectionCoefficient(iSeg, iFreq)
+                                .multiply(geometricalWeightingFactor[iSeg][iFreq]).abs(),2)
+                        * (1 - Math.pow(coherenceFactor[iSeg][iFreq],2))
+                        * modifiedFresnelWeighting[iSeg][iFreq];
+            }
         }
-        Complex[] finalSum1 = sum1;
-        double[] finalSum2 = sum2;
         return IntStream.range(0, nbFreq)
-                .mapToDouble(i -> Math.log10(Math.pow(finalSum1[i].add(1).abs(),2) + finalSum2[i]))
+                .mapToDouble(i -> Math.log10(Math.pow(sum1[i].add(1).abs(),2) + sum2[i]))
                 .toArray();
     }
 
@@ -484,9 +481,11 @@ public class HarmonoiseAttenuation {
                 }
             }
         }
-        return (Complex[]) IntStream.range(0, nFreq)
-                .mapToObj(i -> pImage[i].divide(p[i]))
-                .toArray();
+        Complex[] weightingFactor = new Complex[nFreq];
+        for (int i = 0; i < nFreq; i++) {
+            weightingFactor[i] = pImage[i].divide(p[i]);
+        }
+        return weightingFactor;
     }
 
     /**
