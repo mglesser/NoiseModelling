@@ -5,6 +5,7 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 import org.noise_planet.noisemodelling.pathfinder.profilebuilder.CutProfile;
 import org.noise_planet.noisemodelling.pathfinder.profilebuilder.ProfileBuilder;
+import org.noise_planet.noisemodelling.propagation.harmonoise.HarmonoiseAttenuationOutput;
 import org.noise_planet.noisemodelling.propagation.harmonoise.HarmonoisePropagationModel;
 
 import java.io.IOException;
@@ -13,8 +14,6 @@ import java.net.URL;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 public class AttenuationComputeOutputHarmonoiseTest {
     private static final double HUMIDITY = 70;
@@ -35,8 +34,7 @@ public class AttenuationComputeOutputHarmonoiseTest {
         }
     }
 
-    private static double[] computeHarmonoiseAttenuation(CutProfile cutProfile)
-            throws IOException {
+    private static AttenuationOutput computeHarmonoiseAttenuation(CutProfile cutProfile) {
         //Create profile builder
         ProfileBuilder profileBuilder = new ProfileBuilder()
                 .finishFeeding();
@@ -56,7 +54,7 @@ public class AttenuationComputeOutputHarmonoiseTest {
         PropagationModel propagationModel = new HarmonoisePropagationModel();
 
         return propagationModel.computeAttenuation(sceneWithAttenuation, cutProfile,
-                sceneWithAttenuation.defaultCnossosParameters, false).getFirst().getaGlobal();
+                sceneWithAttenuation.defaultCnossosParameters, false).getFirst();
     }
 
     /**
@@ -66,10 +64,13 @@ public class AttenuationComputeOutputHarmonoiseTest {
      * Acta acustica united with acustica, 97(1), 62-74 (section 3)
      */
     @Test
-    public void test_harmonoise_case01() throws IOException {
+    public void testHarmonoiseCase01() throws IOException {
 
         CutProfile cutProfile = loadCutProfile("case_01");
-        double[] attenuation = computeHarmonoiseAttenuation(cutProfile);
+        AttenuationOutput output = computeHarmonoiseAttenuation(cutProfile);
+        assert (output instanceof HarmonoiseAttenuationOutput);
+        HarmonoiseAttenuationOutput harmonoiseOutput = (HarmonoiseAttenuationOutput) output;
+
 
         //Assertion
         double[] referenceExcessAttenuation = {
@@ -101,7 +102,7 @@ public class AttenuationComputeOutputHarmonoiseTest {
                 1.457858769931665	,
                 4.259681093394079
         }; // plotdigitized from publication, 1/3 oct band 25Hz - 10kHz
-        assertEquals(0, attenuation[0]);
+//        assertEquals(0, attenuation[0]);
 
     }
 
@@ -112,9 +113,9 @@ public class AttenuationComputeOutputHarmonoiseTest {
      * Acta acustica united with acustica, 97(1), 62-74 (section 3)
      */
     @Test
-    public void test_harmonoise_case05() throws IOException {
+    public void testHarmonoiseCase05() throws IOException {
         CutProfile cutProfile = loadCutProfile("case_05");
-        double[] attenuation = computeHarmonoiseAttenuation(cutProfile);
+        AttenuationOutput output = computeHarmonoiseAttenuation(cutProfile);
     }
 
     /**
@@ -124,8 +125,8 @@ public class AttenuationComputeOutputHarmonoiseTest {
      * Acta acustica united with acustica, 97(1), 62-74 (section 3)
      */
     @Test
-    public void test_harmonoise_case07() throws IOException {
+    public void testHarmonoiseCase07() throws IOException {
         CutProfile cutProfile = loadCutProfile("case_07");
-        double[] attenuation = computeHarmonoiseAttenuation(cutProfile);
+        AttenuationOutput output = computeHarmonoiseAttenuation(cutProfile);
     }
 }

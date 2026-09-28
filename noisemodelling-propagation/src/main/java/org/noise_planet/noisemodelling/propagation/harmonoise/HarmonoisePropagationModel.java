@@ -76,12 +76,11 @@ public class HarmonoisePropagationModel implements PropagationModel {
         HarmonoiseAttenuation harmonoiseAttenuation = new HarmonoiseAttenuation(scene, output);
         harmonoiseAttenuation.computeExcessAttenuation();
         // Attenuation computation here
+        output.setMeteoType(MeteoType.CUSTOM); // Store meteo type
+        output.aGlobal = new double[]{0, 0, 0, 0, 0, 0, 0, 0};
+        output.lineString = cutProfile.getPropagationPath();
         List<AttenuationOutput> attenuationOutputs = new ArrayList<>();
-        AttenuationOutput attenuationOutput = new AttenuationOutput(cutProfile); // Store propagation path
-        attenuationOutput.setMeteoType(MeteoType.CUSTOM); // Store meteo type
-        attenuationOutput.aGlobal = new double[]{0, 0, 0, 0, 0, 0, 0, 0};
-        attenuationOutput.lineString = cutProfile.getPropagationPath();
-        attenuationOutputs.add(attenuationOutput);
+        attenuationOutputs.add(output);
         //
         return attenuationOutputs;
     }
