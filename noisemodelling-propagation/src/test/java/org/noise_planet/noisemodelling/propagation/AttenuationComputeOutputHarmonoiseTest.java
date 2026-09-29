@@ -66,7 +66,10 @@ public class AttenuationComputeOutputHarmonoiseTest {
     /**
      * Test case 1 from Harmonoise publication (hard/rigid ground and
      * non refracting atmosphere)
-     * Not tested: Fresnel weighting, modified Fresnel weighting
+     * Not tested:
+     * - diffraction attenuation
+     * - Fresnel weighting
+     * - modified Fresnel weighting
      */
     @Test
     public void testHarmonoiseCase01() throws IOException {

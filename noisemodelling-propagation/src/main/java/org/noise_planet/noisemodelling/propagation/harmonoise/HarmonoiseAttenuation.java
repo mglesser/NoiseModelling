@@ -301,30 +301,6 @@ public class HarmonoiseAttenuation {
     }
 
     /**
-     * Determine whether the ground profile contains convex segment or not
-     * Ref: Figure 3 and "Geometry" subsection of section 2.4.1 from Salomons et al.
-     *
-     * @param vertices vertices of the ground profile
-     * @return true if the profile contains at least one convex segment
-     */
-    private static boolean hasConvexSegment(Coordinate[] vertices){
-        int iReceiver = vertices.length - 1;
-        boolean isConvex = false;
-        // Loop on segments
-        for (int i = 0; i < vertices.length - 2; i++) {
-            double localSourceHeight = vertices[i+1].distance(vertices[0])
-                    * Math.sin(Angle.angleBetweenOriented(vertices[0], vertices[i+1], vertices[i]));
-            double localReceiverHeight = vertices[i].distance(vertices[iReceiver])
-                    * Math.sin(Angle.angleBetweenOriented(vertices[i+1], vertices[i], vertices[iReceiver]));
-            if (localSourceHeight < 0 || localReceiverHeight < 0){
-                isConvex = true;
-                break;
-            }
-        }
-        return isConvex;
-    }
-
-    /**
      * Compute the spherical wave reflection coefficient
      * Ref: "Spherical-wave reflection coefficient" subsection of section 2.4.1 from Salomons et al.
      * Ref: K. Attenborough, K. M. Li, and K. Horoshenkov, Predicting Outdoor Sound. Taylor & Francis, 2006.

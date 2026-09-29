@@ -34,6 +34,8 @@ public class HarmonoiseGroundProfile {
     private Coordinate[] vertices;
     private double[] flowResistivity;
     private Complex[][] reflectionCoefficient;
+    private double sourceHeight;
+    private double receiverHeight;
 
     /**
      * Initialize HarmonoiseGroundProfile object from an array of vertices.
@@ -65,6 +67,8 @@ public class HarmonoiseGroundProfile {
     public HarmonoiseGroundProfile(CutProfile cutProfile, int nFreq, double radius){
         // Get the whole 2D profile including ground points
         extractVertices(cutProfile);
+        sourceHeight = cutProfile.getCutPoints().getFirst().getCoordinate().getZ();
+        receiverHeight = cutProfile.getCutPoints().getFirst().getCoordinate().getZ();
         // TODO : Manage geometry densification
         // Densify per segment to update flowResistivity array
         // TODO : Manage ground curvature
@@ -80,11 +84,6 @@ public class HarmonoiseGroundProfile {
         // Extract top-elevation point, including ground points,
         List<Integer> indices = new ArrayList<>(0);
         vertices = cutProfile.computePts2DGround(0, indices).toArray(new Coordinate[0]);
-        // Replace first and last ground points by respectively the source and the receiver
-        int nVertices = vertices.length;
-        vertices[0].setY(vertices[0].getY() + cutProfile.getCutPoints().getFirst().getCoordinate().getZ());
-        vertices[nVertices - 1].setY(vertices[nVertices - 1].getY()
-                + cutProfile.getCutPoints().getLast().getCoordinate().getZ());
         // Extract flow resistivity
         flowResistivity = indices.stream()
                 .mapToDouble(i -> cutProfile.cutPoints.get(i).groundCoefficient)
@@ -138,20 +137,28 @@ public class HarmonoiseGroundProfile {
         return vertices;
     }
 
-    public Coordinate[] getVertices() {
-        return vertices;
-    }
-
     public int getNVertices() {
         return vertices.length;
     }
 
     /**
-     * @return ground profile vertices with first and last ground vertices replaced
-     * respectively by the source and the receiver vertices
+     * Return ground (sub)profile's vertices
+     *
+     * @param iStart index of the first segment
+     * @param iEnd index of the last segment
+     * @return ground profile vertices
      */
-    public Coordinate[] getVertices(int iStart, int iEnd) {
-        return Arrays.copyOfRange(vertices, iStart, iEnd+1);
+    public static Coordinate[] getVertices(int iStart, int iEnd) {
+        Coordinate[] localVertices = Arrays.copyOfRange(vertices, iStart, iEnd+1);
+        // Replace first and last ground points by respectively the source and the receiver
+        int nVertices = localVertices.length;
+        if (iStart == 0){
+            localVertices[0].setY(localVertices[0].getY() + sourceHeight);
+        }
+        if (iEnd == nVertices - 1){
+            localVertices[nVertices - 1].setY(localVertices[nVertices - 1].getY() + receiverHeight);
+        }
+        return localVertices;
     }
 
     /**
@@ -252,6 +259,31 @@ public class HarmonoiseGroundProfile {
         double localSourceHeight = getLocalOrdinate(iSource, iSeg);
         double localReceiverHeight = getLocalOrdinate(iReceiver, iSeg);
         return localSourceHeight < 0 || localReceiverHeight < 0;
+    }
+
+    /**
+     * Determine whether a ground (sub)profile contains convex segment or not
+     * Ref: Figure 3 and "Geometry" subsection of section 2.4.1 from Salomons et al.
+     *
+     * @param iSource index of the (secondary) source
+     * @param iReceiver index of the (secondary) receiver
+     * @return true if the (sub)profile contains at least one convex segment
+     */
+    private static boolean hasConvexSegment(int iSource, int iReceiver){
+        Coordinate[] localVertices = getVertices(iSource, iReceiver);
+        boolean isConvex = false;
+        // Loop on segments
+        for (int i = 0; i < localVertices.length - 2; i++) {
+            double localSourceHeight = localVertices[i+1].distance(localVertices[0])
+                    * Math.sin(Angle.angleBetweenOriented(localVertices[0], localVertices[i+1], localVertices[i]));
+            double localReceiverHeight = localVertices[i].distance(localVertices[iReceiver])
+                    * Math.sin(Angle.angleBetweenOriented(localVertices[i+1], localVertices[i], localVertices[iReceiver]));
+            if (localSourceHeight < 0 || localReceiverHeight < 0){
+                isConvex = true;
+                break;
+            }
+        }
+        return isConvex;
     }
 
     /**
