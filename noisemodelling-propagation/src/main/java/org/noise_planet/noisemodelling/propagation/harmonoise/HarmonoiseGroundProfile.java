@@ -71,9 +71,21 @@ public class HarmonoiseGroundProfile {
         reflectionCoefficient = new Complex[getNVertices()-1][nFreq];
     }
 
+    /**
+     * Extract 2D vertices of the cutProfile
+     *
+     * @param cutProfile 3D profile from source to receiver
+     */
     private void extractVertices(CutProfile cutProfile){
+        // Extract top-elevation point, including ground points,
         List<Integer> indices = new ArrayList<>(0);
         vertices = cutProfile.computePts2DGround(0, indices).toArray(new Coordinate[0]);
+        // Replace first and last ground points by respectively the source and the receiver
+        int nVertices = vertices.length;
+        vertices[0].setY(vertices[0].getY() + cutProfile.getCutPoints().getFirst().getCoordinate().getZ());
+        vertices[nVertices - 1].setY(vertices[nVertices - 1].getY()
+                + cutProfile.getCutPoints().getLast().getCoordinate().getZ());
+        // Extract flow resistivity
         flowResistivity = indices.stream()
                 .mapToDouble(i -> cutProfile.cutPoints.get(i).groundCoefficient)
                 .toArray();

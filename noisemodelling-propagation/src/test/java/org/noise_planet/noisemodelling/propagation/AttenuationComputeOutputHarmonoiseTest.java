@@ -15,6 +15,12 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+/**
+ * Tests for Harmonoise prropagation model
+ * Ref: Section 3 of Salomons, E., Van Maercke, D., Defrance, J.,&amp;De Roo, F. (2011). The Harmonoise sound propagation model.
+ * Acta acustica united with acustica, 97(1), 62-74
+ * @author Martin Glesser
+ */
 public class AttenuationComputeOutputHarmonoiseTest {
     private static final double HUMIDITY = 70;
     private static final double TEMPERATURE = 10;
@@ -60,8 +66,7 @@ public class AttenuationComputeOutputHarmonoiseTest {
     /**
      * Test case 1 from Harmonoise publication (hard/rigid ground and
      * non refracting atmosphere)
-     * Ref: Salomons, E., Van Maercke, D., Defrance, J.,&amp;De Roo, F. (2011). The Harmonoise sound propagation model.
-     * Acta acustica united with acustica, 97(1), 62-74 (section 3)
+     * Not tested: Fresnel weighting, modified Fresnel weighting
      */
     @Test
     public void testHarmonoiseCase01() throws IOException {
