@@ -183,7 +183,7 @@ public class HarmonoiseAttenuation {
 
     private void computeGroundAttenuation(int iSource, int iReceiver) {
 
-        if (hasConvexSegment(groundProfile.getVertices(iSource, iReceiver))){
+        if (groundProfile.hasConvexSegment(iSource, iReceiver)){
             attenuationOutput.excessAttenuation += 0;
         } else {
             concaveGroundAttenuation(iSource, iReceiver);

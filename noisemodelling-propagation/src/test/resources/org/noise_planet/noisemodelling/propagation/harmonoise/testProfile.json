@@ -1,0 +1,67 @@
+{
+  "cutPoints" : [ {
+    "type" : "Source",
+    "coordinate" : {
+      "x" : 0.0,
+      "y" : 0.0,
+      "z" : 3.0
+    },
+    "zGround" : -2.0,
+    "groundCoefficient" : 0.0,
+    "sourcePk" : -1,
+    "li" : 1.0,
+    "orientation" : {
+      "yaw" : 0.0,
+      "pitch" : 0.0,
+      "roll" : 0.0
+    }
+  }, {
+    "type" : "Topography",
+    "coordinate" : {
+      "x" : 5,
+      "y" : 0,
+      "z" : -2.0
+    },
+    "zGround" : -2.0,
+    "groundCoefficient" : 0.2
+  }, {
+    "type" : "Topography",
+    "coordinate" : {
+      "x" : 6,
+      "y" : 0,
+      "z" : 1
+    },
+    "zGround" : 1,
+    "groundCoefficient" : 0.2
+  }, {
+    "type" : "Topography",
+    "coordinate" : {
+      "x" : 8,
+      "y" : 0,
+      "z" : 2
+    },
+    "zGround" : 2,
+    "groundCoefficient" : 0.2
+  }, {
+    "type" : "Topography",
+    "coordinate" : {
+      "x" : 11.0,
+      "y" : 0,
+      "z" : 1.0
+    },
+    "zGround" : 1,
+    "groundCoefficient" : 0.2
+  }, {
+    "type" : "Receiver",
+    "coordinate" : {
+      "x" : 13.0,
+      "y" : 0.0,
+      "z" : 7.0
+    },
+    "zGround" : 1.0,
+    "groundCoefficient" : 0.0,
+    "receiverPk" : 0
+  } ],
+  "curvedPath" : false,
+  "profileType" : "DIRECT"
+}

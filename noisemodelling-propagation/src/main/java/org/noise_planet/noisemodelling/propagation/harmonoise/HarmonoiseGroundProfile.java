@@ -32,20 +32,11 @@ import static java.lang.Math.*;
 
 public class HarmonoiseGroundProfile {
     private Coordinate[] vertices;
+    private Coordinate[] groundVertices;
     private double[] flowResistivity;
     private Complex[][] reflectionCoefficient;
     private double sourceHeight;
     private double receiverHeight;
-
-    /**
-     * Initialize HarmonoiseGroundProfile object from an array of vertices.
-     * (for testing purpose)
-     *
-     * @param vertices 2D ground profile vertices
-     */
-    public HarmonoiseGroundProfile(Coordinate[] vertices){
-        this.vertices = vertices;
-    }
 
     /**
      * Initialize HarmonoiseGroundProfile object from CutProfile object.
@@ -66,9 +57,9 @@ public class HarmonoiseGroundProfile {
      */
     public HarmonoiseGroundProfile(CutProfile cutProfile, int nFreq, double radius){
         // Get the whole 2D profile including ground points
-        extractVertices(cutProfile);
         sourceHeight = cutProfile.getCutPoints().getFirst().getCoordinate().getZ();
-        receiverHeight = cutProfile.getCutPoints().getFirst().getCoordinate().getZ();
+        receiverHeight = cutProfile.getCutPoints().getLast().getCoordinate().getZ();
+        extractVertices(cutProfile);
         // TODO : Manage geometry densification
         // Densify per segment to update flowResistivity array
         // TODO : Manage ground curvature
@@ -76,14 +67,21 @@ public class HarmonoiseGroundProfile {
     }
 
     /**
-     * Extract 2D vertices of the cutProfile
+     * Extract 2D vertices and segments flow resistivity from the cutProfile
      *
      * @param cutProfile 3D profile from source to receiver
      */
     private void extractVertices(CutProfile cutProfile){
         // Extract top-elevation point, including ground points,
         List<Integer> indices = new ArrayList<>(0);
-        vertices = cutProfile.computePts2DGround(0, indices).toArray(new Coordinate[0]);
+        groundVertices = cutProfile.computePts2DGround(0, indices).toArray(new Coordinate[0]);
+        // The real source and real receiver ground points are replaced by respectively, the source and the receiver
+        int nVertices = groundVertices.length;
+        vertices = Arrays.stream(groundVertices)
+                .map(v -> new Coordinate(v.getX(), v.getY()))
+                .toArray(Coordinate[] ::new);
+        vertices[0].setY(sourceHeight);
+         vertices[nVertices - 1].setY(receiverHeight);
         // Extract flow resistivity
         flowResistivity = indices.stream()
                 .mapToDouble(i -> cutProfile.cutPoints.get(i).groundCoefficient)
@@ -97,6 +95,7 @@ public class HarmonoiseGroundProfile {
      * Acta acustica united with acustica, 97(1), 62-74 (section 2.5)
      * Note: This implementation yield similar results to the one from CurvedProfileGenerator.applyTransformation.
      * However, it works only on the whole ground profile (from zGroundSource to zGroundReceiver).
+     * // TODO : Check against groundProfile vs. profile
      */
     private Coordinate[] computeCurvedProfile(Coordinate[] groundProfile, double radius){
         GeometryFactory geometryFactory = new GeometryFactory();
@@ -137,28 +136,23 @@ public class HarmonoiseGroundProfile {
         return vertices;
     }
 
+    /**
+     * @return number of vertices
+     */
     public int getNVertices() {
         return vertices.length;
     }
 
     /**
-     * Return ground (sub)profile's vertices
+     * Return (sub)profile's vertices. The real source and real receiver ground points are replaced by,
+     * respectively, the source and the receiver
      *
      * @param iStart index of the first segment
      * @param iEnd index of the last segment
-     * @return ground profile vertices
+     * @return (sub)profile vertices
      */
-    public static Coordinate[] getVertices(int iStart, int iEnd) {
-        Coordinate[] localVertices = Arrays.copyOfRange(vertices, iStart, iEnd+1);
-        // Replace first and last ground points by respectively the source and the receiver
-        int nVertices = localVertices.length;
-        if (iStart == 0){
-            localVertices[0].setY(localVertices[0].getY() + sourceHeight);
-        }
-        if (iEnd == nVertices - 1){
-            localVertices[nVertices - 1].setY(localVertices[nVertices - 1].getY() + receiverHeight);
-        }
-        return localVertices;
+    public Coordinate[] getVertices(int iStart, int iEnd) {
+        return Arrays.copyOfRange(vertices, iStart, iEnd+1);
     }
 
     /**
@@ -181,17 +175,17 @@ public class HarmonoiseGroundProfile {
     public Coordinate getImageVertex(int iVertex, int iSeg) {
         double x0 = vertices[iVertex].getX();
         double y0 = vertices[iVertex].getY();
-        double x1 = vertices[iSeg].getX();
-        double x2 = vertices[iSeg+1].getX();
-        double y1 = vertices[iSeg].getY();
-        double y2 = vertices[iSeg+1].getY();
-        // Segment line equation: ax + by + c = 0
-        double a = 1 / (x2 - x1);
-        double b = 1 / (y1 - y2);
-        double c = y1 / (y2 - y1) - x1 / (x2 - x1);
+        double x1 = groundVertices[iSeg].getX();
+        double x2 = groundVertices[iSeg+1].getX();
+        double y1 = groundVertices[iSeg].getY();
+        double y2 = groundVertices[iSeg+1].getY();
+        // Segment line equation: y = mx + c
+        double m = (y2 - y1) / (x2 - x1);
+        double c = (x2*y1 - x1*y2) / (x2-x1);
         // Image vertex coordinates
-        double xi = x0 - 2*a * (a*x0 + b*y0 + c) / (a*a + b*b);
-        double yi = y0 - 2*b * (a*x0 + b*y0 + c) / (a*a + b*b);
+        double d = (x0 + (y0 - c) * m ) / (1 + m*m);
+        double xi = 2*d - x0;
+        double yi = 2*d*m - y0 + 2*c;
         return new Coordinate(xi, yi);
     }
 
@@ -206,14 +200,10 @@ public class HarmonoiseGroundProfile {
      */
     public double getLocalAbscissa(int iPoint, int iSeg, int iSource){
         double thetaPoint;
-        if (iPoint == iSeg+1) {
-            thetaPoint = 0;
-        } else {
-            thetaPoint = Angle.angleBetween(vertices[iPoint], vertices[iSeg + 1], vertices[iSeg]);
-        }
-        double thetaSource = Angle.angleBetween(vertices[iSource], vertices[iSeg+1], vertices[iSeg]);
-        return vertices[iSeg+1].distance(vertices[iSource]) * Math.cos(thetaSource)
-                - vertices[iSeg+1].distance(vertices[iPoint]) * Math.cos(thetaPoint);
+        thetaPoint = Angle.angleBetween(vertices[iPoint], groundVertices[iSeg + 1], groundVertices[iSeg]);
+        double thetaSource = Angle.angleBetween(vertices[iSource], groundVertices[iSeg+1], groundVertices[iSeg]);
+        return groundVertices[iSeg+1].distance(vertices[iSource]) * Math.cos(thetaSource)
+                - groundVertices[iSeg+1].distance(vertices[iPoint]) * Math.cos(thetaPoint);
     }
 
     /**
@@ -224,8 +214,8 @@ public class HarmonoiseGroundProfile {
      * @return local abscissa (or local height)
      */
     public double getLocalOrdinate(int iPoint, int iSeg) {
-        double theta = Angle.angleBetweenOriented(vertices[iPoint], vertices[iSeg + 1], vertices[iSeg]);
-        return vertices[iSeg + 1].distance(vertices[iPoint]) * Math.sin(theta);
+        double theta = Angle.angleBetweenOriented(vertices[iPoint], groundVertices[iSeg + 1], groundVertices[iSeg]);
+        return groundVertices[iSeg + 1].distance(vertices[iPoint]) * Math.sin(theta);
     }
 
     /**
@@ -241,7 +231,7 @@ public class HarmonoiseGroundProfile {
         if (isConvexSegment(iSeg, iSource, iReceiver)) {
             throw new IllegalArgumentException("Reflexion angle cannot be computed for convex segments");
         } else {
-            Vector2D reflexionPlane = new Vector2D(vertices[iSeg], vertices[iSeg + 1]);
+            Vector2D reflexionPlane = new Vector2D(groundVertices[iSeg], groundVertices[iSeg + 1]);
             Vector2D imageSourceReceiverPlane = new Vector2D(this.getImageVertex(iSource, iSeg), vertices[iReceiver]);
             return Math.PI / 2 - reflexionPlane.angle(imageSourceReceiverPlane);
         }
@@ -249,6 +239,7 @@ public class HarmonoiseGroundProfile {
 
     /**
      * Check if a segment is convex according to Harmonoise definition
+     * Ref: Figure 3 and "Geometry" subsection of section 2.4.1 from Salomons et al.
      *
      * @param iSeg index of the ground segment
      * @param iSource index of the (secondary) source
@@ -269,16 +260,12 @@ public class HarmonoiseGroundProfile {
      * @param iReceiver index of the (secondary) receiver
      * @return true if the (sub)profile contains at least one convex segment
      */
-    private static boolean hasConvexSegment(int iSource, int iReceiver){
-        Coordinate[] localVertices = getVertices(iSource, iReceiver);
+    public boolean hasConvexSegment(int iSource, int iReceiver){
         boolean isConvex = false;
         // Loop on segments
-        for (int i = 0; i < localVertices.length - 2; i++) {
-            double localSourceHeight = localVertices[i+1].distance(localVertices[0])
-                    * Math.sin(Angle.angleBetweenOriented(localVertices[0], localVertices[i+1], localVertices[i]));
-            double localReceiverHeight = localVertices[i].distance(localVertices[iReceiver])
-                    * Math.sin(Angle.angleBetweenOriented(localVertices[i+1], localVertices[i], localVertices[iReceiver]));
-            if (localSourceHeight < 0 || localReceiverHeight < 0){
+        for (int i = 0; i < vertices.length - 2; i++) {
+
+            if (isConvexSegment(i, iSource, iReceiver)){
                 isConvex = true;
                 break;
             }
