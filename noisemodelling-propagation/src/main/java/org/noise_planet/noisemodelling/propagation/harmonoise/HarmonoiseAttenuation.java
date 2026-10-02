@@ -201,7 +201,7 @@ public class HarmonoiseAttenuation {
         double[][] coherenceFactor = new double[groundProfile.getNVertices()-1][waveNumber.length];
         double[][] modifiedFresnelWeighting = new double[groundProfile.getNVertices()-1][waveNumber.length];
         double[] nw = new double[waveNumber.length];
-        Arrays.fill(nw, 0);
+        Arrays.fill(nw, 1);
         // Computation
         List<Double> frequency = scene.defaultCnossosParameters.getFrequenciesExact();
         double transitionFrequency = transitionFrequency(iSource, iReceiver);
@@ -513,7 +513,7 @@ public class HarmonoiseAttenuation {
             rho = sourceHeight * receiverHeight / (sourceHeight + receiverHeight);
         }
         double[] cb = Arrays.stream(waveNumber)
-                .map(k -> -3.0/8 * 0.364 * gammaT * k * k * Math.pow(rho, 5.0/3) * source.distance(receiver))
+                .map(k -> Math.exp(-3.0/8 * 0.364 * gammaT * k * k * Math.pow(rho, 5.0/3) * source.distance(receiver)))
                 .toArray();
         return IntStream.range(0, ca.length).mapToDouble(i -> ca[i] * cb[i]).toArray();
     }
