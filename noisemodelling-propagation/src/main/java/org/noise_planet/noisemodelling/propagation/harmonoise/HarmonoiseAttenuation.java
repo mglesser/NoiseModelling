@@ -518,6 +518,8 @@ public class HarmonoiseAttenuation {
         return IntStream.range(0, ca.length).mapToDouble(i -> ca[i] * cb[i]).toArray();
     }
 
+    record FresnelEllipseDimension(double center, double semiMajorAxis) { }
+
     /**
      * Computes the Fresnel ellipse center and semi major axis for a Fresnel parameter of 8
      * Ref: "Fresnel weighting" subsection of section 2.4.2 from Salomons et al.
@@ -526,11 +528,10 @@ public class HarmonoiseAttenuation {
      * @param iSource index of the (secondary) source
      * @param iReceiver index of the (secondary) receiver
      * @param iFreq index of the frequency
-     * @param center local d coordinate of the ellipse center
-     * @param semiMajorAxis ellipse semi major axis length
+     * @return FresnelEllipseDimension record with center and semi major axis
      */
-    private void fresnelEllipse(int iSeg, int iSource, int iReceiver, int iFreq, double center, double semiMajorAxis){
-        fresnelEllipse(iSeg, iSource, iReceiver, iFreq, 8,center, semiMajorAxis);
+    private FresnelEllipseDimension fresnelEllipse(int iSeg, int iSource, int iReceiver, int iFreq){
+        return fresnelEllipse(iSeg, iSource, iReceiver, iFreq, 8);
     }
 
     /**
@@ -542,10 +543,9 @@ public class HarmonoiseAttenuation {
      * @param iReceiver index of the (secondary) receiver
      * @param iFreq index of the frequency
      * @param fresnelParam Fresnel parameter
-     * @param center local d coordinate of the ellipse center
-     * @param semiMajorAxis ellipse semi major axis length
+     * @return FresnelEllipseDimension record with center and semi major axis
      */
-    private void fresnelEllipse(int iSeg, int iSource, int iReceiver, int iFreq, double fresnelParam, double center, double semiMajorAxis){
+    private FresnelEllipseDimension fresnelEllipse(int iSeg, int iSource, int iReceiver, int iFreq, double fresnelParam){
         Coordinate source = groundProfile.getVertex(iSource);
         Coordinate receiver = groundProfile.getVertex(iReceiver);
         Coordinate imageReceiver = groundProfile.getImageVertex(iReceiver, iSeg);
@@ -556,13 +556,14 @@ public class HarmonoiseAttenuation {
         double _term = Math.sqrt(Math.pow(localSourceHeight + localReceiverHeight, 2) + Math.pow(srcImageReceiverDistance, 2));
         double d = 2 * Math.PI / waveNumber[iFreq] / fresnelParam + _term; // Eq. 41
         double denominator = Math.pow(d, 2) - Math.pow(srcRcvDistance, 2);
-        center = srcRcvDistance / 2 * (Math.pow(localSourceHeight,2) - Math.pow(localReceiverHeight,2))
-                / denominator;
+        double center = srcRcvDistance / 2 * (1 + ( Math.pow(localSourceHeight,2) - Math.pow(localReceiverHeight,2))
+                / denominator );
         double dsSquare = Math.pow(center, 2) + Math.pow(localSourceHeight,2);
         double drSquare = Math.pow(srcRcvDistance - center, 2) + Math.pow(localReceiverHeight,2);
-        semiMajorAxis = 0.5 * Math.sqrt(
+        double semiMajorAxis = 0.5 * Math.sqrt(
                 (Math.pow(d,4) + Math.pow(dsSquare - drSquare, 2) - 2 * Math.pow(d,2) * (dsSquare + drSquare))
                         / denominator);
+        return new FresnelEllipseDimension(center, semiMajorAxis);
     }
 
     /**
@@ -632,16 +633,15 @@ public class HarmonoiseAttenuation {
                 .mapToDouble(f -> 32 * (1 - Math.exp(Math.pow(transitionFrequency,2)/Math.pow(f,2))))
                 .toArray();
         double[] modifiedWeighting = new double[frequency.size()];
-        double center = 1;
-        double semiMajorAxis = 1;
+        FresnelEllipseDimension dimension;
         double alpha, dc, xiC, xi1, xi2, xi1Prim, xi2Prim;
         for (int i = 0; i < frequency.size(); i++) {
-            fresnelEllipse(iSeg, iSource, iReceiver, i, nf[i], center, semiMajorAxis);
+            dimension = fresnelEllipse(iSeg, iSource, iReceiver, i, nf[i]);
             alpha = Math.pow((1 + Math.pow(frequency.get(i) / transitionFrequency, 2)), -1);
-            dc = alpha * center + (1 - alpha) * dsp;
-            xiC = (dc - center) / semiMajorAxis;
-            xi1 = (groundProfile.getLocalAbscissa(iSeg, iSeg, iSource) - center) / semiMajorAxis;
-            xi2 = (groundProfile.getLocalAbscissa(iSeg+1, iSeg, iSource) - center) / semiMajorAxis;
+            dc = alpha * dimension.center + (1 - alpha) * dsp;
+            xiC = (dc - dimension.center) / dimension.semiMajorAxis;
+            xi1 = (groundProfile.getLocalAbscissa(iSeg, iSeg, iSource) - dimension.center) / dimension.semiMajorAxis;
+            xi2 = (groundProfile.getLocalAbscissa(iSeg+1, iSeg, iSource) - dimension.center) / dimension.semiMajorAxis;
             xi1Prim = (xi1 - xiC) / (1 - xi1*xiC);
             xi2Prim = (xi2 - xiC) / (1 - xi2*xiC);
             modifiedWeighting[i] = fresnelWeighting(iSeg, iSource,iReceiver, xi1Prim, xi2Prim);
@@ -685,16 +685,15 @@ public class HarmonoiseAttenuation {
         double maxPhaseDiff = 0;
         double phaseDiffPrevious = 0;
         double phaseDiff = 0;
-        double center = 1;
-        double semiMajorAxis = 1;
+        FresnelEllipseDimension dimension;
         for (int i = 0; i < frequency.size(); i++) {
             for (int k = iSource; k < iReceiver; k++) {
                 if (groundProfile.isConvexSegment(k, iSource, iReceiver)){
                     continue;
                 }
-                fresnelEllipse(k, iSource, iReceiver, i, center, semiMajorAxis);
-                double xi1 = (groundProfile.getLocalAbscissa(k, k, iSource) - center) / semiMajorAxis;
-                double xi2 = (groundProfile.getLocalAbscissa(k+1, k, iSource) - center) / semiMajorAxis;
+                dimension = fresnelEllipse(k, iSource, iReceiver, i);
+                double xi1 = (groundProfile.getLocalAbscissa(k, k, iSource) - dimension.center) / dimension.semiMajorAxis;
+                double xi2 = (groundProfile.getLocalAbscissa(k+1, k, iSource) - dimension.center) / dimension.semiMajorAxis;
                 if (fresnelWeighting(k, iSource, iReceiver,xi1, xi2) == 0){
                     continue;
                 }
