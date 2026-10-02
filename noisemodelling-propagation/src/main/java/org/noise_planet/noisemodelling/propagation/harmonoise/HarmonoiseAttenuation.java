@@ -715,11 +715,11 @@ public class HarmonoiseAttenuation {
             }
             if (maxPhaseDiff > Math.PI) {
                 if (i == 0){
-                    fMin = frequency.getFirst();
-                } else if (i == frequency.size()){
-                    fMin = frequency.get(frequency.size()-2) * 2 ;
+                    fMax = frequency.getFirst();
+                } else if (i == frequency.size()-1){
+                    fMax = frequency.get(frequency.size()-2) * 2 ;
                 } else {
-                    fMin = frequency.get(i-1) + (frequency.get(i) - frequency.get(i-1))
+                    fMax = frequency.get(i-1) + (frequency.get(i) - frequency.get(i-1))
                             * (Math.PI - phaseDiffPrevious) / (phaseDiff - phaseDiffPrevious) ;
                 }
                 break;
