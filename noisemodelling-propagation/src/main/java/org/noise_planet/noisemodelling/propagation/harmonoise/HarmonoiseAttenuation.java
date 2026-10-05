@@ -289,14 +289,14 @@ public class HarmonoiseAttenuation {
                         .multiply(coherenceFactor[iSeg][iFreq])
                         .multiply(modifiedFresnelWeighting[iSeg][iFreq])
                 );
-                sum2[iFreq] += Math.pow(groundProfile.getReflectionCoefficient(iSeg, iFreq)
-                                .multiply(geometricalWeightingFactor[iSeg][iFreq]).abs(),2)
+                sum2[iFreq] += Math.pow((groundProfile.getReflectionCoefficient(iSeg, iFreq)
+                                .multiply(geometricalWeightingFactor[iSeg][iFreq])).abs(),2)
                         * (1 - Math.pow(coherenceFactor[iSeg][iFreq],2))
                         * modifiedFresnelWeighting[iSeg][iFreq];
             }
         }
         return IntStream.range(0, nbFreq)
-                .mapToDouble(i -> Math.log10(Math.pow(sum1[i].add(1).abs(),2) + sum2[i]))
+                .mapToDouble(i -> 10 * Math.log10(Math.pow((sum1[i].add(1)).abs(),2) + sum2[i]))
                 .toArray();
     }
 
