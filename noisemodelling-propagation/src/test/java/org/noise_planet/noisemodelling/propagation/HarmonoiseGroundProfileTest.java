@@ -11,8 +11,10 @@ import org.noise_planet.noisemodelling.propagation.harmonoise.HarmonoiseGroundPr
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.noise_planet.noisemodelling.propagation.AttenuationComputeOutputHarmonoiseTest.loadCutProfile;
 
 public class HarmonoiseGroundProfileTest {
     private static HarmonoiseGroundProfile profile;
@@ -145,6 +147,23 @@ public class HarmonoiseGroundProfileTest {
         for (int i = 0; i < expected.length; i++) {
             assertEquals(expected[i], profile.isConvexSegment(i, 0, profile.getNVertices()-1));
         }
+    }
 
+
+    /**
+     * Compare the Cnossos and Harmonoise ground curvature implementations.
+     * Note: both implementations yield similar results. The Cnossos implementation can be used on portion of profiles
+     * while the Harmonoise one shall be used only on whole profiles (from zGround_source to zGround_receiver).
+     */
+    @Test
+    public void compareGroundCurvatureTest() throws IOException {
+        // Generate profile
+        CutProfile cutProfile = loadCutProfile("case_07");
+        // Get curved profile through Cnossos implementation
+        List<Coordinate> curvedProfile = cutProfile.computePts2D(true);
+        // Get curved profile through Harmonoise implementation
+        double d = cutProfile.getSource().coordinate.distance(cutProfile.getReceiver().coordinate);
+        double radius = Math.max(1000, 8 * d);
+        HarmonoiseGroundProfile harmonoiseProfile = new HarmonoiseGroundProfile(cutProfile, 1, radius);
     }
 }

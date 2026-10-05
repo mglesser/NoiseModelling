@@ -65,6 +65,10 @@ public class AttenuationParameters {
     // Wind rose for each directions
     private static final double angle_section = (2 * Math.PI) / DEFAULT_WIND_ROSE.length;
 
+    // Harmonoise specific
+    // TODO : attenuationParameters child per propagation model
+    double radius = 0;
+
     public AttenuationParameters() {
         this(false);
     }
@@ -512,5 +516,13 @@ public class AttenuationParameters {
                     .toArray();
         }
         return new double[0];
+    }
+
+    public void setRadius(double radius) {
+        this.radius = radius;
+    }
+
+    public double getRadius() {
+        return radius;
     }
 }
