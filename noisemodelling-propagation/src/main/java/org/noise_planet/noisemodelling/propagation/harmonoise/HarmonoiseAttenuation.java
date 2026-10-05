@@ -35,6 +35,7 @@ public class HarmonoiseAttenuation {
     double stdHs = 0; // standard deviation on the source height
     double stdHr = 0; // standard deviation on the receiver height
     double gammaT = 5 * Math.pow(10,-6); // typical value for moderate turbulence
+    boolean isFrequencyAveragingOnly = true;
 
     public HarmonoiseAttenuation(SceneWithAttenuation scene, HarmonoiseAttenuationOutput output) {
         this.scene = scene;
@@ -52,6 +53,7 @@ public class HarmonoiseAttenuation {
      */
     public void computeExcessAttenuation() {
         computeExcessAttenuation(0, groundProfile.getNVertices()-1);
+
     }
 
     /**
@@ -184,7 +186,7 @@ public class HarmonoiseAttenuation {
     private void computeGroundAttenuation(int iSource, int iReceiver) {
 
         if (groundProfile.hasConvexSegment(iSource, iReceiver)){
-            attenuationOutput.excessAttenuation += 0;
+            ;
         } else {
             concaveGroundAttenuation(iSource, iReceiver);
         }
@@ -479,6 +481,10 @@ public class HarmonoiseAttenuation {
         Coordinate receiver = groundProfile.getVertex(iReceiver);
         double sourceHeight = source.getY();
         double receiverHeight = receiver.getY();
+        if(isFrequencyAveragingOnly){
+            stdHr = 0;
+            stdHs = 0;
+        }
         // Standard deviation of the frequency integration
         List<Integer> frequencies = scene.defaultCnossosParameters.getFrequencies();
         double bandwidth = 1./3;
@@ -505,17 +511,21 @@ public class HarmonoiseAttenuation {
         double[] stdPhase = Arrays.stream(waveNumber).map(k -> Math.sqrt(stdPhaseTerm) * k * pathLengthDiff).toArray();
         // coherence factor Ca
         double[] ca = Arrays.stream(stdPhase).map(s -> Math.exp(-0.5 * s * s )).toArray();
-        // coherence factor Cb
-        double rho;
-        if (sourceHeight == 0 && receiverHeight == 0){
-            rho = 0;
+        if (isFrequencyAveragingOnly){
+            return ca;
         } else {
-            rho = sourceHeight * receiverHeight / (sourceHeight + receiverHeight);
+            // coherence factor Cb
+            double rho;
+            if (sourceHeight == 0 && receiverHeight == 0) {
+                rho = 0;
+            } else {
+                rho = sourceHeight * receiverHeight / (sourceHeight + receiverHeight);
+            }
+            double[] cb = Arrays.stream(waveNumber)
+                    .map(k -> Math.exp(-3.0 / 8 * 0.364 * gammaT * k * k * Math.pow(rho, 5.0 / 3) * source.distance(receiver)))
+                    .toArray();
+            return IntStream.range(0, ca.length).mapToDouble(i -> ca[i] * cb[i]).toArray();
         }
-        double[] cb = Arrays.stream(waveNumber)
-                .map(k -> Math.exp(-3.0/8 * 0.364 * gammaT * k * k * Math.pow(rho, 5.0/3) * source.distance(receiver)))
-                .toArray();
-        return IntStream.range(0, ca.length).mapToDouble(i -> ca[i] * cb[i]).toArray();
     }
 
     record FresnelEllipseDimension(double center, double semiMajorAxis) { }

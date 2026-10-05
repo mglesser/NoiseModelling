@@ -15,6 +15,8 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+
 /**
  * Tests for Harmonoise prropagation model
  * Ref: Section 3 of Salomons, E., Van Maercke, D., Defrance, J.,&amp;De Roo, F. (2011). The Harmonoise sound propagation model.
@@ -73,13 +75,10 @@ public class AttenuationComputeOutputHarmonoiseTest {
      */
     @Test
     public void testHarmonoiseCase01() throws IOException {
-
+        // Load data and compute attenuation
         CutProfile cutProfile = loadCutProfile("case_01");
         AttenuationOutput output = computeHarmonoiseAttenuation(cutProfile);
         assert (output instanceof HarmonoiseAttenuationOutput);
-        HarmonoiseAttenuationOutput harmonoiseOutput = (HarmonoiseAttenuationOutput) output;
-
-
         //Assertion
         double[] referenceExcessAttenuation = {
                 6.036446469248293	,
@@ -110,8 +109,9 @@ public class AttenuationComputeOutputHarmonoiseTest {
                 1.457858769931665	,
                 4.259681093394079
         }; // plotdigitized from publication, 1/3 oct band 25Hz - 10kHz
-//        assertEquals(0, attenuation[0]);
-
+        for (int i = 0; i < output.aGlobal.length; i++) {
+            assertEquals(referenceExcessAttenuation[i+3], output.aGlobal[i], 0.6);
+        }
     }
 
     /**

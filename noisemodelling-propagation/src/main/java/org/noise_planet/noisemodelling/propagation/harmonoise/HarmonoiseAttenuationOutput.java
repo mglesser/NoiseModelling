@@ -23,7 +23,6 @@ import java.util.stream.IntStream;
  * @author Martin Glesser
  */
 public class HarmonoiseAttenuationOutput extends AttenuationOutput {
-    double excessAttenuation = 0;
     double[] diffractionAttenuation = new double[0];
     double[] groundAttenuation = new double[0];
 
