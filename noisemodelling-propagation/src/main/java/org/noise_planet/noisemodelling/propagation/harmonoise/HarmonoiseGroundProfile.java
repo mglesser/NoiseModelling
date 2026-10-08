@@ -19,12 +19,9 @@ import org.locationtech.jts.math.Vector2D;
 import org.noise_planet.noisemodelling.pathfinder.profilebuilder.CutProfile;
 import org.noise_planet.noisemodelling.pathfinder.profilebuilder.SurfaceAbsorption;
 
-import java.sql.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.stream.IntStream;
-import java.util.stream.Stream;
 
 import static java.lang.Math.*;
 
@@ -41,6 +38,7 @@ public class HarmonoiseGroundProfile {
     private Complex[][] reflectionCoefficient;
     private double sourceHeight;
     private double receiverHeight;
+
 
     /**
      * Initialize HarmonoiseGroundProfile object from CutProfile object.
@@ -61,11 +59,16 @@ public class HarmonoiseGroundProfile {
      */
     public HarmonoiseGroundProfile(CutProfile cutProfile, int nFreq, double radius){
         // Get the whole 2D profile including ground points
-        extractVertices(cutProfile);
+        extractGroundVertices(cutProfile);
         if(radius != 0) {
-            refine();
+            double dsr = cutProfile.getCutPoints().getFirst().getCoordinate()
+                    .distance(cutProfile.getCutPoints().getLast().getCoordinate());
+            refine(dsr);
             curve(radius);
         }
+        // The real source and real receiver ground points are replaced by respectively, the source and the receiver
+        vertices[0].setY(vertices[0].getY() + sourceHeight);
+        vertices[getNVertices() - 1].setY(vertices[getNVertices() - 1].getY() + receiverHeight);
         reflectionCoefficient = new Complex[getNVertices()-1][nFreq];
     }
 
@@ -74,19 +77,14 @@ public class HarmonoiseGroundProfile {
      *
      * @param cutProfile 3D profile from source to receiver
      */
-    private void extractVertices(CutProfile cutProfile){
-        double absoluteSourceHeight = cutProfile.getCutPoints().getFirst().getCoordinate().getZ();
-        double absoluteReceiverHeight = cutProfile.getCutPoints().getLast().getCoordinate().getZ();
+    private void extractGroundVertices(CutProfile cutProfile){
         // Extract top-elevation point, including ground points,
         List<Integer> indices = new ArrayList<>(0);
         vertices = cutProfile.computePts2DGround(0, indices).toArray(new Coordinate[0]);
         int nVertices = vertices.length;
         // source and receiver height from ground
-        sourceHeight = absoluteSourceHeight - vertices[0].getY();
-        receiverHeight = absoluteReceiverHeight - vertices[nVertices-1].getY();
-        // The real source and real receiver ground points are replaced by respectively, the source and the receiver
-        vertices[0].setY(absoluteSourceHeight);
-        vertices[nVertices - 1].setY(absoluteReceiverHeight);
+        sourceHeight = cutProfile.getCutPoints().getFirst().getCoordinate().getZ() - vertices[0].getY();
+        receiverHeight = cutProfile.getCutPoints().getLast().getCoordinate().getZ() - vertices[nVertices-1].getY();
         // Extract flow resistivity
         flowResistivity = indices.stream()
                 .mapToDouble(i -> cutProfile.cutPoints.get(i).groundCoefficient)
@@ -96,29 +94,34 @@ public class HarmonoiseGroundProfile {
 
     /**
      * Refine the segmentation of the profile according to section 2.5 of Salomons et al.
-     * TODO : refine flowResistivity vector
+     *
+     * @param dsr distance source-receiver
      */
-    private void refine(){
-        double absoluteSourceHeight = vertices[0].getY();
-        double absoluteReceiverHeight = vertices[getNVertices()-1].getY();
+    private void refine(double dsr){
         GeometryFactory geometryFactory = new GeometryFactory();
-        double dsr = vertices[0].distance(vertices[vertices.length - 1]);
         double maxSegmentLength = min( dsr/3 , max(50, dsr/20));
         Coordinate[] refinedVertices = new Coordinate[] {vertices[0]};
-        double[] refinedFlowResistivity = new double[0];
+        double[] refinedResistivity = new double[] {flowResistivity[0]};
         for (int k = 0; k < getNVertices() - 1; k++) {
+            // Refine current segment
             LineString segment = geometryFactory.createLineString(
-                    new Coordinate[]{getGroundVertex(k), getGroundVertex(k + 1)});
+                    new Coordinate[]{vertices[k], vertices[k + 1]});
             segment = (LineString) Densifier.densify(segment, maxSegmentLength);
-            Coordinate[] concat = new Coordinate[refinedVertices.length + segment.getCoordinates().length-1];
-            System.arraycopy(refinedVertices, 0, concat, 0, refinedVertices.length);
-            System.arraycopy(Arrays.copyOfRange(segment.getCoordinates(),1,segment.getCoordinates().length), 0, concat,
-                    refinedVertices.length,  segment.getCoordinates().length-1);
-            refinedVertices = concat;
+            Coordinate[] verticesConcat = new Coordinate[refinedVertices.length + segment.getCoordinates().length - 1];
+            System.arraycopy(refinedVertices, 0, verticesConcat, 0, refinedVertices.length);
+            System.arraycopy(Arrays.copyOfRange(segment.getCoordinates(), 1, segment.getCoordinates().length),
+                    0, verticesConcat, refinedVertices.length, segment.getCoordinates().length - 1);
+            refinedVertices = verticesConcat;
+            // Update flow resistivity vector accordingly
+            double[] resistivity = new double[segment.getCoordinates().length-1];
+            Arrays.fill(resistivity, flowResistivity[k]);
+            double[] resistivityConcat = new double[refinedResistivity.length + resistivity.length];
+            System.arraycopy(refinedResistivity, 0, resistivityConcat, 0, refinedResistivity.length);
+            System.arraycopy(resistivity,0, resistivityConcat, refinedResistivity.length, resistivity.length);
+            refinedResistivity = resistivityConcat;
         }
         vertices = refinedVertices;
-        vertices[0].setY(absoluteSourceHeight);
-        vertices[getNVertices() - 1].setY(absoluteReceiverHeight);
+        flowResistivity = refinedResistivity;
     }
 
     /**
@@ -126,19 +129,18 @@ public class HarmonoiseGroundProfile {
      * Ref: Salomons et al. (section 2.5)
      * Note: This implementation yield similar results to the one from CurvedProfileGenerator.applyTransformation.
      * However, it works only on the whole ground profile (from zGroundSource to zGroundReceiver).
-     * // TODO : Check against groundProfile vs. profile
      */
     private void curve(double radius){
         int nVertices = vertices.length;
-        Coordinate source = vertices[0];
-        Coordinate receiver = vertices[nVertices - 1];
+        Coordinate sourceGroundPoint = vertices[0];
+        Coordinate receiverGroundPoint = vertices[nVertices - 1];
         Coordinate[] curvedVertices;
         // Ground curvature
         double hm = (sourceHeight + receiverHeight) / 2;
-        double c0 = 2* (hm + radius); // Eq. 77
+        double c0 = 2 * (hm + radius); // Eq. 77
         Complex c = new Complex(0, c0); // Eq. 76
-        double xc = 0.5 * (source.getX() + receiver.getX());
-        double yc = 0.5 * (source.getY() + receiver.getY()) + hm;
+        double xc = 0.5 * (sourceGroundPoint.getX() + receiverGroundPoint.getX());
+        double yc = 0.5 * (sourceGroundPoint.getY() + receiverGroundPoint.getY()) + hm;
         Complex w0 = new Complex(xc, yc); // Eq. 75
         double deltaY = 0;
         curvedVertices = new Coordinate[nVertices];
@@ -147,7 +149,7 @@ public class HarmonoiseGroundProfile {
             Complex wPrim = c.multiply(w.subtract(w0)).divide(c.add(w.subtract(w0))); // Eq. 74
             // Create new coordinate with transformed z (incl. profile translation)
             if (i == 0) {
-                deltaY = source.getY() - wPrim.getImaginary();
+                deltaY = sourceGroundPoint.getY() - wPrim.getImaginary();
                 curvedVertices[i] =
                         new Coordinate(wPrim.getReal() + xc, vertices[i].getY() , vertices[i].getZ());
             } else {

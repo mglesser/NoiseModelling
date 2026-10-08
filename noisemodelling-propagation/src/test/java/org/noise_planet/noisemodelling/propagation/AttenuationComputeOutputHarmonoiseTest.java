@@ -128,7 +128,7 @@ public class AttenuationComputeOutputHarmonoiseTest {
     public void testHarmonoiseCase03() throws IOException {
         // Load data and compute attenuation
         CutProfile cutProfile = loadCutProfile("case_01");
-        AttenuationOutput output = computeHarmonoiseAttenuation(cutProfile, 0.2/340);
+        AttenuationOutput output = computeHarmonoiseAttenuation(cutProfile, 340/0.2);
         assert (output instanceof HarmonoiseAttenuationOutput);
         //Assertion
         double[] referenceExcessAttenuation = {
