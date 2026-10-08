@@ -104,16 +104,16 @@ public class HarmonoiseGroundProfile {
         GeometryFactory geometryFactory = new GeometryFactory();
         double dsr = vertices[0].distance(vertices[vertices.length - 1]);
         double maxSegmentLength = min( dsr/3 , max(50, dsr/20));
-        Coordinate[] refinedVertices = new Coordinate[0];
+        Coordinate[] refinedVertices = new Coordinate[] {vertices[0]};
         double[] refinedFlowResistivity = new double[0];
         for (int k = 0; k < getNVertices() - 1; k++) {
             LineString segment = geometryFactory.createLineString(
                     new Coordinate[]{getGroundVertex(k), getGroundVertex(k + 1)});
             segment = (LineString) Densifier.densify(segment, maxSegmentLength);
-            Coordinate[] concat = new Coordinate[refinedVertices.length + segment.getCoordinates().length];
+            Coordinate[] concat = new Coordinate[refinedVertices.length + segment.getCoordinates().length-1];
             System.arraycopy(refinedVertices, 0, concat, 0, refinedVertices.length);
-            System.arraycopy(segment.getCoordinates(), 0, concat,
-                    refinedVertices.length,  segment.getCoordinates().length);
+            System.arraycopy(Arrays.copyOfRange(segment.getCoordinates(),1,segment.getCoordinates().length), 0, concat,
+                    refinedVertices.length,  segment.getCoordinates().length-1);
             refinedVertices = concat;
         }
         vertices = refinedVertices;
