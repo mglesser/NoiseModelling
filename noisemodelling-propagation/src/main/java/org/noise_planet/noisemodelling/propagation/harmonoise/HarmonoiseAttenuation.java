@@ -186,7 +186,6 @@ public class HarmonoiseAttenuation {
     private void computeGroundAttenuation(int iSource, int iReceiver) {
 
         if (groundProfile.hasConvexSegment(iSource, iReceiver)){
-            ;
         } else {
             concaveGroundAttenuation(iSource, iReceiver);
         }
@@ -585,13 +584,13 @@ public class HarmonoiseAttenuation {
      */
     private double fresnelFunction(double x){
         double output;
-            if (x <= 1){
-                output = 0;
-            } else if (x >= 1){
-                output = 1;
-            } else {
-                output = 1 - 1/Math.PI * (Math.acos(x) - x * Math.sqrt(1 - Math.pow(x, 2)));
-            }
+        if (x <= -1){
+            output = 0;
+        } else if (x >= 1){
+            output = 1;
+        } else {
+            output = 1.0 - 1.0/Math.PI * (Math.acos(x) - x * Math.sqrt(1.0 - Math.pow(x, 2)));
+        }
         return output;
     }
 
@@ -640,7 +639,7 @@ public class HarmonoiseAttenuation {
         double dsp = dsr * localReceiverHeight / (localSourceHeight + localReceiverHeight);
         List<Double> frequency = scene.defaultCnossosParameters.getFrequenciesExact();
         double[] nf = frequency.stream()
-                .mapToDouble(f -> 32 * (1 - Math.exp(Math.pow(transitionFrequency,2)/Math.pow(f,2))))
+                .mapToDouble(f -> 32 * (1 - Math.exp(-Math.pow(transitionFrequency,2)/Math.pow(f,2))))
                 .toArray();
         double[] modifiedWeighting = new double[frequency.size()];
         FresnelEllipseDimension dimension;
