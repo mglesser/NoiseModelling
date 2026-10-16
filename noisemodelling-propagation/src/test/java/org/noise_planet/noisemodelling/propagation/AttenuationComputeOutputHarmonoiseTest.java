@@ -32,7 +32,6 @@ public class AttenuationComputeOutputHarmonoiseTest {
         URL url = AttenuationComputeOutputHarmonoiseTest.class.getResource("harmonoise/" + utName + ".json");
 
         //Out and computation settings
-        CutProfile cutProfile;
         Assertions.assertNotNull(url);
         try(InputStream inputStream = url.openStream()) {
             ObjectMapper mapper = new ObjectMapper();

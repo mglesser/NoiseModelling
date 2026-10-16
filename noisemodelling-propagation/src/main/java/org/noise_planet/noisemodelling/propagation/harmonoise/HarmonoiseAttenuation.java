@@ -636,7 +636,7 @@ public class HarmonoiseAttenuation {
         double localSourceHeight = groundProfile.getLocalOrdinate(iSource, iSeg);
         double localReceiverHeight = groundProfile.getLocalOrdinate(iReceiver, iSeg);
         double dsr = source.distance(receiver);
-        double dsp = dsr * localReceiverHeight / (localSourceHeight + localReceiverHeight);
+        double dsp = dsr * localSourceHeight / (localSourceHeight + localReceiverHeight);
         List<Double> frequency = scene.defaultCnossosParameters.getFrequenciesExact();
         double[] nf = frequency.stream()
                 .mapToDouble(f -> 32 * (1 - Math.exp(-Math.pow(transitionFrequency,2)/Math.pow(f,2))))
