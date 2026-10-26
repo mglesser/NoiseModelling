@@ -217,12 +217,12 @@ public class HarmonoiseAttenuation {
                     .toArray();
         }
         double[] concaveGroundAttenuation = new double[waveNumber.length];
+        double[] flatAttenuation = flatGroundAttenuation(geometricalWeightingFactor, coherenceFactor, modifiedFresnelWeighting);
+        double[] valleyAttenuation = valleyGroundAttenuation(geometricalWeightingFactor, coherenceFactor, modifiedFresnelWeighting);
         for (int i = 0; i < frequency.size(); i++) {
             double xg = nw[i] / Math.sqrt(1 + Math.pow(frequency.get(i) / transitionFrequency, 2));
             double fg = 1 - Math.exp(-1 / Math.pow(xg,2));
-            concaveGroundAttenuation[i] =
-                    fg * flatGroundAttenuation(geometricalWeightingFactor, coherenceFactor, modifiedFresnelWeighting)[i]
-                    + (1- fg) * valleyGroundAttenuation(geometricalWeightingFactor, coherenceFactor, modifiedFresnelWeighting)[i];
+            concaveGroundAttenuation[i] = fg * flatAttenuation[i] + (1- fg) * valleyAttenuation[i];
         }
         attenuationOutput.addGroundAttenuation(concaveGroundAttenuation);
     }
@@ -242,12 +242,28 @@ public class HarmonoiseAttenuation {
         int nbFreq = geometricalWeightingFactor[0].length;
         double[] flatGroundAttenuation = new double[nbFreq];
         Arrays.fill(flatGroundAttenuation, 0);
+        double[][] tmpAttenuation = new double[nbSeg][nbFreq];
         for (int iSeg = 0; iSeg < nbSeg; iSeg++) {
             int finalISeg = iSeg;
             double[] finalFlatGroundAttenuation = flatGroundAttenuation;
             flatGroundAttenuation = IntStream.range(0, nbFreq)
                     .mapToDouble(i -> finalFlatGroundAttenuation[i]
                             + modifiedFresnelWeighting[finalISeg][i] * 10 * Math.log10(
+                                    Math.pow(
+                                            groundProfile.getReflectionCoefficient(finalISeg, i)
+                                                    .multiply(geometricalWeightingFactor[finalISeg][i])
+                                                    .multiply(coherenceFactor[finalISeg][i])
+                                                    .add(1).abs(),2
+                                    ) + Math.pow(
+                                            groundProfile.getReflectionCoefficient(finalISeg, i)
+                                                    .multiply(geometricalWeightingFactor[finalISeg][i])
+                                                    .abs(),2
+                                    ) * (1 - Math.pow(coherenceFactor[finalISeg][i],2))
+                            )
+                    )
+                    .toArray();
+            tmpAttenuation[iSeg] = IntStream.range(0, nbFreq)
+                    .mapToDouble(i -> modifiedFresnelWeighting[finalISeg][i] * 10 * Math.log10(
                                     Math.pow(
                                             groundProfile.getReflectionCoefficient(finalISeg, i)
                                                     .multiply(geometricalWeightingFactor[finalISeg][i])
