@@ -242,28 +242,12 @@ public class HarmonoiseAttenuation {
         int nbFreq = geometricalWeightingFactor[0].length;
         double[] flatGroundAttenuation = new double[nbFreq];
         Arrays.fill(flatGroundAttenuation, 0);
-        double[][] tmpAttenuation = new double[nbSeg][nbFreq];
         for (int iSeg = 0; iSeg < nbSeg; iSeg++) {
             int finalISeg = iSeg;
             double[] finalFlatGroundAttenuation = flatGroundAttenuation;
             flatGroundAttenuation = IntStream.range(0, nbFreq)
                     .mapToDouble(i -> finalFlatGroundAttenuation[i]
                             + modifiedFresnelWeighting[finalISeg][i] * 10 * Math.log10(
-                                    Math.pow(
-                                            groundProfile.getReflectionCoefficient(finalISeg, i)
-                                                    .multiply(geometricalWeightingFactor[finalISeg][i])
-                                                    .multiply(coherenceFactor[finalISeg][i])
-                                                    .add(1).abs(),2
-                                    ) + Math.pow(
-                                            groundProfile.getReflectionCoefficient(finalISeg, i)
-                                                    .multiply(geometricalWeightingFactor[finalISeg][i])
-                                                    .abs(),2
-                                    ) * (1 - Math.pow(coherenceFactor[finalISeg][i],2))
-                            )
-                    )
-                    .toArray();
-            tmpAttenuation[iSeg] = IntStream.range(0, nbFreq)
-                    .mapToDouble(i -> modifiedFresnelWeighting[finalISeg][i] * 10 * Math.log10(
                                     Math.pow(
                                             groundProfile.getReflectionCoefficient(finalISeg, i)
                                                     .multiply(geometricalWeightingFactor[finalISeg][i])
@@ -334,15 +318,21 @@ public class HarmonoiseAttenuation {
         double distance = groundProfile.getImageVertex(iSource, iSeg).distance(groundProfile.getVertex(iReceiver));
         double hm = (groundProfile.getLocalOrdinate(iSource, iSeg)
                 + groundProfile.getLocalOrdinate(iReceiver, iSeg)) / 2;
+//        In the C++ implementation a different expression is used for hm :
+//        double hm = Math.max(groundProfile.getLocalOrdinate(iSource, iSeg),
+//                groundProfile.getLocalOrdinate(iReceiver, iSeg)) / 2;
         Complex[] groundImpedance = groundProfile.getGroundImpedance(iSeg, frequencies);
         Complex[] reflectionCoefficient = new Complex[frequencies.size()];
         for (int i = 0; i < frequencies.size(); i++) {
             Complex z = groundImpedance[i].multiply(Math.cos(angle));
             Complex planeWaveReflectionCoefficient = z.subtract(1).divide(z.add(1));
-            double kr = 2 * Math.PI * frequencies.get(i) / scene.defaultCnossosParameters.getCelerity() * distance;
+            double kr = waveNumber[i] * distance;
             Complex admittance = groundImpedance[i].reciprocal();
             Complex numericalDistance = admittance.multiply(Math.sqrt(kr))
                     .multiply(new Complex(0.5, 0.5));
+//            In the C++ implementation a different expression is used for the numerical distance :
+//            Complex numericalDistance = admittance.add(Math.cos(angle)).multiply(Math.sqrt(kr))
+//                    .multiply(new Complex(0.5, 0.5));
             double hG = scene.defaultCnossosParameters.celerity / frequencies.get(i) / 32;
             double nG = 1 - 0.7 * Math.exp(-hm / hG);
             reflectionCoefficient[i] = boundaryLossFactor(numericalDistance).pow(nG)
@@ -360,26 +350,36 @@ public class HarmonoiseAttenuation {
      * @param w numerical distance
      * @return boundary loss factor
      */
-    private Complex boundaryLossFactor(Complex w){
+    public static Complex boundaryLossFactor(Complex w){
         double x = w.getReal();
         double y = w.getImaginary();
         // Compute z = exp(-w^2) * erfc(-iw) for different value of the numerical distance
         Complex z;
         if ( Math.abs(x) > 3.9 || Math.abs(y) > 3){
+//            Complex w1 = new Complex(Math.abs(x), Math.abs(y));
+            Complex w1 = w;
             if ( Math.abs(x) > 6. || Math.abs(y) > 6.) {
-                z = new Complex(0, 1).multiply(w)
+                z = new Complex(0, 1).multiply(w1)
                         .multiply(
-                                w.pow(2).subtract(0.2752551).reciprocal().multiply(0.5124242)
-                                .add(w.pow(2).subtract(2.724745).reciprocal().multiply(0.05176536))
+                                w1.pow(2).subtract(0.2752551).reciprocal().multiply(0.5124242)
+                                .add(w1.pow(2).subtract(2.724745).reciprocal().multiply(0.05176536))
                         );
             } else {
-                z = new Complex(0, 1).multiply(w)
+                z = new Complex(0, 1).multiply(w1)
                         .multiply(
-                                w.pow(2).subtract(0.1901635).reciprocal().multiply(0.461313500)
-                                .add(w.pow(2).subtract(1.7844927).reciprocal().multiply(0.099992160))
-                                .add(w.pow(2).subtract(5.5253437).reciprocal().multiply(0.002883894))
+                                w1.pow(2).subtract(0.1901635).reciprocal().multiply(0.461313500)
+                                .add(w1.pow(2).subtract(1.7844927).reciprocal().multiply(0.099992160))
+                                .add(w1.pow(2).subtract(5.5253437).reciprocal().multiply(0.002883894))
                         );
             }
+//            if (x < 0) {z = z.conjugate();}
+//            if (y < 0) {
+//                z = new Complex(Math.cos(2*x*y), -Math.sin(2*x*y))
+//                        .multiply(2* Math.exp(y*y-x*x))
+//                        .subtract(z.conjugate());
+//            }
+
+
         } else {
             double h = 0.8;
             double a1 = Math.cos(2 * x * y);

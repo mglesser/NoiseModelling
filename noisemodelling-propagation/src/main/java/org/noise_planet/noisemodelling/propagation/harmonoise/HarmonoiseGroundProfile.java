@@ -11,6 +11,7 @@ package org.noise_planet.noisemodelling.propagation.harmonoise;
 
 import org.apache.commons.math3.complex.Complex;
 import org.locationtech.jts.algorithm.Angle;
+import org.locationtech.jts.algorithm.Intersection;
 import org.locationtech.jts.densify.Densifier;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
@@ -272,9 +273,12 @@ public class HarmonoiseGroundProfile {
         if (isConvexSegment(iSeg, iSource, iReceiver)) {
             throw new IllegalArgumentException("Reflexion angle cannot be computed for convex segments");
         } else {
+
+            Coordinate p = Intersection.intersection(getGroundVertex(iSeg), getGroundVertex(iSeg+1),
+                    getImageVertex(iSource, iSeg), getVertex(iReceiver));
+            Vector2D ps = new Vector2D(p, getVertex(iSource));
             Vector2D reflexionPlane = new Vector2D(getGroundVertex(iSeg), getGroundVertex(iSeg+1));
-            Vector2D imageSourceReceiverPlane = new Vector2D(this.getImageVertex(iSource, iSeg), vertices[iReceiver]);
-            return Math.PI / 2 - reflexionPlane.angle(imageSourceReceiverPlane);
+            return reflexionPlane.angle(ps) - Math.PI / 2;
         }
     }
 

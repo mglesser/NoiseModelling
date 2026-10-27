@@ -116,12 +116,54 @@ public class AttenuationComputeOutputHarmonoiseTest {
     }
 
     /**
+     * Test case 2 from Harmonoise publication (100 kPa s/m2 ground flow res. and
+     * non refracting atmosphere)
+     */
+    @Test
+    public void testHarmonoiseCase02() throws IOException {
+        // Load data and compute attenuation
+        CutProfile cutProfile = loadCutProfile("case_02");
+        AttenuationOutput output = computeHarmonoiseAttenuation(cutProfile, 0);
+        assert (output instanceof HarmonoiseAttenuationOutput);
+        //Assertion
+        double[] referenceExcessAttenuation = {
+                5.9122401847575	,
+                5.77367205542725	,
+                5.49653579676674	,
+                5.21939953810623	,
+                4.80369515011547	,
+                4.04157043879907	,
+                3.14087759815242	,
+                1.82448036951501	,
+                0.0230946882217076	,
+                -2.40184757505774	,
+                -4.89607390300231	,
+                -7.04387990762125	,
+                -8.15242494226328	,
+                -6.76674364896074	,
+                -3.92609699769053	,
+                -1.08545034642032	,
+                1.33949191685912	,
+                3.21016166281755	,
+                4.59584295612009	,
+                4.73441108545034	,
+                2.86374133949192	,
+                -3.37182448036952	,
+                -0.669745958429562	,
+                4.38799076212471	,
+                0.300230946882216	,
+                3.27944572748268	,
+                0.577367205542725	,
+        }; // plotdigitized from publication, 1/3 oct band 25Hz - 10kHz
+        assert(output.aGlobal.length !=0);
+        for (int i = 0; i < output.aGlobal.length; i++) {
+            assertEquals(referenceExcessAttenuation[i+3], output.aGlobal[i], 0.6);
+        }
+    }
+
+    /**
      * Test case 3 from Harmonoise publication (hard/rigid ground and
      * linear wind profile)
-     * Not tested:
-     * - diffraction attenuation
-     * - Fresnel weighting
-     * - modified Fresnel weighting
      */
     @Test
     public void testHarmonoiseCase03() throws IOException {
