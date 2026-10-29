@@ -62,10 +62,10 @@ public class SurfaceAbsorption {
             default:
                 // Ref: Delany M. E. and Bazley E. N., Acoustical properties of fibrous absorbent
                 // materials, Applied Acoustics 3, 1970, pp. 105-116
-                double s = Math.log(freq_l / sigma);
-                double x = 1. + 9.08 * Math.exp(-.75 * s);
-                double y = - 11.9 * Math.exp(-0.73 * s);
-                // Another fit giving similar results is sometimes found in the literature with:
+                double s = freq_l / sigma;
+                double x = 1. + 9.08 * Math.pow(s, -.75);
+                double y = 11.9 * Math.pow(s, -0.73);
+                // Another fit giving similar results is found in the literature with:
                 // x = 1 + 0.0571 * (rho_0 * s)^-0.754
                 // y = 0.0870 * (rho_0 * s)^-0.732
                 Z = new Complex(x, y);
