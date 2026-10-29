@@ -558,20 +558,16 @@ public class HarmonoiseAttenuation {
      * @return FresnelEllipseDimension record with center and semi major axis
      */
     private FresnelEllipseDimension fresnelEllipse(int iSeg, int iSource, int iReceiver, int iFreq, double fresnelParam){
-        Coordinate source = groundProfile.getVertex(iSource);
-        Coordinate receiver = groundProfile.getVertex(iReceiver);
-        Coordinate imageReceiver = groundProfile.getImageVertex(iReceiver, iSeg);
-        double srcRcvDistance = source.distance(receiver);
-        double srcImageReceiverDistance = source.distance(imageReceiver);
+        double dsr = groundProfile.getLocalAbscissa(iReceiver, iSeg, iSource);
         double localSourceHeight = groundProfile.getLocalOrdinate(iSource, iSeg);
         double localReceiverHeight = groundProfile.getLocalOrdinate(iReceiver, iSeg);
-        double _term = Math.sqrt(Math.pow(localSourceHeight + localReceiverHeight, 2) + Math.pow(srcImageReceiverDistance, 2));
+        double _term = Math.sqrt(Math.pow(localSourceHeight + localReceiverHeight, 2) + Math.pow(dsr, 2));
         double d = 2 * Math.PI / waveNumber[iFreq] / fresnelParam + _term; // Eq. 41
-        double denominator = Math.pow(d, 2) - Math.pow(srcRcvDistance, 2);
-        double center = srcRcvDistance / 2 * (1 + ( Math.pow(localSourceHeight,2) - Math.pow(localReceiverHeight,2))
+        double denominator = Math.pow(d, 2) - Math.pow(dsr, 2);
+        double center = dsr / 2 * (1 + ( Math.pow(localSourceHeight,2) - Math.pow(localReceiverHeight,2))
                 / denominator );
         double dsSquare = Math.pow(center, 2) + Math.pow(localSourceHeight,2);
-        double drSquare = Math.pow(srcRcvDistance - center, 2) + Math.pow(localReceiverHeight,2);
+        double drSquare = Math.pow(dsr - center, 2) + Math.pow(localReceiverHeight,2);
         double semiMajorAxis = 0.5 * Math.sqrt(
                 (Math.pow(d,4) + Math.pow(dsSquare - drSquare, 2) - 2 * Math.pow(d,2) * (dsSquare + drSquare))
                         / denominator);
@@ -638,7 +634,7 @@ public class HarmonoiseAttenuation {
         Coordinate receiver = groundProfile.getVertex(iReceiver);
         double localSourceHeight = groundProfile.getLocalOrdinate(iSource, iSeg);
         double localReceiverHeight = groundProfile.getLocalOrdinate(iReceiver, iSeg);
-        double dsr = source.distance(receiver);
+        double dsr = groundProfile.getLocalAbscissa(iReceiver, iSeg, iSource);
         double dsp = dsr * localSourceHeight / (localSourceHeight + localReceiverHeight);
         List<Double> frequency = scene.defaultCnossosParameters.getFrequenciesExact();
         double[] nf = frequency.stream()
