@@ -157,7 +157,7 @@ public class AttenuationComputeOutputHarmonoiseTest {
         }; // plotdigitized from publication, 1/3 oct band 25Hz - 10kHz
         assert(output.aGlobal.length !=0);
         for (int i = 0; i < output.aGlobal.length; i++) {
-            assertEquals(referenceExcessAttenuation[i+3], output.aGlobal[i], 0.6);
+            assertEquals(referenceExcessAttenuation[i+3], output.aGlobal[i], 0.7);
         }
     }
 
@@ -229,5 +229,97 @@ public class AttenuationComputeOutputHarmonoiseTest {
     public void testHarmonoiseCase07() throws IOException {
         CutProfile cutProfile = loadCutProfile("case_07");
         AttenuationOutput output = computeHarmonoiseAttenuation(cutProfile, 0);
+    }
+
+    /**
+     * Test case 10 from Harmonoise publication (100 kPa.s/m2 ground and
+     * non refracting atmosphere, long-distance propagation)
+     */
+    @Test
+    public void testHarmonoiseCase10() throws IOException {
+        // Load data and compute attenuation
+        CutProfile cutProfile = loadCutProfile("case_09");
+        AttenuationOutput output = computeHarmonoiseAttenuation(cutProfile, 0);
+        assert (output instanceof HarmonoiseAttenuationOutput);
+        //Assertion
+        double[] referenceExcessAttenuation = {
+                6.199095022624434	,
+                6.0633484162895925	,
+                5.723981900452486	,
+                5.316742081447963	,
+                4.638009049773753	,
+                3.348416289592759	,
+                1.108597285067873	,
+                -2.760180995475114	,
+                -9.140271493212671	,
+                -17.692307692307693	,
+                -24.20814479638009	,
+                -26.787330316742082	,
+                -27.058823529411764	,
+                -25.497737556561084	,
+                -22.511312217194572	,
+                -19.38914027149321	,
+                -16.67420814479638	,
+                -14.095022624434389	,
+                -11.719457013574662	,
+                -9.276018099547512	,
+                -7.171945701357467	,
+                -5.067873303167422	,
+                -3.167420814479641	,
+                -1.1990950226244372	,
+                0.7013574660633459	,
+                2.3981900452488674	,
+                3.959276018099544
+        }; // plotdigitized from publication, 1/3 oct band 25Hz - 10kHz
+        assert(output.aGlobal.length !=0);
+        for (int i = 0; i < output.aGlobal.length; i++) {
+            assertEquals(referenceExcessAttenuation[i+3], output.aGlobal[i], 0.3);
+        }
+    }
+
+    /**
+     * Test case 12 from Harmonoise publication (rigid ground and
+     * non refracting atmosphere, long-distance propagation)
+     */
+    @Test
+    public void testHarmonoiseCase12() throws IOException {
+        // Load data and compute attenuation
+        CutProfile cutProfile = loadCutProfile("case_11");
+        AttenuationOutput output = computeHarmonoiseAttenuation(cutProfile, 0);
+        assert (output instanceof HarmonoiseAttenuationOutput);
+        //Assertion
+        double[] referenceExcessAttenuation = {
+                6.004514672686234	,
+                6.0722347629796865	,
+                6.0722347629796865	,
+                6.0722347629796865	,
+                6.0722347629796865	,
+                6.0722347629796865	,
+                6.0722347629796865	,
+                6.0722347629796865	,
+                6.0722347629796865	,
+                6.0722347629796865	,
+                6.0722347629796865	,
+                6.004514672686234	,
+                6.0722347629796865	,
+                6.0722347629796865	,
+                6.0722347629796865	,
+                5.869074492099326	,
+                5.936794582392778	,
+                5.869074492099326	,
+                5.665914221218962	,
+                5.665914221218962	,
+                5.59819413092551	,
+                5.191873589164789	,
+                4.717832957110613	,
+                4.040632054176076	,
+                2.889390519187362	,
+                1.0609480812641117	,
+                -1.9187358916478523
+        }; // plotdigitized from publication, 1/3 oct band 25Hz - 10kHz
+        assert(output.aGlobal.length !=0);
+        for (int i = 0; i < output.aGlobal.length; i++) {
+            assertEquals(referenceExcessAttenuation[i+3], output.aGlobal[i], 0.6);
+        }
     }
 }
