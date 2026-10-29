@@ -19,7 +19,7 @@ public class HarmonoiseAttenuationOutputTest {
     public void boundaryLossFactorTest(){
         double[] magnitude = new double[]{0.001, 0.002, 0.004, 0.006, 0.01, 0.02, 0.04, 0.06, 0.1, 0.2, 0.4, 0.6,
                 1, 2, 4, 6, 10, 20};
-        double[] phaseAngle = new double[]{0, Math.PI/4, 80 * Math.PI / 180, Math.PI/2};
+        double[] phaseAngle = new double[]{0, Math.PI/4, Math.PI/2};
         double[][] boundaryLossFactor = new double[phaseAngle.length][magnitude.length];
         for (int i = 0; i < phaseAngle.length; i++){
             int finalI = i;
@@ -43,9 +43,27 @@ public class HarmonoiseAttenuationOutputTest {
                 -30.01464128843338	,
                 -36.67642752562225	,
                 -45.900439238653
-        }; // plotdigitized from Attenborough et al., distance from 0.01 to 10
+        }; // plotdigitized from a scan of Attenborough et al., distance from 0.01 to 10
         for (int i = 0; i < expected_0.length; i++) {
             assertEquals(expected_0[i], 20 * Math.log10( boundaryLossFactor[0][i+4]), 1.5);
+        }
+        double[] expected_45 = new double[]{
+                0.2773722627737243	,
+                0.2773722627737243	,
+                0.1751824817518255	,
+                0.2773722627737243	,
+                0.2773722627737243	,
+                0.1751824817518255	,
+                -0.3357664233576614	,
+                -0.9489051094890542	,
+                -3.1970802919708063	,
+                -12.802919708029194	,
+                -28.94890510948905	,
+                -36.613138686131386	,
+                -45.91240875912409
+        }; // plotdigitized from a scan of Attenborough et al., distance from 0.01 to 10
+        for (int i = 0; i < expected_45.length; i++) {
+            assertEquals(expected_45[i], 20 * Math.log10( boundaryLossFactor[1][i+4]), 1);
         }
         double[] expected_90 = new double[]{
                 0.19061583577713037	,
@@ -58,9 +76,9 @@ public class HarmonoiseAttenuationOutputTest {
                 6.6568914956011795	,
                 10.659824046920825	,
                 17.33137829912023
-        }; // plotdigitized from Attenborough et al., distance from 0.01 to 2
+        }; // plotdigitized from a scan of Attenborough et al., distance from 0.01 to 2
         for (int i = 0; i < expected_90.length; i++) {
-            assertEquals(expected_90[i], 20 * Math.log10( boundaryLossFactor[3][i+4]), 1);
+            assertEquals(expected_90[i], 20 * Math.log10( boundaryLossFactor[2][i+4]), 1);
         }
     }
 
