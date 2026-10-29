@@ -7,7 +7,7 @@
       "z" : 0.75
     },
     "zGround" : 0.0,
-    "groundCoefficient" : 200000,
+    "groundCoefficient" : 1000000,
     "sourcePk" : -1,
     "li" : 1.0,
     "orientation" : {

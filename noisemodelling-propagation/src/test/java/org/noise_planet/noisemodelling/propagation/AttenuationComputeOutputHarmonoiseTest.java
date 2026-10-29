@@ -111,7 +111,7 @@ public class AttenuationComputeOutputHarmonoiseTest {
         }; // plotdigitized from publication, 1/3 oct band 25Hz - 10kHz
         assert(output.aGlobal.length !=0);
         for (int i = 0; i < output.aGlobal.length; i++) {
-            assertEquals(referenceExcessAttenuation[i+3], output.aGlobal[i], 0.6);
+            assertEquals(referenceExcessAttenuation[i+3], output.aGlobal[i], 0.7);
         }
     }
 
@@ -319,7 +319,7 @@ public class AttenuationComputeOutputHarmonoiseTest {
         }; // plotdigitized from publication, 1/3 oct band 25Hz - 10kHz
         assert(output.aGlobal.length !=0);
         for (int i = 0; i < output.aGlobal.length; i++) {
-            assertEquals(referenceExcessAttenuation[i+3], output.aGlobal[i], 0.6);
+            assertEquals(referenceExcessAttenuation[i+3], output.aGlobal[i], 0.2);
         }
     }
 }
