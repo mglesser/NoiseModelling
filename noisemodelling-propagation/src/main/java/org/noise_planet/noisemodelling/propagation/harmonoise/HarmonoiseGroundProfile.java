@@ -241,11 +241,21 @@ public class HarmonoiseGroundProfile {
      * @return local abscissa (or local distance)
      */
     public double getLocalAbscissa(int iPoint, int iSeg, int iSource){
-        double thetaPoint;
-        thetaPoint = Angle.angleBetween(vertices[iPoint], getGroundVertex(iSeg + 1), getGroundVertex(iSeg));
-        double thetaSource = Angle.angleBetween(vertices[iSource], getGroundVertex(iSeg+1), getGroundVertex(iSeg));
-        return getGroundVertex(iSeg+1).distance(vertices[iSource]) * Math.cos(thetaSource)
-                - getGroundVertex(iSeg+1).distance(vertices[iPoint]) * Math.cos(thetaPoint);
+        if (iPoint == iSource){ return 0;}
+        else {
+            double thetaSource;
+            if (iPoint <= iSeg) {
+                thetaSource = Math.PI - Angle.angleBetween(vertices[iSource], getGroundVertex(iSeg), getGroundVertex(iSeg + 1));
+            } else {
+                thetaSource = Angle.angleBetween(vertices[iSource], getGroundVertex(iSeg + 1), getGroundVertex(iSeg));
+            }
+            double d = getLocalOrdinate(iSource, iSeg) / Math.tan(thetaSource);
+            if (iPoint > iSeg + 1) {
+                double thetaPoint = Angle.angleBetween(vertices[iPoint], getGroundVertex(iSeg + 1), getGroundVertex(iSeg));
+                d += getLocalOrdinate(iPoint, iSeg) / Math.tan(Math.PI - thetaPoint);
+            }
+            return d;
+        }
     }
 
     /**
