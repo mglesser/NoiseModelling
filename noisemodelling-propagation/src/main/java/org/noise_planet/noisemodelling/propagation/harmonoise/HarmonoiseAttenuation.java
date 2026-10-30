@@ -630,12 +630,15 @@ public class HarmonoiseAttenuation {
      * @return modified Fresnel weightings
      */
     private double[] modifiedFresnelWeighting(int iSeg, int iSource, int iReceiver, double transitionFrequency){
-        Coordinate source = groundProfile.getVertex(iSource);
-        Coordinate receiver = groundProfile.getVertex(iReceiver);
         double localSourceHeight = groundProfile.getLocalOrdinate(iSource, iSeg);
         double localReceiverHeight = groundProfile.getLocalOrdinate(iReceiver, iSeg);
         double dsr = groundProfile.getLocalAbscissa(iReceiver, iSeg, iSource);
-        double dsp = dsr * localSourceHeight / (localSourceHeight + localReceiverHeight);
+        double dsp;
+        if (localSourceHeight == 0 && localReceiverHeight == 0){
+            dsp = dsr/2;
+        } else {
+            dsp = dsr * localSourceHeight / (localSourceHeight + localReceiverHeight);
+        }
         List<Double> frequency = scene.defaultCnossosParameters.getFrequenciesExact();
         double[] nf = frequency.stream()
                 .mapToDouble(f -> 32 * (1 - Math.exp(-Math.pow(transitionFrequency,2)/Math.pow(f,2))))
