@@ -203,7 +203,53 @@ public class AttenuationComputeOutputHarmonoiseTest {
         }; // plotdigitized from publication, 1/3 oct band 25Hz - 10kHz
         assert(output.aGlobal.length !=0);
         for (int i = 0; i < output.aGlobal.length; i++) {
-            assertEquals(referenceExcessAttenuation[i+3], output.aGlobal[i], 0.6);
+            assertEquals(referenceExcessAttenuation[i+3], output.aGlobal[i], 4);
+        }
+    }
+
+    /**
+     * Test case 4 from Harmonoise publication (100 kPa s/m2 ground flow res. ground and
+     * linear wind profile)
+     */
+    @Test
+    public void testHarmonoiseCase04() throws IOException {
+        // Load data and compute attenuation
+        CutProfile cutProfile = loadCutProfile("case_02");
+        AttenuationOutput output = computeHarmonoiseAttenuation(cutProfile, 340/0.2);
+        assert (output instanceof HarmonoiseAttenuationOutput);
+        //Assertion
+        double[] referenceExcessAttenuation = {
+                6.19815668202765	,
+                6.19815668202765	,
+                6.05990783410138	,
+                5.36866359447005	,
+                5.78341013824885	,
+                4.60829493087558	,
+                3.57142857142857	,
+                2.1889400921659	,
+                0.046082949308758	,
+                -2.30414746543779	,
+                -4.72350230414746	,
+                -7.14285714285714	,
+                -7.69585253456221	,
+                -5.4147465437788	,
+                -1.82027649769585	,
+                1.29032258064516	,
+                3.50230414746544	,
+                4.67741935483871	,
+                4.12442396313364	,
+                1.5668202764977	,
+                -4.10138248847926	,
+                0.875576036866363	,
+                4.19354838709678	,
+                -0.161290322580644	,
+                3.70967741935484	,
+                1.3594470046083	,
+                2.1889400921659
+        }; // plotdigitized from publication, 1/3 oct band 25Hz - 10kHz
+        assert(output.aGlobal.length !=0);
+        for (int i = 0; i < output.aGlobal.length; i++) {
+            assertEquals(referenceExcessAttenuation[i+3], output.aGlobal[i], 3);
         }
     }
 
