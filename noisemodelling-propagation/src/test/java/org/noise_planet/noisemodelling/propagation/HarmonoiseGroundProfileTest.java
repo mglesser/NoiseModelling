@@ -85,12 +85,11 @@ public class HarmonoiseGroundProfileTest {
     @Test
     public void getLocalAbscissaTest(){
         // Input data
-        Coordinate origin = new Coordinate(2,-1);
         double d;
         // Test profile
         for (int i = 0; i < profile.getNVertices(); i++) {
              d = profile.getLocalAbscissa(i,2, 0);
-            assertEquals(origin.distance(projections[i]), d, 0.001);
+            assertEquals(projections[0].distance(projections[i]), d, 0.001);
         }
         // Test side effects - source = first point of the segment
         int i = 4;
@@ -149,6 +148,24 @@ public class HarmonoiseGroundProfileTest {
         }
     }
 
+    @Test
+    public void computeRadiusTest() throws IOException {
+        //Get specific test data
+        URL url09 = HarmonoiseGroundProfileTest.class.getResource("harmonoise/case_09.json");
+        CutProfile cutProfile09;
+        Assertions.assertNotNull(url09);
+        try(InputStream inputStream = url09.openStream()) {
+            ObjectMapper mapper = new ObjectMapper();
+            cutProfile09 = mapper.readValue(inputStream, CutProfile.class);
+        } catch (IOException e) {
+            throw new IOException(e);
+        }
+        // Create ground profile
+        HarmonoiseGroundProfile profile09 = new HarmonoiseGroundProfile(cutProfile09, 1);
+        double radius = profile09.computeRadius(0, 1, 0.1,340);
+        assertEquals(0.177, 340 / radius, 0.001);
+    }
+
 
     /**
      * Compare the Cnossos and Harmonoise ground curvature implementations.
@@ -164,6 +181,7 @@ public class HarmonoiseGroundProfileTest {
         // Get curved profile through Harmonoise implementation
         double d = cutProfile.getSource().coordinate.distance(cutProfile.getReceiver().coordinate);
         double radius = Math.max(1000, 8 * d);
-        HarmonoiseGroundProfile harmonoiseProfile = new HarmonoiseGroundProfile(cutProfile, 1, radius);
+        HarmonoiseGroundProfile harmonoiseProfile = new HarmonoiseGroundProfile(cutProfile, 1,
+                340/radius, 0, 0, 340);
     }
 }

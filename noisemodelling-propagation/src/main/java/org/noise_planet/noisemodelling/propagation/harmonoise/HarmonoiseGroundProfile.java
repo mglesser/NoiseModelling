@@ -40,27 +40,30 @@ public class HarmonoiseGroundProfile {
     private double sourceHeight;
     private double receiverHeight;
 
-
     /**
      * Initialize HarmonoiseGroundProfile object from CutProfile object.
      *
      * @param cutProfile 3D profile from source to receiver
      * @param nFreq size of the frequency axis
      */
-    public HarmonoiseGroundProfile(CutProfile cutProfile, int nFreq){
-        this(cutProfile, nFreq, 0);
+    public HarmonoiseGroundProfile(CutProfile cutProfile, int nFreq){this(cutProfile, nFreq,
+            0, 0, 0, 0);
     }
 
     /**
-     * Initialize HarmonoiseGroundProfile object from CutProfile object.
+     * Initialize HarmonoiseGroundProfile object from CutProfile object considering
+     * log/lin celerity profile: c(z) = c0 + az + bln(1+z/z0).
      *
      * @param cutProfile 3D profile from source to receiver
      * @param nFreq size of the frequency axis
-     * @param radius curvature radius of the equivalent ground profile
+     * @param aMeteo linear component of the lin/log celerity profile
+     * @param bMeteo log component of the lin/log celerity profile
      */
-    public HarmonoiseGroundProfile(CutProfile cutProfile, int nFreq, double radius){
+    public HarmonoiseGroundProfile(CutProfile cutProfile, int nFreq, double aMeteo, double bMeteo,
+                                   double z0, double c0){
         // Get the whole 2D profile including ground points
         extractGroundVertices(cutProfile);
+        double radius = computeRadius(aMeteo, bMeteo, z0, c0);
         if(radius != 0) {
             double dsr = cutProfile.getCutPoints().getFirst().getCoordinate()
                     .distance(cutProfile.getCutPoints().getLast().getCoordinate());
@@ -123,6 +126,51 @@ public class HarmonoiseGroundProfile {
         }
         vertices = refinedVertices;
         flowResistivity = refinedResistivity;
+    }
+
+    /**
+     * Compute the equivalent curvature radius Rc of the linear profile c(z) = c0 + c0/Rc.z)
+     * that agree as much as possible with the lin/log profile c(z) = c0 + az + bln(1+z/z0)
+     * according to Harmonoise methodology.
+     * Ref: Salomons et al section 3
+     *
+     * @return the equivalent curvature radius
+     */
+    public double computeRadius(double aMeteo, double bMeteo, double z0, double c0){
+        if (aMeteo ==0 && bMeteo ==0) { return 0;}
+        double hm = (sourceHeight + receiverHeight) / 2;
+        // Linear component of the celerity profile
+        double ra = aMeteo / c0;
+        // Logarithmic component of the celerity profile
+        double rb;
+        if(bMeteo != 0){
+            if (bMeteo > 0) {
+                double vDist = sourceHeight - receiverHeight;
+                double hDist = vertices[vertices.length-1].getX() - vertices[0].getX();
+                double tan = vDist / hDist ;
+                double distance = Math.sqrt(vDist*vDist + hDist*hDist);
+                double k = Math.sqrt(bMeteo / (2 * Math.PI * c0));
+                double gamma = (1 + 4 * k * k)/(1 - 4 * k * k);
+                double a = 1 + tan * tan - gamma * gamma;
+                double b = hm * (1 + tan * tan);
+                double c = b * hm + distance * distance / 4;
+                double d = b * b - a * c;
+                if (d > 0){
+                    rb = (Math.sqrt(d) - b) / c ;
+                    if (rb < 0){ rb = 0; }
+                }
+                else {
+                    rb = 0;
+                }
+            }
+            else {
+                rb = 0;
+            }
+        }
+        else {
+            rb = bMeteo / c0 / hm ;
+        }
+        return Math.max(1 / (ra + rb), 1.0e-6 );
     }
 
     /**
@@ -241,21 +289,11 @@ public class HarmonoiseGroundProfile {
      * @return local abscissa (or local distance)
      */
     public double getLocalAbscissa(int iPoint, int iSeg, int iSource){
-        if (iPoint == iSource){ return 0;}
-        else {
-            double thetaSource;
-            if (iPoint <= iSeg) {
-                thetaSource = Math.PI - Angle.angleBetween(vertices[iSource], getGroundVertex(iSeg), getGroundVertex(iSeg + 1));
-            } else {
-                thetaSource = Angle.angleBetween(vertices[iSource], getGroundVertex(iSeg + 1), getGroundVertex(iSeg));
-            }
-            double d = getLocalOrdinate(iSource, iSeg) / Math.tan(thetaSource);
-            if (iPoint > iSeg + 1) {
-                double thetaPoint = Angle.angleBetween(vertices[iPoint], getGroundVertex(iSeg + 1), getGroundVertex(iSeg));
-                d += getLocalOrdinate(iPoint, iSeg) / Math.tan(Math.PI - thetaPoint);
-            }
-            return d;
-        }
+        double thetaPoint;
+        thetaPoint = Angle.angleBetween(vertices[iPoint], getGroundVertex(iSeg + 1), getGroundVertex(iSeg));
+        double thetaSource = Angle.angleBetween(vertices[iSource], getGroundVertex(iSeg+1), getGroundVertex(iSeg));
+        return getGroundVertex(iSeg+1).distance(vertices[iSource]) * Math.cos(thetaSource)
+                - getGroundVertex(iSeg+1).distance(vertices[iPoint]) * Math.cos(thetaPoint);
     }
 
     /**

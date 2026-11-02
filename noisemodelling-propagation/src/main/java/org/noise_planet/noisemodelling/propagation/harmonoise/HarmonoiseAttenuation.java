@@ -44,7 +44,11 @@ public class HarmonoiseAttenuation {
                 .stream()
                 .mapToDouble(f -> 2 * Math.PI * f / scene.defaultCnossosParameters.getCelerity())
                 .toArray();
-        this.groundProfile = new HarmonoiseGroundProfile(output.getCutProfile(), waveNumber.length, scene.defaultCnossosParameters.getRadius());
+        this.groundProfile = new HarmonoiseGroundProfile(output.getCutProfile(), waveNumber.length,
+                scene.defaultCnossosParameters.getaMeteo(),
+                scene.defaultCnossosParameters.getbMeteo(),
+                scene.defaultCnossosParameters.getZ0(),
+                scene.defaultCnossosParameters.getCelerity());
     }
 
     /**

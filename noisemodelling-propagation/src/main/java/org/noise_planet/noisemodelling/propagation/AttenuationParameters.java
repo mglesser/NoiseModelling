@@ -67,7 +67,9 @@ public class AttenuationParameters {
 
     // Harmonoise specific
     // TODO : attenuationParameters child per propagation model
-    double radius = 0;
+    double aMeteo = 0; // linear component of the lin/log celerity profile
+    double bMeteo = 0; // log component of the lin/log celerity profile
+    double z0 = 0;
 
     public AttenuationParameters() {
         this(false);
@@ -518,11 +520,27 @@ public class AttenuationParameters {
         return new double[0];
     }
 
-    public void setRadius(double radius) {
-        this.radius = radius;
+    public double getaMeteo() {
+        return aMeteo;
     }
 
-    public double getRadius() {
-        return radius;
+    public void setaMeteo(double aMeteo) {
+        this.aMeteo = aMeteo;
+    }
+
+    public double getbMeteo() {
+        return bMeteo;
+    }
+
+    public void setbMeteo(double bMeteo) {
+        this.bMeteo = bMeteo;
+    }
+
+    public double getZ0() {
+        return z0;
+    }
+
+    public void setZ0(double z0) {
+        this.z0 = z0;
     }
 }

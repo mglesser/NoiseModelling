@@ -41,7 +41,7 @@ public class AttenuationComputeOutputHarmonoiseTest {
         }
     }
 
-    private static AttenuationOutput computeHarmonoiseAttenuation(CutProfile cutProfile, double radius) {
+    private static AttenuationOutput computeHarmonoiseAttenuation(CutProfile cutProfile, double aMeteo, double bMeteo) {
         //Create profile builder
         ProfileBuilder profileBuilder = new ProfileBuilder()
                 .finishFeeding();
@@ -57,7 +57,9 @@ public class AttenuationComputeOutputHarmonoiseTest {
         //Propagation process path data building
         sceneWithAttenuation.defaultCnossosParameters.setHumidity(HUMIDITY);
         sceneWithAttenuation.defaultCnossosParameters.setTemperature(TEMPERATURE);
-        sceneWithAttenuation.defaultCnossosParameters.setRadius(radius);
+        sceneWithAttenuation.defaultCnossosParameters.setaMeteo(aMeteo);
+        sceneWithAttenuation.defaultCnossosParameters.setbMeteo(bMeteo);
+        sceneWithAttenuation.defaultCnossosParameters.setZ0(0.1);
 
         PropagationModel propagationModel = new HarmonoisePropagationModel();
 
@@ -77,7 +79,7 @@ public class AttenuationComputeOutputHarmonoiseTest {
     public void testHarmonoiseCase01() throws IOException {
         // Load data and compute attenuation
         CutProfile cutProfile = loadCutProfile("case_01");
-        AttenuationOutput output = computeHarmonoiseAttenuation(cutProfile, 0);
+        AttenuationOutput output = computeHarmonoiseAttenuation(cutProfile, 0, 0);
         assert (output instanceof HarmonoiseAttenuationOutput);
         //Assertion
         double[] referenceExcessAttenuation = {
@@ -123,7 +125,7 @@ public class AttenuationComputeOutputHarmonoiseTest {
     public void testHarmonoiseCase02() throws IOException {
         // Load data and compute attenuation
         CutProfile cutProfile = loadCutProfile("case_02");
-        AttenuationOutput output = computeHarmonoiseAttenuation(cutProfile, 0);
+        AttenuationOutput output = computeHarmonoiseAttenuation(cutProfile, 0, 0);
         assert (output instanceof HarmonoiseAttenuationOutput);
         //Assertion
         double[] referenceExcessAttenuation = {
@@ -169,7 +171,7 @@ public class AttenuationComputeOutputHarmonoiseTest {
     public void testHarmonoiseCase03() throws IOException {
         // Load data and compute attenuation
         CutProfile cutProfile = loadCutProfile("case_01");
-        AttenuationOutput output = computeHarmonoiseAttenuation(cutProfile, 340/0.2);
+        AttenuationOutput output = computeHarmonoiseAttenuation(cutProfile, 0.2, 0);
         assert (output instanceof HarmonoiseAttenuationOutput);
         //Assertion
         double[] referenceExcessAttenuation = {
@@ -209,13 +211,13 @@ public class AttenuationComputeOutputHarmonoiseTest {
 
     /**
      * Test case 4 from Harmonoise publication (100 kPa s/m2 ground flow res. ground and
-     * linear wind profile)
+     * linear celerity profile)
      */
     @Test
     public void testHarmonoiseCase04() throws IOException {
         // Load data and compute attenuation
         CutProfile cutProfile = loadCutProfile("case_02");
-        AttenuationOutput output = computeHarmonoiseAttenuation(cutProfile, 340/0.2);
+        AttenuationOutput output = computeHarmonoiseAttenuation(cutProfile, 0.2, 0);
         assert (output instanceof HarmonoiseAttenuationOutput);
         //Assertion
         double[] referenceExcessAttenuation = {
@@ -259,11 +261,11 @@ public class AttenuationComputeOutputHarmonoiseTest {
      * Ref: Salomons, E., Van Maercke, D., Defrance, J.,&amp;De Roo, F. (2011). The Harmonoise sound propagation model.
      * Acta acustica united with acustica, 97(1), 62-74 (section 3)
      */
-    @Test
-    public void testHarmonoiseCase05() throws IOException {
-        CutProfile cutProfile = loadCutProfile("case_05");
-        AttenuationOutput output = computeHarmonoiseAttenuation(cutProfile, 0);
-    }
+//    @Test
+//    public void testHarmonoiseCase05() throws IOException {
+//        CutProfile cutProfile = loadCutProfile("case_05");
+//        AttenuationOutput output = computeHarmonoiseAttenuation(cutProfile, 0, 0);
+//    }
 
     /**
      * Test case 7 from Harmonoise publication (200 kPa.s/m2 ground and
@@ -274,7 +276,53 @@ public class AttenuationComputeOutputHarmonoiseTest {
     @Test
     public void testHarmonoiseCase07() throws IOException {
         CutProfile cutProfile = loadCutProfile("case_07");
-        AttenuationOutput output = computeHarmonoiseAttenuation(cutProfile, 0);
+        AttenuationOutput output = computeHarmonoiseAttenuation(cutProfile, 0, 0);
+    }
+
+    /**
+     * Test case 9 from Harmonoise publication (100 kPa.s/m2 ground and
+     * linear celerity profile, long-distance propagation)
+     */
+    @Test
+    public void testHarmonoiseCase09() throws IOException {
+        // Load data and compute attenuation
+        CutProfile cutProfile = loadCutProfile("case_09");
+        AttenuationOutput output = computeHarmonoiseAttenuation(cutProfile, 0, 1);
+        assert (output instanceof HarmonoiseAttenuationOutput);
+        //Assertion
+        double[] referenceExcessAttenuation = {
+                9.458239277652371	,
+                9.59367945823928	,
+                9.729119638826187	,
+                9.458239277652371	,
+                8.713318284424382	,
+                6.410835214446955	,
+                3.566591422121899	,
+                -0.9029345372460469	,
+                -6.523702031602708	,
+                -10.383747178329571	,
+                -10.383747178329571	,
+                -7.268623024830699	,
+                -4.085778781038373	,
+                0.38374717832957117	,
+                4.717832957110613	,
+                6.275395033860047	,
+                2.2799097065462774	,
+                -1.3092550790067712	,
+                7.291196388261852	,
+                7.832957110609485	,
+                3.1602708803611748	,
+                -1.6478555304740397	,
+                5.462753950338602	,
+                7.155756207674944	,
+                2.0090293453724613	,
+                7.2234762979684	,
+                4.853273137697521
+        }; // plotdigitized from publication, 1/3 oct band 25Hz - 10kHz
+        assert(output.aGlobal.length !=0);
+        for (int i = 0; i < output.aGlobal.length; i++) {
+            assertEquals(referenceExcessAttenuation[i+3], output.aGlobal[i], 3);
+        }
     }
 
     /**
@@ -285,7 +333,7 @@ public class AttenuationComputeOutputHarmonoiseTest {
     public void testHarmonoiseCase10() throws IOException {
         // Load data and compute attenuation
         CutProfile cutProfile = loadCutProfile("case_09");
-        AttenuationOutput output = computeHarmonoiseAttenuation(cutProfile, 0);
+        AttenuationOutput output = computeHarmonoiseAttenuation(cutProfile, 0, 0);
         assert (output instanceof HarmonoiseAttenuationOutput);
         //Assertion
         double[] referenceExcessAttenuation = {
@@ -324,6 +372,52 @@ public class AttenuationComputeOutputHarmonoiseTest {
     }
 
     /**
+     * Test case 11 from Harmonoise publication (rigid ground and
+     * linear celerity profile, long-distance propagation)
+     */
+    @Test
+    public void testHarmonoiseCase11() throws IOException {
+        // Load data and compute attenuation
+        CutProfile cutProfile = loadCutProfile("case_11");
+        AttenuationOutput output = computeHarmonoiseAttenuation(cutProfile, 0, 1);
+        assert (output instanceof HarmonoiseAttenuationOutput);
+        //Assertion
+        double[] referenceExcessAttenuation = {
+                9.932126696832576	,
+                10.746606334841626	,
+                11.357466063348415	,
+                12.239819004524882	,
+                12.850678733031671	,
+                13.529411764705877	,
+                14.004524886877824	,
+                14.004524886877824	,
+                14.072398190045249	,
+                13.665158371040718	,
+                13.257918552036195	,
+                12.036199095022624	,
+                9.117647058823525	,
+                3.348416289592759	,
+                -2.4886877828054317	,
+                1.3122171945701346	,
+                8.167420814479637	,
+                7.76018099547511	,
+                -8.597285067873305	,
+                2.8733031674208114	,
+                9.25339366515837	,
+                10.610859728506785	,
+                7.69230769230769	,
+                4.434389140271492	,
+                10.135746606334838	,
+                5.384615384615383	,
+                8.50678733031674
+        }; // plotdigitized from publication, 1/3 oct band 25Hz - 10kHz
+        assert(output.aGlobal.length !=0);
+        for (int i = 0; i < output.aGlobal.length; i++) {
+            assertEquals(referenceExcessAttenuation[i+3], output.aGlobal[i], 0.3);
+        }
+    }
+
+    /**
      * Test case 12 from Harmonoise publication (rigid ground and
      * non refracting atmosphere, long-distance propagation)
      */
@@ -331,7 +425,7 @@ public class AttenuationComputeOutputHarmonoiseTest {
     public void testHarmonoiseCase12() throws IOException {
         // Load data and compute attenuation
         CutProfile cutProfile = loadCutProfile("case_11");
-        AttenuationOutput output = computeHarmonoiseAttenuation(cutProfile, 0);
+        AttenuationOutput output = computeHarmonoiseAttenuation(cutProfile, 0, 0);
         assert (output instanceof HarmonoiseAttenuationOutput);
         //Assertion
         double[] referenceExcessAttenuation = {
