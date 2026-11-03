@@ -22,6 +22,7 @@ public class Graph2D {
     private double yMax;
     private double[] xTicks;
     private double[] yTicks;
+    private String[] legend = new String[0];
 
     /**
      * Create Graph2D object with default parameters
@@ -65,7 +66,10 @@ public class Graph2D {
             // Ticks
             drawTicks(sb);
             plot(sb);
-            legend(sb);
+            drawAxisLabel(sb);
+            if (legend.length > 0) {
+                drawLegend(sb);
+            }
             // Footer
             sb.append("</svg> \n");
             // Write file
@@ -126,9 +130,10 @@ public class Graph2D {
                 );
             }
         }
+
     }
 
-    private void legend(StringBuilder sb){
+    private void drawAxisLabel(StringBuilder sb){
         sb.append(String.format(
                 Locale.ROOT,
                 "<text x=\"%f\" y=\"%d\" text-anchor=\"middle\" style=\"stroke:none; fill:black\">Frequency [Hz]</text>\n",
@@ -139,6 +144,23 @@ public class Graph2D {
                 "<text x=\"%d\" y=\"%f\" transform=\"rotate(-90, %d, %f)\" text-anchor=\"middle\" style=\"stroke:none; fill:black\">Excess attenuation [dB]</text>\n",
                 5, margin + (dHeight -2*margin-textMargin)/2.0, 12, margin + (dHeight -2*margin-textMargin)/2.0)
         );
+    }
+
+    private void drawLegend(StringBuilder sb){
+        for (int j = 0; j < y.length; j++) {
+            int ypx = dHeight - margin - textMargin - 20 - (y.length - 1 - j) * 15;
+            sb.append(String.format(
+                    Locale.ROOT,
+                    "<line x1=\"%d\" y1=\"%d\" x2=\"%d\" y2=\"%d\" style=\"fill:none; stroke-width:1; stroke:%s\"/>\n",
+                    margin + textMargin + 15, ypx,
+                    margin + textMargin + 35, ypx, colors[j])
+            );
+            sb.append(String.format(
+                    Locale.ROOT,
+                    "<text x=\"%d\" y=\"%d\" dominant-baseline=\"middle\" style=\"stroke:none; fill:black; font-size:smaller\">%s</text>\n",
+                    margin + textMargin + 40, ypx, legend[j])
+            );
+        }
     }
 
     /**
@@ -194,5 +216,7 @@ public class Graph2D {
         yTicks = ticks;
     }
 
-
+    public void legend(String... legend){
+        this.legend = legend;
+    }
 }

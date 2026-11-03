@@ -65,4 +65,8 @@
 <line x1="365.680585" y1="86.930001" x2="380.000000" y2="78.811196" style="fill:none; stroke-width:1; stroke:rgb(130,166,173)"/>
 <text x="210.000000" y="295" text-anchor="middle" style="stroke:none; fill:black">Frequency [Hz]</text>
 <text x="5" y="140.000000" transform="rotate(-90, 12, 140.000000)" text-anchor="middle" style="stroke:none; fill:black">Excess attenuation [dB]</text>
+<line x1="55" y1="225" x2="75" y2="225" style="fill:none; stroke-width:1; stroke:rgb(232,126,77)"/>
+<text x="80" y="225" dominant-baseline="middle" style="stroke:none; fill:black; font-size:smaller">Salomons 2011</text>
+<line x1="55" y1="240" x2="75" y2="240" style="fill:none; stroke-width:1; stroke:rgb(130,166,173)"/>
+<text x="80" y="240" dominant-baseline="middle" style="stroke:none; fill:black; font-size:smaller">NoiseModelling</text>
 </svg> 

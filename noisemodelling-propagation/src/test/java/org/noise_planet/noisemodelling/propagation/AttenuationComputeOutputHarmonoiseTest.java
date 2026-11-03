@@ -118,6 +118,7 @@ public class AttenuationComputeOutputHarmonoiseTest {
         Graph2D plot = new Graph2D(DEFAULT_FREQUENCIES_THIRD_OCTAVE,
                 Arrays.copyOfRange(referenceExcessAttenuation, 3, referenceExcessAttenuation.length),
                 output.aGlobal);
+        plot.legend("Salomons 2011", "NoiseModelling");
         plot.draw(rootDir + "/Docs/images/Validation/Harmonoise/case01.svg");
         for (int i = 0; i < output.aGlobal.length; i++) {
             assertEquals(referenceExcessAttenuation[i+3], output.aGlobal[i], 0.7);
@@ -168,6 +169,7 @@ public class AttenuationComputeOutputHarmonoiseTest {
         Graph2D plot = new Graph2D(DEFAULT_FREQUENCIES_THIRD_OCTAVE,
                 Arrays.copyOfRange(referenceExcessAttenuation, 3, referenceExcessAttenuation.length),
                 output.aGlobal);
+        plot.legend("Salomons 2011", "NoiseModelling");
         plot.draw(rootDir + "/Docs/images/Validation/Harmonoise/case02.svg");
         for (int i = 0; i < output.aGlobal.length; i++) {
             assertEquals(referenceExcessAttenuation[i+3], output.aGlobal[i], 0.7);
@@ -218,6 +220,7 @@ public class AttenuationComputeOutputHarmonoiseTest {
         Graph2D plot = new Graph2D(DEFAULT_FREQUENCIES_THIRD_OCTAVE,
                 Arrays.copyOfRange(referenceExcessAttenuation, 3, referenceExcessAttenuation.length),
                 output.aGlobal);
+        plot.legend("Salomons 2011", "NoiseModelling");
         plot.draw(rootDir + "/Docs/images/Validation/Harmonoise/case03.svg");
         for (int i = 0; i < output.aGlobal.length; i++) {
             assertEquals(referenceExcessAttenuation[i+3], output.aGlobal[i], 4);
@@ -268,6 +271,7 @@ public class AttenuationComputeOutputHarmonoiseTest {
         Graph2D plot = new Graph2D(DEFAULT_FREQUENCIES_THIRD_OCTAVE,
                 Arrays.copyOfRange(referenceExcessAttenuation, 3, referenceExcessAttenuation.length),
                 output.aGlobal);
+        plot.legend("Salomons 2011", "NoiseModelling");
         plot.draw(rootDir + "/Docs/images/Validation/Harmonoise/case04.svg");
         for (int i = 0; i < output.aGlobal.length; i++) {
             assertEquals(referenceExcessAttenuation[i+3], output.aGlobal[i], 3);
@@ -342,6 +346,7 @@ public class AttenuationComputeOutputHarmonoiseTest {
         Graph2D plot = new Graph2D(DEFAULT_FREQUENCIES_THIRD_OCTAVE,
                 Arrays.copyOfRange(referenceExcessAttenuation, 3, referenceExcessAttenuation.length),
                 output.aGlobal);
+        plot.legend("Salomons 2011", "NoiseModelling");
         plot.draw(rootDir + "/Docs/images/Validation/Harmonoise/case09.svg");
         for (int i = 0; i < output.aGlobal.length; i++) {
             assertEquals(referenceExcessAttenuation[i+3], output.aGlobal[i], 3);
@@ -392,6 +397,7 @@ public class AttenuationComputeOutputHarmonoiseTest {
         Graph2D plot = new Graph2D(DEFAULT_FREQUENCIES_THIRD_OCTAVE,
                 Arrays.copyOfRange(referenceExcessAttenuation, 3, referenceExcessAttenuation.length),
                 output.aGlobal);
+        plot.legend("Salomons 2011", "NoiseModelling");
         plot.draw(rootDir + "/Docs/images/Validation/Harmonoise/case10.svg");
         for (int i = 0; i < output.aGlobal.length; i++) {
             assertEquals(referenceExcessAttenuation[i+3], output.aGlobal[i], 0.3);
@@ -442,6 +448,7 @@ public class AttenuationComputeOutputHarmonoiseTest {
         Graph2D plot = new Graph2D(DEFAULT_FREQUENCIES_THIRD_OCTAVE,
                 Arrays.copyOfRange(referenceExcessAttenuation, 3, referenceExcessAttenuation.length),
                 output.aGlobal);
+        plot.legend("Salomons 2011", "NoiseModelling");
         plot.draw(rootDir + "/Docs/images/Validation/Harmonoise/case11.svg");
         for (int i = 0; i < output.aGlobal.length; i++) {
             assertEquals(referenceExcessAttenuation[i+3], output.aGlobal[i], 0.3);
@@ -492,6 +499,7 @@ public class AttenuationComputeOutputHarmonoiseTest {
         Graph2D plot = new Graph2D(DEFAULT_FREQUENCIES_THIRD_OCTAVE,
                 Arrays.copyOfRange(referenceExcessAttenuation, 3, referenceExcessAttenuation.length),
                 output.aGlobal);
+        plot.legend("Salomons 2011", "NoiseModelling");
         plot.draw(rootDir + "/Docs/images/Validation/Harmonoise/case12.svg");
         for (int i = 0; i < output.aGlobal.length; i++) {
             assertEquals(referenceExcessAttenuation[i+3], output.aGlobal[i], 0.2);
