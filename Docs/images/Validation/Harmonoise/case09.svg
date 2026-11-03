@@ -1,0 +1,68 @@
+<svg height="300" width="400">
+<rect width="400" height="300" x="0" y="0" style="fill:white; stroke:none"/>
+<rect width="340" height="240" x="40" y="20" style="fill:none; stroke-width:1;stroke:black"/>
+<line x1="40.000000" y1="260.000000" x2="45.000000" y2="260.000000" style="fill:none; stroke-width:1; stroke:black"/>
+<text x="35.000000" y="260.000000" text-anchor="end" style="stroke:none; fill:black; font-size:smaller">-30</text>
+<line x1="40.000000" y1="206.666667" x2="45.000000" y2="206.666667" style="fill:none; stroke-width:1; stroke:black"/>
+<text x="35.000000" y="206.666667" text-anchor="end" style="stroke:none; fill:black; font-size:smaller">-20</text>
+<line x1="40.000000" y1="153.333333" x2="45.000000" y2="153.333333" style="fill:none; stroke-width:1; stroke:black"/>
+<text x="35.000000" y="153.333333" text-anchor="end" style="stroke:none; fill:black; font-size:smaller">-10</text>
+<line x1="40.000000" y1="100.000000" x2="45.000000" y2="100.000000" style="fill:none; stroke-width:1; stroke:black"/>
+<text x="35.000000" y="100.000000" text-anchor="end" style="stroke:none; fill:black; font-size:smaller">0</text>
+<line x1="40.000000" y1="46.666667" x2="45.000000" y2="46.666667" style="fill:none; stroke-width:1; stroke:black"/>
+<text x="35.000000" y="46.666667" text-anchor="end" style="stroke:none; fill:black; font-size:smaller">10</text>
+<line x1="84.480167" y1="260.000000" x2="84.480167" y2="255.000000" style="fill:none; stroke-width:1; stroke:black"/>
+<text x="84.480167" y="275.000000" text-anchor="middle" style="stroke:none; fill:black; font-size:smaller">1e+02</text>
+<line x1="232.240084" y1="260.000000" x2="232.240084" y2="255.000000" style="fill:none; stroke-width:1; stroke:black"/>
+<text x="232.240084" y="275.000000" text-anchor="middle" style="stroke:none; fill:black; font-size:smaller">1e+03</text>
+<line x1="380.000000" y1="260.000000" x2="380.000000" y2="255.000000" style="fill:none; stroke-width:1; stroke:black"/>
+<text x="380.000000" y="275.000000" text-anchor="middle" style="stroke:none; fill:black; font-size:smaller">1e+04</text>
+<line x1="40.000000" y1="49.556057" x2="54.830743" y2="53.528969" style="fill:none; stroke-width:1; stroke:rgb(232,126,77)"/>
+<line x1="54.830743" y1="53.528969" x2="70.160752" y2="65.808879" style="fill:none; stroke-width:1; stroke:rgb(232,126,77)"/>
+<line x1="70.160752" y1="65.808879" x2="84.480167" y2="80.978179" style="fill:none; stroke-width:1; stroke:rgb(232,126,77)"/>
+<line x1="84.480167" y1="80.978179" x2="98.799582" y2="104.815651" style="fill:none; stroke-width:1; stroke:rgb(232,126,77)"/>
+<line x1="98.799582" y1="104.815651" x2="114.640919" y2="134.793078" style="fill:none; stroke-width:1; stroke:rgb(232,126,77)"/>
+<line x1="114.640919" y1="134.793078" x2="128.960334" y2="155.379985" style="fill:none; stroke-width:1; stroke:rgb(232,126,77)"/>
+<line x1="128.960334" y1="155.379985" x2="143.279749" y2="155.379985" style="fill:none; stroke-width:1; stroke:rgb(232,126,77)"/>
+<line x1="143.279749" y1="155.379985" x2="158.110493" y2="138.765989" style="fill:none; stroke-width:1; stroke:rgb(232,126,77)"/>
+<line x1="158.110493" y1="138.765989" x2="173.440501" y2="121.790820" style="fill:none; stroke-width:1; stroke:rgb(232,126,77)"/>
+<line x1="173.440501" y1="121.790820" x2="187.759916" y2="97.953348" style="fill:none; stroke-width:1; stroke:rgb(232,126,77)"/>
+<line x1="187.759916" y1="97.953348" x2="202.590660" y2="74.838224" style="fill:none; stroke-width:1; stroke:rgb(232,126,77)"/>
+<line x1="202.590660" y1="74.838224" x2="217.920668" y2="66.531226" style="fill:none; stroke-width:1; stroke:rgb(232,126,77)"/>
+<line x1="217.920668" y1="66.531226" x2="232.240084" y2="87.840482" style="fill:none; stroke-width:1; stroke:rgb(232,126,77)"/>
+<line x1="232.240084" y1="87.840482" x2="246.559499" y2="106.982694" style="fill:none; stroke-width:1; stroke:rgb(232,126,77)"/>
+<line x1="246.559499" y1="106.982694" x2="262.400835" y2="61.113619" style="fill:none; stroke-width:1; stroke:rgb(232,126,77)"/>
+<line x1="262.400835" y1="61.113619" x2="276.720251" y2="58.224229" style="fill:none; stroke-width:1; stroke:rgb(232,126,77)"/>
+<line x1="276.720251" y1="58.224229" x2="291.039666" y2="83.145222" style="fill:none; stroke-width:1; stroke:rgb(232,126,77)"/>
+<line x1="291.039666" y1="83.145222" x2="305.870409" y2="108.788563" style="fill:none; stroke-width:1; stroke:rgb(232,126,77)"/>
+<line x1="305.870409" y1="108.788563" x2="321.200418" y2="70.865312" style="fill:none; stroke-width:1; stroke:rgb(232,126,77)"/>
+<line x1="321.200418" y1="70.865312" x2="335.519833" y2="61.835967" style="fill:none; stroke-width:1; stroke:rgb(232,126,77)"/>
+<line x1="335.519833" y1="61.835967" x2="350.350576" y2="89.285177" style="fill:none; stroke-width:1; stroke:rgb(232,126,77)"/>
+<line x1="350.350576" y1="89.285177" x2="365.680585" y2="61.474793" style="fill:none; stroke-width:1; stroke:rgb(232,126,77)"/>
+<line x1="365.680585" y1="61.474793" x2="380.000000" y2="74.115877" style="fill:none; stroke-width:1; stroke:rgb(232,126,77)"/>
+<line x1="40.000000" y1="41.471866" x2="54.830743" y2="62.123901" style="fill:none; stroke-width:1; stroke:rgb(130,166,173)"/>
+<line x1="54.830743" y1="62.123901" x2="70.160752" y2="84.078686" style="fill:none; stroke-width:1; stroke:rgb(130,166,173)"/>
+<line x1="70.160752" y1="84.078686" x2="84.480167" y2="114.317868" style="fill:none; stroke-width:1; stroke:rgb(130,166,173)"/>
+<line x1="84.480167" y1="114.317868" x2="98.799582" y2="153.889084" style="fill:none; stroke-width:1; stroke:rgb(130,166,173)"/>
+<line x1="98.799582" y1="153.889084" x2="114.640919" y2="179.331242" style="fill:none; stroke-width:1; stroke:rgb(130,166,173)"/>
+<line x1="114.640919" y1="179.331242" x2="128.960334" y2="181.806625" style="fill:none; stroke-width:1; stroke:rgb(130,166,173)"/>
+<line x1="128.960334" y1="181.806625" x2="143.279749" y2="168.570733" style="fill:none; stroke-width:1; stroke:rgb(130,166,173)"/>
+<line x1="143.279749" y1="168.570733" x2="158.110493" y2="147.050767" style="fill:none; stroke-width:1; stroke:rgb(130,166,173)"/>
+<line x1="158.110493" y1="147.050767" x2="173.440501" y2="123.899317" style="fill:none; stroke-width:1; stroke:rgb(130,166,173)"/>
+<line x1="173.440501" y1="123.899317" x2="187.759916" y2="97.833713" style="fill:none; stroke-width:1; stroke:rgb(130,166,173)"/>
+<line x1="187.759916" y1="97.833713" x2="202.590660" y2="75.532149" style="fill:none; stroke-width:1; stroke:rgb(130,166,173)"/>
+<line x1="202.590660" y1="75.532149" x2="217.920668" y2="67.623508" style="fill:none; stroke-width:1; stroke:rgb(130,166,173)"/>
+<line x1="217.920668" y1="67.623508" x2="232.240084" y2="89.959362" style="fill:none; stroke-width:1; stroke:rgb(130,166,173)"/>
+<line x1="232.240084" y1="89.959362" x2="246.559499" y2="105.464576" style="fill:none; stroke-width:1; stroke:rgb(130,166,173)"/>
+<line x1="246.559499" y1="105.464576" x2="262.400835" y2="61.775088" style="fill:none; stroke-width:1; stroke:rgb(130,166,173)"/>
+<line x1="262.400835" y1="61.775088" x2="276.720251" y2="60.639027" style="fill:none; stroke-width:1; stroke:rgb(130,166,173)"/>
+<line x1="276.720251" y1="60.639027" x2="291.039666" y2="84.746367" style="fill:none; stroke-width:1; stroke:rgb(130,166,173)"/>
+<line x1="291.039666" y1="84.746367" x2="305.870409" y2="112.158152" style="fill:none; stroke-width:1; stroke:rgb(130,166,173)"/>
+<line x1="305.870409" y1="112.158152" x2="321.200418" y2="70.567994" style="fill:none; stroke-width:1; stroke:rgb(130,166,173)"/>
+<line x1="321.200418" y1="70.567994" x2="335.519833" y2="64.343431" style="fill:none; stroke-width:1; stroke:rgb(130,166,173)"/>
+<line x1="335.519833" y1="64.343431" x2="350.350576" y2="90.142169" style="fill:none; stroke-width:1; stroke:rgb(130,166,173)"/>
+<line x1="350.350576" y1="90.142169" x2="365.680585" y2="62.816555" style="fill:none; stroke-width:1; stroke:rgb(130,166,173)"/>
+<line x1="365.680585" y1="62.816555" x2="380.000000" y2="73.134848" style="fill:none; stroke-width:1; stroke:rgb(130,166,173)"/>
+<text x="210.000000" y="295" text-anchor="middle" style="stroke:none; fill:black">Frequency [Hz]</text>
+<text x="5" y="140.000000" transform="rotate(-90, 12, 140.000000)" text-anchor="middle" style="stroke:none; fill:black">Excess attenuation [dB]</text>
+</svg> 

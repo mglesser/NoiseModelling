@@ -11,6 +11,7 @@ import org.noise_planet.noisemodelling.propagation.harmonoise.HarmonoisePropagat
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -26,6 +27,8 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class AttenuationComputeOutputHarmonoiseTest {
     private static final double HUMIDITY = 70;
     private static final double TEMPERATURE = 10;
+    double[] DEFAULT_FREQUENCIES_THIRD_OCTAVE = new double[] {50, 63, 80, 100, 125, 160, 200, 250, 315, 400, 500, 630, 800, 1000, 1250, 1600, 2000, 2500, 3150, 4000, 5000, 6300, 8000, 10000};
+    String rootDir = Paths.get(System.getProperty("user.dir")).getParent().toString();
 
     public static CutProfile loadCutProfile(String utName) throws IOException {
         //Get test data
@@ -112,6 +115,10 @@ public class AttenuationComputeOutputHarmonoiseTest {
                 4.259681093394079
         }; // plotdigitized from publication, 1/3 oct band 25Hz - 10kHz
         assert(output.aGlobal.length !=0);
+        Graph2D plot = new Graph2D(DEFAULT_FREQUENCIES_THIRD_OCTAVE,
+                Arrays.copyOfRange(referenceExcessAttenuation, 3, referenceExcessAttenuation.length),
+                output.aGlobal);
+        plot.draw(rootDir + "/Docs/images/Validation/Harmonoise/case01.svg");
         for (int i = 0; i < output.aGlobal.length; i++) {
             assertEquals(referenceExcessAttenuation[i+3], output.aGlobal[i], 0.7);
         }
@@ -158,6 +165,10 @@ public class AttenuationComputeOutputHarmonoiseTest {
                 0.577367205542725	,
         }; // plotdigitized from publication, 1/3 oct band 25Hz - 10kHz
         assert(output.aGlobal.length !=0);
+        Graph2D plot = new Graph2D(DEFAULT_FREQUENCIES_THIRD_OCTAVE,
+                Arrays.copyOfRange(referenceExcessAttenuation, 3, referenceExcessAttenuation.length),
+                output.aGlobal);
+        plot.draw(rootDir + "/Docs/images/Validation/Harmonoise/case02.svg");
         for (int i = 0; i < output.aGlobal.length; i++) {
             assertEquals(referenceExcessAttenuation[i+3], output.aGlobal[i], 0.7);
         }
@@ -204,6 +215,10 @@ public class AttenuationComputeOutputHarmonoiseTest {
                 3.64055299539171
         }; // plotdigitized from publication, 1/3 oct band 25Hz - 10kHz
         assert(output.aGlobal.length !=0);
+        Graph2D plot = new Graph2D(DEFAULT_FREQUENCIES_THIRD_OCTAVE,
+                Arrays.copyOfRange(referenceExcessAttenuation, 3, referenceExcessAttenuation.length),
+                output.aGlobal);
+        plot.draw(rootDir + "/Docs/images/Validation/Harmonoise/case03.svg");
         for (int i = 0; i < output.aGlobal.length; i++) {
             assertEquals(referenceExcessAttenuation[i+3], output.aGlobal[i], 4);
         }
@@ -250,6 +265,10 @@ public class AttenuationComputeOutputHarmonoiseTest {
                 2.1889400921659
         }; // plotdigitized from publication, 1/3 oct band 25Hz - 10kHz
         assert(output.aGlobal.length !=0);
+        Graph2D plot = new Graph2D(DEFAULT_FREQUENCIES_THIRD_OCTAVE,
+                Arrays.copyOfRange(referenceExcessAttenuation, 3, referenceExcessAttenuation.length),
+                output.aGlobal);
+        plot.draw(rootDir + "/Docs/images/Validation/Harmonoise/case04.svg");
         for (int i = 0; i < output.aGlobal.length; i++) {
             assertEquals(referenceExcessAttenuation[i+3], output.aGlobal[i], 3);
         }
@@ -320,6 +339,10 @@ public class AttenuationComputeOutputHarmonoiseTest {
                 4.853273137697521
         }; // plotdigitized from publication, 1/3 oct band 25Hz - 10kHz
         assert(output.aGlobal.length !=0);
+        Graph2D plot = new Graph2D(DEFAULT_FREQUENCIES_THIRD_OCTAVE,
+                Arrays.copyOfRange(referenceExcessAttenuation, 3, referenceExcessAttenuation.length),
+                output.aGlobal);
+        plot.draw(rootDir + "/Docs/images/Validation/Harmonoise/case09.svg");
         for (int i = 0; i < output.aGlobal.length; i++) {
             assertEquals(referenceExcessAttenuation[i+3], output.aGlobal[i], 3);
         }
@@ -366,6 +389,10 @@ public class AttenuationComputeOutputHarmonoiseTest {
                 3.959276018099544
         }; // plotdigitized from publication, 1/3 oct band 25Hz - 10kHz
         assert(output.aGlobal.length !=0);
+        Graph2D plot = new Graph2D(DEFAULT_FREQUENCIES_THIRD_OCTAVE,
+                Arrays.copyOfRange(referenceExcessAttenuation, 3, referenceExcessAttenuation.length),
+                output.aGlobal);
+        plot.draw(rootDir + "/Docs/images/Validation/Harmonoise/case10.svg");
         for (int i = 0; i < output.aGlobal.length; i++) {
             assertEquals(referenceExcessAttenuation[i+3], output.aGlobal[i], 0.3);
         }
@@ -412,6 +439,10 @@ public class AttenuationComputeOutputHarmonoiseTest {
                 8.50678733031674
         }; // plotdigitized from publication, 1/3 oct band 25Hz - 10kHz
         assert(output.aGlobal.length !=0);
+        Graph2D plot = new Graph2D(DEFAULT_FREQUENCIES_THIRD_OCTAVE,
+                Arrays.copyOfRange(referenceExcessAttenuation, 3, referenceExcessAttenuation.length),
+                output.aGlobal);
+        plot.draw(rootDir + "/Docs/images/Validation/Harmonoise/case11.svg");
         for (int i = 0; i < output.aGlobal.length; i++) {
             assertEquals(referenceExcessAttenuation[i+3], output.aGlobal[i], 0.3);
         }
@@ -458,6 +489,10 @@ public class AttenuationComputeOutputHarmonoiseTest {
                 -1.9187358916478523
         }; // plotdigitized from publication, 1/3 oct band 25Hz - 10kHz
         assert(output.aGlobal.length !=0);
+        Graph2D plot = new Graph2D(DEFAULT_FREQUENCIES_THIRD_OCTAVE,
+                Arrays.copyOfRange(referenceExcessAttenuation, 3, referenceExcessAttenuation.length),
+                output.aGlobal);
+        plot.draw(rootDir + "/Docs/images/Validation/Harmonoise/case12.svg");
         for (int i = 0; i < output.aGlobal.length; i++) {
             assertEquals(referenceExcessAttenuation[i+3], output.aGlobal[i], 0.2);
         }
