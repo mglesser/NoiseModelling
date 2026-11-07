@@ -725,6 +725,7 @@ public class HarmonoiseAttenuation {
         double phaseDiff = 0;
         FresnelEllipseDimension dimension;
         for (int i = 0; i < frequency.size(); i++) {
+            phaseDiffPrevious = maxPhaseDiff;
             for (int k = iSource; k < iReceiver; k++) {
                 if (groundProfile.isConvexSegment(k, iSource, iReceiver)){
                     continue;
@@ -735,7 +736,6 @@ public class HarmonoiseAttenuation {
                 if (fresnelWeighting(k, iSource, iReceiver,xi1, xi2) == 0){
                     continue;
                 }
-                phaseDiffPrevious = phaseDiff;
                 phaseDiff = phaseDifference(k, iSource, iReceiver, i);
                 if (phaseDiff > maxPhaseDiff){
                     maxPhaseDiff = phaseDiff;
@@ -748,7 +748,7 @@ public class HarmonoiseAttenuation {
                     fMin = frequency.getLast() ;
                 } else {
                     fMin = frequency.get(i-1) + (frequency.get(i) - frequency.get(i-1))
-                            * (Math.PI/2 - phaseDiffPrevious) / (phaseDiff - phaseDiffPrevious) ;
+                            * (Math.PI/2 - phaseDiffPrevious) / (maxPhaseDiff - phaseDiffPrevious) ;
                 }
             }
             if (maxPhaseDiff > Math.PI) {
@@ -758,7 +758,7 @@ public class HarmonoiseAttenuation {
                     fMax = frequency.get(frequency.size()-2) * 2 ;
                 } else {
                     fMax = frequency.get(i-1) + (frequency.get(i) - frequency.get(i-1))
-                            * (Math.PI - phaseDiffPrevious) / (phaseDiff - phaseDiffPrevious) ;
+                            * (Math.PI - phaseDiffPrevious) / (maxPhaseDiff - phaseDiffPrevious) ;
                 }
                 break;
             }
