@@ -12,7 +12,6 @@ package org.noise_planet.noisemodelling.propagation.harmonoise;
 import org.apache.commons.math3.complex.Complex;
 import org.locationtech.jts.algorithm.Angle;
 import org.locationtech.jts.geom.Coordinate;
-import org.noise_planet.noisemodelling.propagation.Graph2D;
 import org.noise_planet.noisemodelling.propagation.SceneWithAttenuation;
 
 import java.util.Arrays;
@@ -207,7 +206,7 @@ public class HarmonoiseAttenuation {
         double[][] coherenceFactor = new double[groundProfile.getNVertices()-1][waveNumber.length];
         double[][] modifiedFresnelWeighting = new double[groundProfile.getNVertices()-1][waveNumber.length];
         double[] nw = new double[waveNumber.length];
-        Arrays.fill(nw, 1);
+        Arrays.fill(nw, 0);
         // Computation
         List<Double> frequency = scene.defaultCnossosParameters.getFrequenciesExact();
         double transitionFrequency = transitionFrequency(iSource, iReceiver);
@@ -218,30 +217,9 @@ public class HarmonoiseAttenuation {
             double[] finalNw = nw;
             int finalK = k;
             nw = IntStream.range(0, waveNumber.length)
-                    .mapToDouble(i -> finalNw[i] * modifiedFresnelWeighting[finalK][i])
+                    .mapToDouble(i -> finalNw[i] + modifiedFresnelWeighting[finalK][i])
                     .toArray();
         }
-        // debug
-        Graph2D plot = new Graph2D(
-            frequency.stream().mapToDouble(f -> f).toArray(),
-            modifiedFresnelWeighting[0],
-            modifiedFresnelWeighting[1], modifiedFresnelWeighting[2]
-        );
-        plot.legend("w1", "w2", "w3");
-        plot.yTicks(new double[]{0, 0.2, 0.4, 0.6, 0.8, 1, 1.2});
-        plot.axis(50, 10000, 0, 1.2);
-        plot.draw("/home/glesser/Documents/03_tmp_local/202610/case11_fresnelWeights.svg");
-
-        Graph2D plot1 = new Graph2D(
-                frequency.stream().mapToDouble(f -> f).toArray(),
-                Arrays.stream(geometricalWeightingFactor[0]).mapToDouble(d -> 10 * Math.log10(Math.pow(d.add(1).abs(), 2))).toArray(),
-                Arrays.stream(geometricalWeightingFactor[1]).mapToDouble(d -> 10 * Math.log10(Math.pow(d.add(1).abs(), 2))).toArray(),
-                Arrays.stream(geometricalWeightingFactor[2]).mapToDouble(d -> 10 * Math.log10(Math.pow(d.add(1).abs(), 2))).toArray()
-        );
-        plot1.legend("d1", "d2", "d3");
-//        plot1.yTicks(new double[]{0, 0.2, 0.4, 0.6, 0.8, 1, 1.2});
-//        plot1.axis(50, 10000, 0, 1.2);
-        plot1.draw("/home/glesser/Documents/03_tmp_local/202610/case11_geomWeightingFactor.svg");
 
         double[] concaveGroundAttenuation = new double[waveNumber.length];
         double[] flatAttenuation = flatGroundAttenuation(geometricalWeightingFactor, coherenceFactor, modifiedFresnelWeighting);
@@ -721,8 +699,8 @@ public class HarmonoiseAttenuation {
         double fMin = 0;
         double fMax = 0;
         double maxPhaseDiff = 0;
-        double phaseDiffPrevious = 0;
-        double phaseDiff = 0;
+        double phaseDiffPrevious;
+        double phaseDiff;
         FresnelEllipseDimension dimension;
         for (int i = 0; i < frequency.size(); i++) {
             phaseDiffPrevious = maxPhaseDiff;
