@@ -15,6 +15,7 @@ public class Graph2D {
     private final String[] colors = new String[]{
             "rgb(232,126,77)", // orange
             "rgb(130,166,173)", // dark blue-green
+            "rgb(161,26,77)", // magenta
     };
     private double xMin;
     private double xMax;
@@ -49,7 +50,7 @@ public class Graph2D {
     public void draw(String path){
         try (FileWriter writer = new FileWriter(path)){
             // Header
-            StringBuilder sb = new StringBuilder(String.format("<svg height=\"%d\" width=\"%d\">\n",
+            StringBuilder sb = new StringBuilder(String.format("<svg height=\"%d\" width=\"%d\" xmlns=\"http://www.w3.org/2000/svg\">\n",
                     dHeight, dWidth));
             // White background
             sb.append(String.format(
@@ -96,7 +97,7 @@ public class Graph2D {
             );
             sb.append(String.format(
                     Locale.ROOT,
-                    "<text x=\"%f\" y=\"%f\" text-anchor=\"end\" style=\"stroke:none; fill:black; font-size:smaller\">%.0f</text>\n",
+                    "<text x=\"%f\" y=\"%f\" text-anchor=\"end\" style=\"stroke:none; fill:black; font-size:smaller\">%.1f</text>\n",
                     (double) margin + textMargin - 5, y, yTick)
             );
         }
@@ -170,7 +171,7 @@ public class Graph2D {
      * @return y coordinate in the graph
      */
     private double getYLin(double yValue){
-        return dHeight - (margin + textMargin) - (dHeight -2*margin-textMargin) * (yValue - yMin) / (yMax - yMin);
+        return dHeight - (margin + textMargin) - (dHeight - 2.0 * margin-textMargin) * (yValue - yMin) / (yMax - yMin);
     }
 
     /**
@@ -180,7 +181,7 @@ public class Graph2D {
      * @return x coordinate in the graph
      */
     private double getXLog(double xValue){
-        return margin + textMargin + (dWidth-2*margin-textMargin) * (Math.log10(xValue) - Math.log10(xMin))
+        return margin + textMargin + (dWidth-2.0*margin-textMargin) * (Math.log10(xValue) - Math.log10(xMin))
                 / (Math.log10(xMax) - Math.log10(xMin));
     }
 
