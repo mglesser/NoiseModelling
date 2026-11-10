@@ -202,15 +202,15 @@ public class HarmonoiseAttenuation {
             groundProfile.setReflectionCoefficient(k, sphericalWaveReflectionCoefficient(k, iSource, iReceiver));
         }
         // Initialization
-        Complex[][] geometricalWeightingFactor = new Complex[groundProfile.getNVertices()-1][waveNumber.length];
-        double[][] coherenceFactor = new double[groundProfile.getNVertices()-1][waveNumber.length];
-        double[][] modifiedFresnelWeighting = new double[groundProfile.getNVertices()-1][waveNumber.length];
+        Complex[][] geometricalWeightingFactor = new Complex[iReceiver-iSource][waveNumber.length];
+        double[][] coherenceFactor = new double[iReceiver-iSource][waveNumber.length];
+        double[][] modifiedFresnelWeighting = new double[iReceiver-iSource][waveNumber.length];
         double[] nw = new double[waveNumber.length];
         Arrays.fill(nw, 0);
         // Computation
         List<Double> frequency = scene.defaultCnossosParameters.getFrequenciesExact();
         double transitionFrequency = transitionFrequency(iSource, iReceiver);
-        for (int k = iSource; k < iReceiver; k++) {
+        for (int k = 0; k < iReceiver - iSource; k++) {
             geometricalWeightingFactor[k] = geometricalWeightingFactor(k, iSource, iReceiver);
             coherenceFactor[k] = coherenceFactor(k, iSource, iReceiver);
             modifiedFresnelWeighting[k] = modifiedFresnelWeighting(k, iSource, iReceiver, transitionFrequency);
