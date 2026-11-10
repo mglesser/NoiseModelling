@@ -289,13 +289,12 @@ public class HarmonoiseGroundProfile {
         double x2 = vertices[iSeg+1].getX();
         double y1 = getGroundVertex(iSeg).getY();
         double y2 = getGroundVertex(iSeg+1).getY();
-        // Segment line equation: y = mx + c
-        double m = (y2 - y1) / (x2 - x1);
-        double c = (x2*y1 - x1*y2) / (x2-x1);
-        // Image vertex coordinates
-        double d = (x0 + (y0 - c) * m ) / (1 + m*m);
-        double xi = 2*d - x0;
-        double yi = 2*d*m - y0 + 2*c;
+        double distance = getGroundVertex(iSeg).distance(getGroundVertex(iSeg+1));
+        double xn = (y1 - y2) / distance;
+        double yn = (x2 - x1) / distance;
+        double d = (x0 - x1) * xn + (y0 - y1) * yn;
+        double xi = x0 - 2 * d * xn ;
+        double yi = y0 - 2 * d * yn;
         return new Coordinate(xi, yi);
     }
 
@@ -376,7 +375,7 @@ public class HarmonoiseGroundProfile {
     public boolean hasConvexSegment(int iSource, int iReceiver){
         boolean isConvex = false;
         // Loop on segments
-        for (int i = 0; i < vertices.length - 2; i++) {
+        for (int i = iSource; i < iReceiver - 1; i++) {
 
             if (isConvexSegment(i, iSource, iReceiver)){
                 isConvex = true;
