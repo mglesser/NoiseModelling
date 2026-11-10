@@ -102,8 +102,11 @@ public class HarmonoiseAttenuation {
      * @param point diffraction point
      */
     private void computeDiffractionAttenuation(Coordinate source, Coordinate receiver, Coordinate point) {
-        computeDiffractionAttenuation(source, receiver, point, new Complex[0]);
+        Diffraction diffraction = computeDiffraction(source, receiver, point);
+        attenuationOutput.addDiffractionAttenuation(diffraction.attenuation);
     }
+
+    record Diffraction(double[] attenuation, Complex[] pressure) { }
 
     /**
      * Compute diffraction attenuation and diffracted sound pressure amplitude according to Harmonoise methodology
@@ -112,13 +115,11 @@ public class HarmonoiseAttenuation {
      * @param source source point ("real" or secondary at diffraction edge)
      * @param receiver receiver point ("real" or secondary at diffraction edge)
      * @param point diffraction point
-     * @param diffractedPressure store the sound pressure if input size != 0
      */
-    private void computeDiffractionAttenuation(Coordinate source, Coordinate receiver, Coordinate point, Complex[] diffractedPressure){
+    private Diffraction computeDiffraction(Coordinate source, Coordinate receiver, Coordinate point){
         double sourceAngle = - (Angle.angle(point, source) - Angle.PI_OVER_2);
         double receiverAngle = Angle.angle(point, receiver) + Angle.PI_OVER_2;
         double theta = sourceAngle + receiverAngle;
-
         double pathLengthDiff;
         double directPathLength;
         double distanceToSource = source.distance(point);
@@ -141,14 +142,12 @@ public class HarmonoiseAttenuation {
         double[] diffractionAttenuation = Arrays.stream(fresnelNumber)
                 .map(HarmonoiseAttenuation::fresnelApproximation)
                 .toArray();
-        if (diffractedPressure.length == 0) {
-            attenuationOutput.addDiffractionAttenuation(diffractionAttenuation);
-        } else {
-            Complex[] sphericalPressure = unitSphericalWavePressure(directPathLength);
-            for (int i = 0; i < diffractionAttenuation.length; i++) {
-                diffractedPressure[i] = sphericalPressure[i].multiply(10 * Math.log10(diffractionAttenuation[i] / 20));
-            }
+        Complex[] sphericalPressure = unitSphericalWavePressure(directPathLength);
+        Complex[] diffractedPressure = new Complex[diffractionAttenuation.length];
+        for (int i = 0; i < diffractionAttenuation.length; i++) {
+            diffractedPressure[i] = sphericalPressure[i].multiply(10 * Math.log10(-diffractionAttenuation[i] / 20));
         }
+        return new Diffraction(diffractionAttenuation, diffractedPressure);
     }
 
     /**
@@ -432,32 +431,26 @@ public class HarmonoiseAttenuation {
         Coordinate realReceiver = groundProfile.getVertex(lastVertex);
         Coordinate secondarySource = groundProfile.getVertex(iSource);
         Coordinate secondaryReceiver = groundProfile.getVertex(iReceiver);
-        Complex[] pImage;
-        Complex[] p;
+        Complex[] pImage = new Complex[nFreq];
+        Complex[] p = new Complex[nFreq];
         if (iSource == 0 && iReceiver == lastVertex){ // Case 1 no diffraction
             pImage = unitSphericalWavePressure(realSourceImage.distance(realReceiver));
             p = unitSphericalWavePressure(realSource.distance(realReceiver));
         } else {
-            p = new Complex[nFreq];
-            pImage = new Complex[nFreq];
             if (iSource == 0 && iReceiver < lastVertex) { // Case 2 diffraction on the receiver side only
-                computeDiffractionAttenuation(realSourceImage, realReceiver, secondaryReceiver, pImage);
-                computeDiffractionAttenuation(realSource, realReceiver, secondaryReceiver, p);
+                pImage = computeDiffraction(realSourceImage, realReceiver, secondaryReceiver).pressure;
+                p = computeDiffraction(realSource, realReceiver, secondaryReceiver).pressure;
             } else if (iSource > 0 && iReceiver == lastVertex) { // Case 3 diffraction on the source side only
                 Coordinate receiverImage = groundProfile.getImageVertex(lastVertex, iSeg);
-                computeDiffractionAttenuation(realSource, receiverImage, secondarySource, pImage);
-                computeDiffractionAttenuation(realSource, realReceiver, secondarySource, p);
+                pImage = computeDiffraction(realSource, receiverImage, secondarySource).pressure;
+                p = computeDiffraction(realSource, realReceiver, secondarySource).pressure;
             } else { // Case 4 diffraction on both sides
                 Coordinate secondarySourceImage = groundProfile.getImageVertex(iSource, iSeg);
                 Coordinate secondaryReceiverImage = groundProfile.getImageVertex(iReceiver, iSeg);
-                Complex[] pImage1 = pImage.clone();
-                Complex[] p1 = p.clone();
-                Complex[] pImage2 = pImage.clone();
-                Complex[] p2 = p.clone();
-                computeDiffractionAttenuation(realSource, secondaryReceiverImage, secondarySource, pImage1);
-                computeDiffractionAttenuation(realSource, secondaryReceiver, secondarySource, p1);
-                computeDiffractionAttenuation(secondarySourceImage, realReceiver, secondaryReceiver, pImage2);
-                computeDiffractionAttenuation(secondarySource, realReceiver, secondaryReceiver, p2);
+                Complex[] pImage1 = computeDiffraction(realSource, secondaryReceiverImage, secondarySource).pressure;
+                Complex[] p1 = computeDiffraction(realSource, secondaryReceiver, secondarySource).pressure;
+                Complex[] pImage2 = computeDiffraction(secondarySourceImage, realReceiver, secondaryReceiver).pressure;
+                Complex[] p2 = computeDiffraction(secondarySource, realReceiver, secondaryReceiver).pressure;
                 for (int i = 0; i < nFreq; i++) {
                     pImage[i] = pImage1[i].multiply(pImage2[i]);
                     p[i] = p1[i].multiply(p2[i]);
