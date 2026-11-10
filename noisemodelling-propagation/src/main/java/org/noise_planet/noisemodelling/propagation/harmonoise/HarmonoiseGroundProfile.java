@@ -17,8 +17,7 @@ import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LineString;
 import org.locationtech.jts.math.Vector2D;
-import org.noise_planet.noisemodelling.pathfinder.profilebuilder.CutProfile;
-import org.noise_planet.noisemodelling.pathfinder.profilebuilder.SurfaceAbsorption;
+import org.noise_planet.noisemodelling.pathfinder.profilebuilder.*;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -90,10 +89,31 @@ public class HarmonoiseGroundProfile {
         sourceHeight = cutProfile.getCutPoints().getFirst().getCoordinate().getZ() - vertices[0].getY();
         receiverHeight = cutProfile.getCutPoints().getLast().getCoordinate().getZ() - vertices[nVertices-1].getY();
         // Extract flow resistivity
-        flowResistivity = indices.stream()
-                .mapToDouble(i -> cutProfile.cutPoints.get(i).groundCoefficient)
-                .toArray();
-        // TODO : Manage flow resistivity for all cutPoints type
+        flowResistivity = extractFlowResistivity(cutProfile, nVertices, indices);
+    }
+
+    /**
+     * Extract ground segment's flow resistivity from cut profile
+     *
+     * @param cutProfile 3D profile from source to receiver
+     * @param nVertices ground profile's number of vertices
+     * @param indices correspondence between cut points and vertices indices
+     * @return ground segment's flow resistivity
+     */
+    private double[] extractFlowResistivity(CutProfile cutProfile, int nVertices, List<Integer> indices){
+        double[] resistivity = new double[nVertices];
+        for (int i = 0; i < indices.size(); i++) {
+            if (cutProfile.cutPoints.get(i) instanceof CutPointWall) {
+                // Set rigid wall
+                // TODO : get absorption from cutProfile
+                resistivity[indices.get(i)-2] = 1e6;
+                resistivity[indices.get(i)-1] = 1e6;
+                resistivity[indices.get(i)] = cutProfile.cutPoints.get(i).groundCoefficient;
+            } else {
+                resistivity[indices.get(i)] = cutProfile.cutPoints.get(i).groundCoefficient;
+            }
+        }
+        return resistivity;
     }
 
     /**
