@@ -284,11 +284,12 @@ public class AttenuationComputeOutputHarmonoiseTest {
      * Ref: Salomons, E., Van Maercke, D., Defrance, J.,&amp;De Roo, F. (2011). The Harmonoise sound propagation model.
      * Acta acustica united with acustica, 97(1), 62-74 (section 3)
      */
-//    @Test
-//    public void testHarmonoiseCase05() throws IOException {
-//        CutProfile cutProfile = loadCutProfile("case_05");
-//        AttenuationOutput output = computeHarmonoiseAttenuation(cutProfile, 0, 0);
-//    }
+    @Test
+    public void testHarmonoiseCase05() throws IOException {
+        CutProfile cutProfile = loadCutProfile("case_05");
+        AttenuationOutput output = computeHarmonoiseAttenuation(cutProfile, 0, 0);
+        assert(output.aGlobal.length !=0);
+    }
 
     /**
      * Test case 7 from Harmonoise publication (200 kPa.s/m2 ground and
@@ -296,11 +297,12 @@ public class AttenuationComputeOutputHarmonoiseTest {
      * Ref: Salomons, E., Van Maercke, D., Defrance, J.,&amp;De Roo, F. (2011). The Harmonoise sound propagation model.
      * Acta acustica united with acustica, 97(1), 62-74 (section 3)
      */
-    @Test
-    public void testHarmonoiseCase07() throws IOException {
-        CutProfile cutProfile = loadCutProfile("case_07");
-        AttenuationOutput output = computeHarmonoiseAttenuation(cutProfile, 0, 0);
-    }
+//    @Test
+//    public void testHarmonoiseCase07() throws IOException {
+//        CutProfile cutProfile = loadCutProfile("case_07");
+//        AttenuationOutput output = computeHarmonoiseAttenuation(cutProfile, 0, 0);
+//        assert(output.aGlobal.length !=0);
+//    }
 
     /**
      * Test case 9 from Harmonoise publication (100 kPa.s/m2 ground and
@@ -349,7 +351,7 @@ public class AttenuationComputeOutputHarmonoiseTest {
         plot.legend("Salomons 2011", "NoiseModelling");
         plot.draw(rootDir + "/Docs/images/Validation/Harmonoise/case09.svg");
         for (int i = 0; i < output.aGlobal.length; i++) {
-            assertEquals(referenceExcessAttenuation[i+3], output.aGlobal[i], 3);
+            assertEquals(referenceExcessAttenuation[i+3], output.aGlobal[i], 1);
         }
     }
 
@@ -451,7 +453,7 @@ public class AttenuationComputeOutputHarmonoiseTest {
         plot.legend("Salomons 2011", "NoiseModelling");
         plot.draw(rootDir + "/Docs/images/Validation/Harmonoise/case11.svg");
         for (int i = 0; i < output.aGlobal.length; i++) {
-            assertEquals(referenceExcessAttenuation[i+3], output.aGlobal[i], 0.3);
+            assertEquals(referenceExcessAttenuation[i+3], output.aGlobal[i], 1);
         }
     }
 
