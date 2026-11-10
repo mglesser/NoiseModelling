@@ -247,25 +247,23 @@ public class HarmonoiseAttenuation {
         int nbFreq = geometricalWeightingFactor[0].length;
         double[] flatGroundAttenuation = new double[nbFreq];
         Arrays.fill(flatGroundAttenuation, 0);
-        for (int iSeg = 0; iSeg < nbSeg; iSeg++) {
-            int finalISeg = iSeg;
-            double[] finalFlatGroundAttenuation = flatGroundAttenuation;
-            flatGroundAttenuation = IntStream.range(0, nbFreq)
-                    .mapToDouble(i -> finalFlatGroundAttenuation[i]
-                            + modifiedFresnelWeighting[finalISeg][i] * 10 * Math.log10(
-                                    Math.pow(
-                                            groundProfile.getReflectionCoefficient(finalISeg, i)
-                                                    .multiply(geometricalWeightingFactor[finalISeg][i])
-                                                    .multiply(coherenceFactor[finalISeg][i])
-                                                    .add(1).abs(),2
-                                    ) + Math.pow(
-                                            groundProfile.getReflectionCoefficient(finalISeg, i)
-                                                    .multiply(geometricalWeightingFactor[finalISeg][i])
-                                                    .abs(),2
-                                    ) * (1 - Math.pow(coherenceFactor[finalISeg][i],2))
-                            )
-                    )
-                    .toArray();
+        for (int iFreq = 0; iFreq < nbFreq; iFreq++) {
+            for (int iSeg = 0; iSeg < nbSeg; iSeg++) {
+                flatGroundAttenuation[iFreq] = flatGroundAttenuation[iFreq]
+                        + modifiedFresnelWeighting[iSeg][iFreq]
+                        * 10 * Math.log10(
+                            Math.pow(
+                                    groundProfile.getReflectionCoefficient(iSeg, iFreq)
+                                            .multiply(geometricalWeightingFactor[iSeg][iFreq])
+                                            .multiply(coherenceFactor[iSeg][iFreq])
+                                            .add(1).abs(),2
+                            ) + Math.pow(
+                                    groundProfile.getReflectionCoefficient(iSeg, iFreq)
+                                            .multiply(geometricalWeightingFactor[iSeg][iFreq])
+                                            .abs(),2
+                            ) * (1 - Math.pow(coherenceFactor[iSeg][iFreq],2))
+                        );
+            }
         }
         return flatGroundAttenuation;
     }
