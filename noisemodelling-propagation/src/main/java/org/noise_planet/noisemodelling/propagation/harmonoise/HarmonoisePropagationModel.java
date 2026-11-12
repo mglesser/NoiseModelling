@@ -17,6 +17,7 @@ import org.noise_planet.noisemodelling.propagation.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.stream.IntStream;
 
 /**
  * Template of propagation model. To be used as a basis
@@ -76,7 +77,14 @@ public class HarmonoisePropagationModel implements PropagationModel {
         HarmonoiseAttenuation harmonoiseAttenuation = new HarmonoiseAttenuation(scene, output);
         harmonoiseAttenuation.computeExcessAttenuation();
         output.setMeteoType(MeteoType.CUSTOM); // Store meteo type
-        output.aGlobal = output.groundAttenuation;
+        if (output.diffractionAttenuation.length != 0){
+            output.aGlobal = IntStream.range(0, output.groundAttenuation.length)
+                    .mapToDouble(i -> output.groundAttenuation[i] + output.diffractionAttenuation[i])
+                    .toArray();
+        } else {
+            output.aGlobal = output.groundAttenuation;
+        }
+
         output.lineString = cutProfile.getPropagationPath();
         List<AttenuationOutput> attenuationOutputs = new ArrayList<>();
         attenuationOutputs.add(output);
