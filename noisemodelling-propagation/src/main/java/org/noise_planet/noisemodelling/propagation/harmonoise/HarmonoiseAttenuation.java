@@ -117,8 +117,8 @@ public class HarmonoiseAttenuation {
      * @param point diffraction point
      */
     private Diffraction computeDiffraction(Coordinate source, Coordinate receiver, Coordinate point){
-        double sourceAngle = - (Angle.angle(point, source) - Angle.PI_OVER_2);
-        double receiverAngle = Angle.angle(point, receiver) + Angle.PI_OVER_2;
+        double sourceAngle = Angle.angle(source, point) + Angle.PI_OVER_2;
+        double receiverAngle = - Angle.angle(point, receiver) + Angle.PI_OVER_2;
         double theta = sourceAngle + receiverAngle;
         double pathLengthDiff;
         double directPathLength;
@@ -133,7 +133,7 @@ public class HarmonoiseAttenuation {
             directPathLength = distanceToSource + distanceToReceiver; // Eq. 12
             double epsilon = Math.sqrt(distanceToSource * distanceToReceiver) / (distanceToSource + distanceToReceiver)
                     * (theta - Math.PI); // Eq. 13
-            pathLengthDiff = directPathLength * (1.0/2 * Math.pow(epsilon,2) + 1.0/3 * Math.pow(epsilon,3)); // Eq. 11
+            pathLengthDiff = directPathLength * (1.0/2 * Math.pow(epsilon,2) + 1.0/3 * Math.pow(epsilon,4)); // Eq. 11
         }
         double[] fresnelNumber = scene.defaultCnossosParameters.getFrequenciesExact()
                 .stream()
@@ -144,8 +144,8 @@ public class HarmonoiseAttenuation {
                 .toArray();
         Complex[] sphericalPressure = unitSphericalWavePressure(directPathLength);
         Complex[] diffractedPressure = new Complex[diffractionAttenuation.length];
-        for (int i = 0; i < diffractionAttenuation.length; i++) {
-            diffractedPressure[i] = sphericalPressure[i].multiply(10 * Math.log10(-diffractionAttenuation[i] / 20));
+        for (int i = 0; i < waveNumber.length; i++) {
+            diffractedPressure[i] = sphericalPressure[i].multiply(Math.pow(10, diffractionAttenuation[i] / 20));
         }
         return new Diffraction(diffractionAttenuation, diffractedPressure);
     }
@@ -209,15 +209,13 @@ public class HarmonoiseAttenuation {
         // Computation
         List<Double> frequency = scene.defaultCnossosParameters.getFrequenciesExact();
         double transitionFrequency = transitionFrequency(iSource, iReceiver);
-        for (int k = 0; k < iReceiver - iSource; k++) {
-            geometricalWeightingFactor[k] = geometricalWeightingFactor(k, iSource, iReceiver);
-            coherenceFactor[k] = coherenceFactor(k, iSource, iReceiver);
-            modifiedFresnelWeighting[k] = modifiedFresnelWeighting(k, iSource, iReceiver, transitionFrequency);
-            double[] finalNw = nw;
-            int finalK = k;
-            nw = IntStream.range(0, waveNumber.length)
-                    .mapToDouble(i -> finalNw[i] + modifiedFresnelWeighting[finalK][i])
-                    .toArray();
+        for (int k = iSource; k < iReceiver; k++) {
+            geometricalWeightingFactor[k - iSource] = geometricalWeightingFactor(k, iSource, iReceiver);
+            coherenceFactor[k - iSource] = coherenceFactor(k, iSource, iReceiver);
+            modifiedFresnelWeighting[k - iSource] = modifiedFresnelWeighting(k, iSource, iReceiver, transitionFrequency);
+            for (int iFreq = 0; iFreq < waveNumber.length; iFreq++) {
+                nw[iFreq] = nw[iFreq] + modifiedFresnelWeighting[k - iSource][iFreq];
+            }
         }
 
         double[] concaveGroundAttenuation = new double[waveNumber.length];
@@ -424,7 +422,7 @@ public class HarmonoiseAttenuation {
      * @return geometrical weighting factor
      */
     private Complex[] geometricalWeightingFactor(int iSeg, int iSource, int iReceiver){
-        int nFreq = scene.defaultCnossosParameters.getFrequenciesExact().size();
+        int nFreq = waveNumber.length;
         int lastVertex = groundProfile.getNVertices()-1;
         Coordinate realSource = groundProfile.getVertex(0);
         Coordinate realSourceImage = groundProfile.getImageVertex(0, iSeg);
