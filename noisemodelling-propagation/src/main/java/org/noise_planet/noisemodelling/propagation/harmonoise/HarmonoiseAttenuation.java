@@ -219,8 +219,9 @@ public class HarmonoiseAttenuation {
         }
 
         double[] concaveGroundAttenuation = new double[waveNumber.length];
-        double[] flatAttenuation = flatGroundAttenuation(geometricalWeightingFactor, coherenceFactor, modifiedFresnelWeighting);
-        double[] valleyAttenuation = valleyGroundAttenuation(geometricalWeightingFactor, coherenceFactor, modifiedFresnelWeighting);
+        double[] flatAttenuation = flatGroundAttenuation(iSource, geometricalWeightingFactor, coherenceFactor,
+                modifiedFresnelWeighting);
+        double[] valleyAttenuation = valleyGroundAttenuation(iSource, geometricalWeightingFactor, coherenceFactor, modifiedFresnelWeighting);
         for (int i = 0; i < frequency.size(); i++) {
             double xg = nw[i] / Math.sqrt(1 + Math.pow(frequency.get(i) / transitionFrequency, 2));
             double fg = 1 - Math.exp(-1 / Math.pow(xg,2));
@@ -238,7 +239,7 @@ public class HarmonoiseAttenuation {
      * @param modifiedFresnelWeighting modified Fresnel weighing for all segments of the (sub)profile
      * @return round attenuation for relatively flat ground
      */
-    private double[] flatGroundAttenuation(Complex[][] geometricalWeightingFactor, double[][] coherenceFactor,
+    private double[] flatGroundAttenuation(int iSource, Complex[][] geometricalWeightingFactor, double[][] coherenceFactor,
                                            double[][] modifiedFresnelWeighting) {
         int nbSeg = geometricalWeightingFactor.length;
         int nbFreq = geometricalWeightingFactor[0].length;
@@ -250,12 +251,12 @@ public class HarmonoiseAttenuation {
                         + modifiedFresnelWeighting[iSeg][iFreq]
                         * 10 * Math.log10(
                             Math.pow(
-                                    groundProfile.getReflectionCoefficient(iSeg, iFreq)
+                                    groundProfile.getReflectionCoefficient(iSeg + iSource, iFreq)
                                             .multiply(geometricalWeightingFactor[iSeg][iFreq])
                                             .multiply(coherenceFactor[iSeg][iFreq])
                                             .add(1).abs(),2
                             ) + Math.pow(
-                                    groundProfile.getReflectionCoefficient(iSeg, iFreq)
+                                    groundProfile.getReflectionCoefficient(iSeg + iSource, iFreq)
                                             .multiply(geometricalWeightingFactor[iSeg][iFreq])
                                             .abs(),2
                             ) * (1 - Math.pow(coherenceFactor[iSeg][iFreq],2))
@@ -274,7 +275,7 @@ public class HarmonoiseAttenuation {
      * @param modifiedFresnelWeighting modified Fresnel weighing for all segments of the (sub)profile
      * @return round attenuation for valley-shaped terrain
      */
-    private double[] valleyGroundAttenuation(Complex[][] geometricalWeightingFactor, double[][] coherenceFactor,
+    private double[] valleyGroundAttenuation(int iSource, Complex[][] geometricalWeightingFactor, double[][] coherenceFactor,
                                            double[][] modifiedFresnelWeighting) {
         int nbSeg = geometricalWeightingFactor.length;
         int nbFreq = geometricalWeightingFactor[0].length;
@@ -285,12 +286,12 @@ public class HarmonoiseAttenuation {
         for (int iSeg = 0; iSeg < nbSeg; iSeg++) {
             for (int iFreq = 0; iFreq < nbFreq; iFreq++) {
                 sum1[iFreq] = sum1[iFreq].add(
-                        groundProfile.getReflectionCoefficient(iSeg, iFreq)
+                        groundProfile.getReflectionCoefficient(iSeg + iSource, iFreq)
                         .multiply(geometricalWeightingFactor[iSeg][iFreq])
                         .multiply(coherenceFactor[iSeg][iFreq])
                         .multiply(modifiedFresnelWeighting[iSeg][iFreq])
                 );
-                sum2[iFreq] += Math.pow((groundProfile.getReflectionCoefficient(iSeg, iFreq)
+                sum2[iFreq] += Math.pow((groundProfile.getReflectionCoefficient(iSeg + iSource, iFreq)
                                 .multiply(geometricalWeightingFactor[iSeg][iFreq])).abs(),2)
                         * (1 - Math.pow(coherenceFactor[iSeg][iFreq],2))
                         * modifiedFresnelWeighting[iSeg][iFreq];
