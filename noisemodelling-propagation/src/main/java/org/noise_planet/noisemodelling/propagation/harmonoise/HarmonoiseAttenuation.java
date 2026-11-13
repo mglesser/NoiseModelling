@@ -234,6 +234,7 @@ public class HarmonoiseAttenuation {
      * Return the ground attenuation of a (sub)profile for relatively flat ground
      * Ref: Eq. 19 and 20 from Salomons et al.
      *
+     * @param iSource index of the (secondary) source
      * @param geometricalWeightingFactor geometrical weighting factors for all segments of the (sub)profile
      * @param coherenceFactor coherence factor for all segments of the (sub)profile
      * @param modifiedFresnelWeighting modified Fresnel weighing for all segments of the (sub)profile
@@ -270,6 +271,7 @@ public class HarmonoiseAttenuation {
      * Return the ground attenuation of a (sub)profile for valley-shaped terrain
      * Ref: Eq. 21 from Salomons et al.
      *
+     * @param iSource index of the (secondary) source
      * @param geometricalWeightingFactor geometrical weighting factors for all segments of the (sub)profile
      * @param coherenceFactor coherence factor for all segments of the (sub)profile
      * @param modifiedFresnelWeighting modified Fresnel weighing for all segments of the (sub)profile
