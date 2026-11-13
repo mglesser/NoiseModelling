@@ -75,8 +75,7 @@ public class HarmonoiseAttenuation {
             double crossProduct = (vertices[i].x - vertices[0].x) * (vertices[0].y - vertices[vertices.length-1].y)
                     + (vertices[i].y - vertices[0].y) * (vertices[vertices.length-1].x - vertices[0].x);
             if (crossProduct > 0) { // if the current point is above the line crossing the first and last points
-                double distance = vertices[0].distance(vertices[i]) + vertices[i].distance(vertices[vertices.length-1])
-                        - vertices[0].distance(vertices[vertices.length-1]); // Eq. 5
+                double distance = groundProfile.getPathLengthDifference(iSource, i, iReceiver); // Eq 5
                 if (distance > maxDistance){
                     maxDistance = distance;
                     indexMaxDistance = i;
@@ -189,10 +188,33 @@ public class HarmonoiseAttenuation {
     private void computeGroundAttenuation(int iSource, int iReceiver) {
 
         if (groundProfile.hasConvexSegment(iSource, iReceiver)){
+            transitionGroundAttenuation(iSource, iReceiver);
         } else {
             concaveGroundAttenuation(iSource, iReceiver);
         }
 
+    }
+
+    private void transitionGroundAttenuation(int iSource, int iReceiver){
+        // Searching for diffraction points below line of sight
+        double minDistance = 1e6;
+        int indexMinDistance = 0;
+        for (int k = iSource; k < iReceiver; k++) {
+            if( groundProfile.getLocalOrdinate(iSource, k) < 0 ){
+                double distance = groundProfile.getPathLengthDifference(iSource, k, iReceiver); // Eq 5
+                if (distance < minDistance){
+                    minDistance = distance;
+                    indexMinDistance = k;
+                }
+            }
+            else if( groundProfile.getLocalOrdinate(iSource, k+1) < 0 ) {
+                double distance = groundProfile.getPathLengthDifference(iSource, k + 1, iReceiver); // Eq 5
+                if (distance < minDistance) {
+                    minDistance = distance;
+                    indexMinDistance = k + 1;
+                }
+            }
+        }
     }
 
     private void concaveGroundAttenuation(int iSource, int iReceiver){

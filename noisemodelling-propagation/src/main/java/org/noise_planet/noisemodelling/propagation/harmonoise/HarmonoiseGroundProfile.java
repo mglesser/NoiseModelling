@@ -419,4 +419,17 @@ public class HarmonoiseGroundProfile {
     public Complex getReflectionCoefficient(int iSeg, int iFreq) {
         return reflectionCoefficient[iSeg][iFreq];
     }
+
+    /**
+     * Return the path length difference between direct and diffracted path
+     *
+     * @param iSource index of the (secondary) source
+     * @param iPoint index of the diffraction point
+     * @param iReceiver index of the (secondary) receiver
+     * @return path length difference
+     */
+    public double getPathLengthDifference(int iSource, int iPoint, int iReceiver){
+        return vertices[iSource].distance(vertices[iPoint]) + vertices[iPoint].distance(vertices[iReceiver])
+                - vertices[iSource].distance(vertices[iReceiver]); // Eq. 5
+    }
 }
