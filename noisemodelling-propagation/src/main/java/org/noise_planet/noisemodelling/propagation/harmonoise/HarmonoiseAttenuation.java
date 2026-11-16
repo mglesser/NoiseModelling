@@ -354,9 +354,18 @@ public class HarmonoiseAttenuation {
     private Complex[] sphericalWaveReflectionCoefficient(int iSeg, int iSource, int iReceiver){
         double angle = groundProfile.getReflexionAngle(iSeg, iSource, iReceiver);
         List<Double> frequencies = scene.defaultCnossosParameters.getFrequenciesExact();
-        double distance = groundProfile.getImageVertex(iSource, iSeg).distance(groundProfile.getVertex(iReceiver));
-        double hm = (groundProfile.getLocalOrdinate(iSource, iSeg)
-                + groundProfile.getLocalOrdinate(iReceiver, iSeg)) / 2;
+        double distance;
+        double hm;
+        // In case of convex segment, source/receiver is replaced by its image
+        if (groundProfile.isConvexSegment(iSeg, iSource, iReceiver)) {
+            distance = groundProfile.getVertex(iSource).distance(groundProfile.getVertex(iReceiver));
+            hm = (Math.abs(groundProfile.getLocalOrdinate(iSource, iSeg))
+                    + Math.abs(groundProfile.getLocalOrdinate(iReceiver, iSeg))) / 2;
+        } else {
+            distance = groundProfile.getImageVertex(iSource, iSeg).distance(groundProfile.getVertex(iReceiver));
+            hm = (groundProfile.getLocalOrdinate(iSource, iSeg)
+                    + groundProfile.getLocalOrdinate(iReceiver, iSeg)) / 2;
+        }
 //        In the C++ implementation a different expression is used for hm :
 //        double hm = Math.max(groundProfile.getLocalOrdinate(iSource, iSeg),
 //                groundProfile.getLocalOrdinate(iReceiver, iSeg)) / 2;
@@ -468,6 +477,14 @@ public class HarmonoiseAttenuation {
         Coordinate realReceiver = groundProfile.getVertex(lastVertex);
         Coordinate secondarySource = groundProfile.getVertex(iSource);
         Coordinate secondaryReceiver = groundProfile.getVertex(iReceiver);
+        // In case of convex segment, source/receiver is replaced by its image
+        if (groundProfile.isConvexSegment(iSeg, iSource, iReceiver)) {
+            if (groundProfile.getLocalOrdinate(iSource, iSeg) < 0) {
+                secondarySource = groundProfile.getImageVertex(iSource, iSeg);
+            } else {
+                secondaryReceiver = groundProfile.getImageVertex(iReceiver, iSeg);
+            }
+        }
         Complex[] pImage = new Complex[nFreq];
         Complex[] p = new Complex[nFreq];
         if (iSource == 0 && iReceiver == lastVertex){ // Case 1 no diffraction
@@ -514,6 +531,15 @@ public class HarmonoiseAttenuation {
         Coordinate source = groundProfile.getVertex(iSource);
         Coordinate sourceImage = groundProfile.getImageVertex(iSource, iSeg);
         Coordinate receiver = groundProfile.getVertex(iReceiver);
+        // In case of convex segment, source/receiver is replaced by its image
+        if (groundProfile.isConvexSegment(iSeg, iSource, iReceiver)) {
+            if (groundProfile.getLocalOrdinate(iSource, iSeg) < 0) {
+                source = groundProfile.getImageVertex(iSource, iSeg);
+                sourceImage = groundProfile.getVertex(iSource);
+            } else {
+                receiver = groundProfile.getImageVertex(iReceiver, iSeg);
+            }
+        }
         double sourceHeight = source.getY();
         double receiverHeight = receiver.getY();
         if(isFrequencyAveragingOnly){
@@ -556,9 +582,11 @@ public class HarmonoiseAttenuation {
             } else {
                 rho = sourceHeight * receiverHeight / (sourceHeight + receiverHeight);
             }
-            double[] cb = Arrays.stream(waveNumber)
-                    .map(k -> Math.exp(-3.0 / 8 * 0.364 * gammaT * k * k * Math.pow(rho, 5.0 / 3) * source.distance(receiver)))
-                    .toArray();
+            double[] cb = new double[waveNumber.length];
+            for (int i = 0; i < waveNumber.length; i++) {
+                cb[i] = Math.exp(-3.0 / 8 * 0.364 * gammaT * waveNumber[i] * waveNumber[i]
+                        * Math.pow(rho, 5.0 / 3) * source.distance(receiver));
+            }
             return IntStream.range(0, ca.length).mapToDouble(i -> ca[i] * cb[i]).toArray();
         }
     }
@@ -594,6 +622,11 @@ public class HarmonoiseAttenuation {
         double dsr = groundProfile.getLocalAbscissa(iReceiver, iSeg, iSource);
         double localSourceHeight = groundProfile.getLocalOrdinate(iSource, iSeg);
         double localReceiverHeight = groundProfile.getLocalOrdinate(iReceiver, iSeg);
+        // Use image source or receiver in case of convex segment
+        if (groundProfile.isConvexSegment(iSeg, iSource, iReceiver)){
+            localReceiverHeight = Math.abs(localReceiverHeight);
+            localSourceHeight = Math.abs(localSourceHeight);
+        }
         double _term = Math.sqrt(Math.pow(localSourceHeight + localReceiverHeight, 2) + Math.pow(dsr, 2));
         double d = 2 * Math.PI / waveNumber[iFreq] / fresnelParam + _term; // Eq. 41
         double denominator = Math.pow(d, 2) - Math.pow(dsr, 2);
@@ -665,9 +698,14 @@ public class HarmonoiseAttenuation {
     private double[] modifiedFresnelWeighting(int iSeg, int iSource, int iReceiver, double transitionFrequency){
         double localSourceHeight = groundProfile.getLocalOrdinate(iSource, iSeg);
         double localReceiverHeight = groundProfile.getLocalOrdinate(iReceiver, iSeg);
+        // Use image source or receiver in case of convex segment
+        if (groundProfile.isConvexSegment(iSeg, iSource, iReceiver)){
+            localReceiverHeight = Math.abs(localReceiverHeight);
+            localSourceHeight = Math.abs(localSourceHeight);
+        }
         double dsr = groundProfile.getLocalAbscissa(iReceiver, iSeg, iSource);
         double dsp;
-        if (localSourceHeight == 0 && localReceiverHeight == 0){
+        if (localSourceHeight <= 0 && localReceiverHeight <= 0){
             dsp = dsr/2;
         } else {
             dsp = dsr * localSourceHeight / (localSourceHeight + localReceiverHeight);

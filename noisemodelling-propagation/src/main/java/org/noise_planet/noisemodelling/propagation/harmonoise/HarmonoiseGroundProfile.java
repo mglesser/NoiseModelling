@@ -16,6 +16,7 @@ import org.locationtech.jts.densify.Densifier;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LineString;
+import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.math.Vector2D;
 import org.noise_planet.noisemodelling.pathfinder.profilebuilder.*;
 
@@ -329,24 +330,32 @@ public class HarmonoiseGroundProfile {
 
     /**
      * Return the reflexion angle between source and receiver with respect to the normal on the ground
-     * segment surface
+     * segment surface. In case of convex segment, the source or receiver is replaced by its image.
      *
      * @param iSeg iSeg index of the ground segment
      * @param iSource index of the (secondary) source
      * @param iReceiver index of the (secondary) receiver
      * @return reflexion angle in radian
      */
-    public double getReflexionAngle(int iSeg, int iSource, int iReceiver) throws IllegalArgumentException {
+    public double getReflexionAngle(int iSeg, int iSource, int iReceiver) {
+        Coordinate source = getVertex(iSource);
+        Coordinate imageSource = getImageVertex(iSource, iSeg);
+        Coordinate receiver = getVertex(iReceiver);
         if (isConvexSegment(iSeg, iSource, iReceiver)) {
-            throw new IllegalArgumentException("Reflexion angle cannot be computed for convex segments");
-        } else {
-
-            Coordinate p = Intersection.intersection(getGroundVertex(iSeg), getGroundVertex(iSeg+1),
-                    getImageVertex(iSource, iSeg), getVertex(iReceiver));
-            Vector2D ps = new Vector2D(p, getVertex(iSource));
-            Vector2D reflexionPlane = new Vector2D(getGroundVertex(iSeg), getGroundVertex(iSeg+1));
-            return reflexionPlane.angle(ps) - Math.PI / 2;
+            if (getLocalOrdinate(iSource, iSeg) < 0) {
+                // Replace source by image source
+                source = getImageVertex(iSource, iSeg);
+                imageSource = getVertex(iSource);
+            } else {
+                // Replace receiver by image receiver
+                receiver = getImageVertex(iReceiver, iSeg);
+            }
         }
+        Coordinate p = Intersection.intersection(getGroundVertex(iSeg), getGroundVertex(iSeg+1),
+                imageSource, receiver);
+        Vector2D ps = new Vector2D(p, source);
+        Vector2D reflexionPlane = new Vector2D(getGroundVertex(iSeg), getGroundVertex(iSeg+1));
+        return reflexionPlane.angle(ps) - Math.PI / 2;
     }
 
     /**
