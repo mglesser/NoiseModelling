@@ -196,10 +196,11 @@ public class HarmonoiseAttenuation {
     }
 
     private void transitionGroundAttenuation(int iSource, int iReceiver){
-        // Searching for diffraction points below line of sight
+        // Searching for diffraction points below line of sight with the smallest path
+        // length difference
         double minDistance = 1e6;
         int indexMinDistance = 0;
-        for (int k = iSource; k < iReceiver; k++) {
+        for (int k = iSource; k < iReceiver - 1; k++) {
             if( groundProfile.getLocalOrdinate(iSource, k) < 0 ){
                 double distance = groundProfile.getPathLengthDifference(iSource, k, iReceiver); // Eq 5
                 if (distance < minDistance){
@@ -207,7 +208,7 @@ public class HarmonoiseAttenuation {
                     indexMinDistance = k;
                 }
             }
-            else if( groundProfile.getLocalOrdinate(iSource, k+1) < 0 ) {
+            else if( groundProfile.getLocalOrdinate(iReceiver, k) < 0 ) {
                 double distance = groundProfile.getPathLengthDifference(iSource, k + 1, iReceiver); // Eq 5
                 if (distance < minDistance) {
                     minDistance = distance;
@@ -215,7 +216,20 @@ public class HarmonoiseAttenuation {
                 }
             }
         }
+        // Computing modified fresnel weightings
+
+        // Compute balance factor
+
+        int i = 0;
     }
+
+//    private void balanceFactor(int iSource, int iPoint, int iReceiver){
+//        double pathLengthDiff = groundProfile.getPathLengthDifference(iSource, iPoint, iReceiver);
+//        double deltaSpecular = 0;
+//        for (int k = iSource; k < iReceiver; k++) {
+//            double
+//        }
+//    }
 
     private void concaveGroundAttenuation(int iSource, int iReceiver){
         // Pre-computation of the reflexion coefficient necessary to compute the transition frequency
