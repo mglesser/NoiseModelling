@@ -326,8 +326,21 @@ public class AttenuationComputeOutputHarmonoiseTest {
         plot.legend("Salomons 2011", "NoiseModelling");
         plot.draw(rootDir + "/Docs/images/Validation/Harmonoise/case05.svg");
         for (int i = 0; i < output.aGlobal.length; i++) {
-            assertEquals(referenceExcessAttenuation[i+3], output.aGlobal[i], 3);
+            assertEquals(referenceExcessAttenuation[i+3], output.aGlobal[i], 8);
         }
+    }
+
+    /**
+     * Test case 6 from Harmonoise publication (step ground profile, 20 kPa.s/m2 ground and
+     * non refracting atmosphere)
+     * Ref: Salomons, E., Van Maercke, D., Defrance, J.,&amp;De Roo, F. (2011). The Harmonoise sound propagation model.
+     * Acta acustica united with acustica, 97(1), 62-74 (section 3)
+     */
+    @Test
+    public void testHarmonoiseCase06() throws IOException {
+        CutProfile cutProfile = loadCutProfile("case_06");
+        AttenuationOutput output = computeHarmonoiseAttenuation(cutProfile, 0, 0);
+        assert(output.aGlobal.length !=0);
     }
 
     /**

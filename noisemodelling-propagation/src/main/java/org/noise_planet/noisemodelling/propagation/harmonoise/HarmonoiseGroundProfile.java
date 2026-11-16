@@ -86,8 +86,8 @@ public class HarmonoiseGroundProfile {
         vertices = cutProfile.computePts2DGround(0, indices).toArray(new Coordinate[0]);
         int nVertices = vertices.length;
         // source and receiver height from ground
-        sourceHeight = cutProfile.getCutPoints().getFirst().getCoordinate().getZ() - vertices[0].getY();
-        receiverHeight = cutProfile.getCutPoints().getLast().getCoordinate().getZ() - vertices[nVertices-1].getY();
+        sourceHeight = cutProfile.getCutPoints().getFirst().getCoordinate().getZ();
+        receiverHeight = cutProfile.getCutPoints().getLast().getCoordinate().getZ();
         // Extract flow resistivity
         flowResistivity = extractFlowResistivity(cutProfile, nVertices, indices);
     }
