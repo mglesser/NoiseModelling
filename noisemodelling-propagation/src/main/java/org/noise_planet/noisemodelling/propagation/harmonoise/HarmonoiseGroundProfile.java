@@ -266,7 +266,7 @@ public class HarmonoiseGroundProfile {
      * @param i index of the (secondary) source
      * @return coordinate of the source ground point
      */
-    private Coordinate getGroundVertex(int i){
+    public Coordinate getGroundVertex(int i){
         Coordinate groundPoint = (Coordinate) vertices[i].clone();
         if (i == 0){
             groundPoint.setY(groundPoint.getY() - sourceHeight);

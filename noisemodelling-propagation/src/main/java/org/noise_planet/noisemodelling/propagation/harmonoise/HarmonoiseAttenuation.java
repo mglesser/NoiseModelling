@@ -11,6 +11,7 @@ package org.noise_planet.noisemodelling.propagation.harmonoise;
 
 import org.apache.commons.math3.complex.Complex;
 import org.locationtech.jts.algorithm.Angle;
+import org.locationtech.jts.algorithm.Intersection;
 import org.locationtech.jts.geom.Coordinate;
 import org.noise_planet.noisemodelling.propagation.SceneWithAttenuation;
 
@@ -469,21 +470,33 @@ public class HarmonoiseAttenuation {
      * @param iReceiver index of the (secondary) receiver
      * @return geometrical weighting factor
      */
-    private Complex[] geometricalWeightingFactor(int iSeg, int iSource, int iReceiver){
+    private Complex[] geometricalWeightingFactor(int iSeg, int iSource, int iReceiver) {
         int nFreq = waveNumber.length;
-        int lastVertex = groundProfile.getNVertices()-1;
+        int lastVertex = groundProfile.getNVertices() - 1;
         Coordinate realSource = groundProfile.getVertex(0);
         Coordinate realSourceImage = groundProfile.getImageVertex(0, iSeg);
         Coordinate realReceiver = groundProfile.getVertex(lastVertex);
         Coordinate secondarySource = groundProfile.getVertex(iSource);
         Coordinate secondaryReceiver = groundProfile.getVertex(iReceiver);
-        // In case of convex segment, source/receiver is replaced by its image
+        // In case of convex segment, source/receiver is replaced by its image and consider specular
+        // reflection point as diffraction point
+        Complex[] pSpecImage = new Complex[nFreq];
+        Complex[] pSpec = new Complex[nFreq];
         if (groundProfile.isConvexSegment(iSeg, iSource, iReceiver)) {
+            Coordinate realReceiverImage = groundProfile.getImageVertex(lastVertex, iSeg);
+            Coordinate x = Intersection.intersection(groundProfile.getGroundVertex(iSeg),
+                    groundProfile.getGroundVertex(iSeg + 1), realSourceImage, realReceiver);
+            pSpecImage = computeDiffraction(realSource, realReceiverImage, x).pressure;
+            pSpec = computeDiffraction(realSource, realReceiver, x).pressure;
             if (groundProfile.getLocalOrdinate(iSource, iSeg) < 0) {
-                secondarySource = groundProfile.getImageVertex(iSource, iSeg);
+                realSource = groundProfile.getImageVertex(0, iSeg);
+                realSourceImage = groundProfile.getVertex(0);
             } else {
-                secondaryReceiver = groundProfile.getImageVertex(iReceiver, iSeg);
+                realReceiver = groundProfile.getImageVertex(lastVertex, iSeg);
             }
+        } else {
+            Arrays.fill(pSpecImage, new Complex(1));
+            Arrays.fill(pSpec, new Complex(1));
         }
         Complex[] pImage = new Complex[nFreq];
         Complex[] p = new Complex[nFreq];
@@ -513,7 +526,7 @@ public class HarmonoiseAttenuation {
         }
         Complex[] weightingFactor = new Complex[nFreq];
         for (int i = 0; i < nFreq; i++) {
-            weightingFactor[i] = pImage[i].divide(p[i]);
+            weightingFactor[i] = pImage[i].divide(p[i]).multiply(pSpecImage[i].divide(pSpec[i]));
         }
         return weightingFactor;
     }
@@ -610,7 +623,7 @@ public class HarmonoiseAttenuation {
     /**
      * Computes the Fresnel ellipse center and semi major axis
      * Ref: "Fresnel weighting" subsection of section 2.4.2 from Salomons et al.
-     *
+     *!
      * @param iSeg index of the first index of the segment
      * @param iSource index of the (secondary) source
      * @param iReceiver index of the (secondary) receiver
