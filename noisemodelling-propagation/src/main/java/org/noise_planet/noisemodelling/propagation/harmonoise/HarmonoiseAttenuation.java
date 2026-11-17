@@ -201,15 +201,18 @@ public class HarmonoiseAttenuation {
         }
         // Computing ground attenuation
         if (groundProfile.hasConvexSegment(iSource, iReceiver)){
-            transitionGroundAttenuation(iSource, iReceiver, reflectionCoefficient, modifiedFresnelWeighting);
+            transitionGroundAttenuation(iSource, iReceiver, reflectionCoefficient, modifiedFresnelWeighting,
+                    transitionFrequency);
         } else {
-            concaveGroundAttenuation(iSource, iReceiver, reflectionCoefficient, modifiedFresnelWeighting, transitionFrequency);
+            double[] concaveGroundAttenuation = concaveGroundAttenuation(iSource, iReceiver, reflectionCoefficient, modifiedFresnelWeighting,
+                    transitionFrequency);
+            attenuationOutput.addGroundAttenuation(concaveGroundAttenuation);
         }
 
     }
 
     private void transitionGroundAttenuation(int iSource, int iReceiver, Complex[][] reflectionCoefficient,
-                                             double[][] modifiedFresnelWeighting){
+                                             double[][] modifiedFresnelWeighting, double transitionFrequency){
         // Searching for diffraction points below line of sight with the smallest path
         // length difference
         double minDistance = 1e6;
@@ -230,21 +233,70 @@ public class HarmonoiseAttenuation {
                 }
             }
         }
+        // Compute attenuation
+        Coordinate source = groundProfile.getVertex(iSource);
+        Coordinate receiver = groundProfile.getVertex(iReceiver);
+        Coordinate diffractionEdge = groundProfile.getVertex(indexMinDistance);
+        double[] directAttenuation = concaveGroundAttenuation(iSource, iReceiver, reflectionCoefficient,
+                modifiedFresnelWeighting, transitionFrequency);
+        double[] diffractionAttenuation = computeDiffraction(source, receiver, diffractionEdge).attenuation;
+        double[] leftAttenuation = concaveGroundAttenuation(iSource, indexMinDistance, reflectionCoefficient,
+                modifiedFresnelWeighting, transitionFrequency);
+        double[] rightAttenuation = concaveGroundAttenuation(indexMinDistance, iReceiver, reflectionCoefficient,
+                modifiedFresnelWeighting, transitionFrequency);
+        for (int i = 0; i < waveNumber.length; i++) {
+            int finalI = i;
+            double[] weightings = Arrays.stream(modifiedFresnelWeighting)
+                    .mapToDouble(w -> w[finalI])
+                    .toArray();
+            double chi = balanceFactor(iSource, indexMinDistance, iReceiver, 2 * Math.PI / waveNumber[i],
+                    weightings);
 
-        // Compute balance factor
-
-        int i = 0;
+        }
     }
 
-//    private void balanceFactor(int iSource, int iPoint, int iReceiver){
-//        double pathLengthDiff = groundProfile.getPathLengthDifference(iSource, iPoint, iReceiver);
-//        double deltaSpecular = 0;
-//        for (int k = iSource; k < iReceiver; k++) {
-//            double
-//        }
-//    }
+    /**
+     * Implement Eq. 64 from Salomons et al. at a given frequency
+     *
+     * @param iSource index of the (secondary) source
+     * @param iPoint index of the diffraction point
+     * @param iReceiver index of the (secondary) receiver
+     * @param wavelength wavelength
+     * @param modifiedFresnelWeighting modified Fresnel weighting
+     * @return factor chi
+     */
+    private double balanceFactor(int iSource, int iPoint, int iReceiver, double wavelength, double[] modifiedFresnelWeighting){
+        double pathLengthDiff = groundProfile.getPathLengthDifference(iSource, iPoint, iReceiver);
+        double numerator = 0;
+        double denominator = 0;
+        for (int k = iSource; k < iReceiver; k++) {
+            numerator += modifiedFresnelWeighting[k] * (
+                    groundProfile.getImageVertex(iSource, k).distance(groundProfile.getVertex(iReceiver))
+                    - groundProfile.getVertex(iSource).distance(groundProfile.getVertex(iReceiver))
+            );
+            denominator += modifiedFresnelWeighting[k];
+        }
+        double deltaSpecular = numerator / denominator;
+        double chi1 = function((deltaSpecular - pathLengthDiff) / (wavelength/8));
+        double chi2 = function(pathLengthDiff / (wavelength/64));
+        return chi2 + (1-chi1) * (1-chi2);
+    }
 
-    private void concaveGroundAttenuation(int iSource, int iReceiver, Complex[][] reflectionCoefficient,
+    /**
+     * Implement Eq. 68 and 70 from Salomons et al.
+     *
+     * @param tau input parameter
+     * @return output parameter
+     */
+    private double function(double tau) {
+        if (tau > 0) {
+            return 1 - Math.exp(-1/(tau*tau));
+        } else {
+            return 1.0;
+        }
+    }
+
+    private double[] concaveGroundAttenuation(int iSource, int iReceiver, Complex[][] reflectionCoefficient,
                                           double[][] modifiedFresnelWeighting, double transitionFrequency){
         // Initialization
         Complex[][] geometricalWeightingFactor = new Complex[iReceiver-iSource][waveNumber.length];
@@ -271,7 +323,7 @@ public class HarmonoiseAttenuation {
             double fg = 1 - Math.exp(-1 / Math.pow(xg,2));
             concaveGroundAttenuation[i] = fg * flatAttenuation[i] + (1- fg) * valleyAttenuation[i];
         }
-        attenuationOutput.addGroundAttenuation(concaveGroundAttenuation);
+        return concaveGroundAttenuation;
     }
 
     /**
