@@ -36,7 +36,6 @@ import static java.lang.Math.*;
 public class HarmonoiseGroundProfile {
     private Coordinate[] vertices;
     private double[] flowResistivity;
-    private Complex[][] reflectionCoefficient;
     private double sourceHeight;
     private double receiverHeight;
 
@@ -73,7 +72,6 @@ public class HarmonoiseGroundProfile {
         // The real source and real receiver ground points are replaced by respectively, the source and the receiver
         vertices[0].setY(vertices[0].getY() + sourceHeight);
         vertices[getNVertices() - 1].setY(vertices[getNVertices() - 1].getY() + receiverHeight);
-        reflectionCoefficient = new Complex[getNVertices()-1][nFreq];
     }
 
     /**
@@ -407,26 +405,6 @@ public class HarmonoiseGroundProfile {
             groundImpedance[i] = SurfaceAbsorption.computeSurfaceImpedance(flowResistivity[iSeg], frequency.get(i));
         }
         return groundImpedance;
-    }
-
-    /**
-     * Set the frequency dependant reflectionCoefficient for segment iSeg
-     *
-     * @param iSeg index of the ground segment
-     * @param reflectionCoefficient spherical-wave reflection coefficient
-     */
-    public void setReflectionCoefficient(int iSeg, Complex[] reflectionCoefficient) {
-        this.reflectionCoefficient[iSeg] = reflectionCoefficient;
-    }
-
-    /**
-     * Return the reflection coefficient at a given frequency
-     * @param iSeg index of the ground segment
-     * @param iFreq index of the frequency
-     * @return reflection coefficient
-     */
-    public Complex getReflectionCoefficient(int iSeg, int iFreq) {
-        return reflectionCoefficient[iSeg][iFreq];
     }
 
     /**

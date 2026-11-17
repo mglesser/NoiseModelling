@@ -187,16 +187,28 @@ public class HarmonoiseAttenuation {
     }
 
     private void computeGroundAttenuation(int iSource, int iReceiver) {
-
+        // Pre-computation of the reflexion coefficient necessary to compute the transition frequency
+        Complex[][] reflectionCoefficient = new Complex[iReceiver-iSource][waveNumber.length];
+        for (int k = iSource; k < iReceiver; k++) {
+            reflectionCoefficient[k - iSource] = sphericalWaveReflectionCoefficient(k, iSource, iReceiver);
+        }
+        // Pre-computing modified fresnel weightings
+        double transitionFrequency = transitionFrequency(iSource, iReceiver, reflectionCoefficient);
+        double[][] modifiedFresnelWeighting = new double[iReceiver-iSource][waveNumber.length];
+        for (int k = iSource; k < iReceiver; k++) {
+            modifiedFresnelWeighting[k - iSource] = modifiedFresnelWeighting(k, iSource, iReceiver, transitionFrequency);
+        }
+        // Computing ground attenuation
         if (groundProfile.hasConvexSegment(iSource, iReceiver)){
-            transitionGroundAttenuation(iSource, iReceiver);
+            transitionGroundAttenuation(iSource, iReceiver, reflectionCoefficient, modifiedFresnelWeighting);
         } else {
-            concaveGroundAttenuation(iSource, iReceiver);
+            concaveGroundAttenuation(iSource, iReceiver, reflectionCoefficient, modifiedFresnelWeighting, transitionFrequency);
         }
 
     }
 
-    private void transitionGroundAttenuation(int iSource, int iReceiver){
+    private void transitionGroundAttenuation(int iSource, int iReceiver, Complex[][] reflectionCoefficient,
+                                             double[][] modifiedFresnelWeighting){
         // Searching for diffraction points below line of sight with the smallest path
         // length difference
         double minDistance = 1e6;
@@ -217,7 +229,6 @@ public class HarmonoiseAttenuation {
                 }
             }
         }
-        // Computing modified fresnel weightings
 
         // Compute balance factor
 
@@ -232,33 +243,28 @@ public class HarmonoiseAttenuation {
 //        }
 //    }
 
-    private void concaveGroundAttenuation(int iSource, int iReceiver){
-        // Pre-computation of the reflexion coefficient necessary to compute the transition frequency
-        for (int k = iSource; k < iReceiver; k++) {
-            groundProfile.setReflectionCoefficient(k, sphericalWaveReflectionCoefficient(k, iSource, iReceiver));
-        }
+    private void concaveGroundAttenuation(int iSource, int iReceiver, Complex[][] reflectionCoefficient,
+                                          double[][] modifiedFresnelWeighting, double transitionFrequency){
         // Initialization
         Complex[][] geometricalWeightingFactor = new Complex[iReceiver-iSource][waveNumber.length];
         double[][] coherenceFactor = new double[iReceiver-iSource][waveNumber.length];
-        double[][] modifiedFresnelWeighting = new double[iReceiver-iSource][waveNumber.length];
         double[] nw = new double[waveNumber.length];
         Arrays.fill(nw, 0);
         // Computation
         List<Double> frequency = scene.defaultCnossosParameters.getFrequenciesExact();
-        double transitionFrequency = transitionFrequency(iSource, iReceiver);
         for (int k = iSource; k < iReceiver; k++) {
             geometricalWeightingFactor[k - iSource] = geometricalWeightingFactor(k, iSource, iReceiver);
             coherenceFactor[k - iSource] = coherenceFactor(k, iSource, iReceiver);
-            modifiedFresnelWeighting[k - iSource] = modifiedFresnelWeighting(k, iSource, iReceiver, transitionFrequency);
             for (int iFreq = 0; iFreq < waveNumber.length; iFreq++) {
                 nw[iFreq] = nw[iFreq] + modifiedFresnelWeighting[k - iSource][iFreq];
             }
         }
 
         double[] concaveGroundAttenuation = new double[waveNumber.length];
-        double[] flatAttenuation = flatGroundAttenuation(iSource, geometricalWeightingFactor, coherenceFactor,
-                modifiedFresnelWeighting);
-        double[] valleyAttenuation = valleyGroundAttenuation(iSource, geometricalWeightingFactor, coherenceFactor, modifiedFresnelWeighting);
+        double[] flatAttenuation = flatGroundAttenuation(iSource, geometricalWeightingFactor, reflectionCoefficient,
+                coherenceFactor,modifiedFresnelWeighting);
+        double[] valleyAttenuation = valleyGroundAttenuation(iSource, geometricalWeightingFactor, reflectionCoefficient,
+                coherenceFactor, modifiedFresnelWeighting);
         for (int i = 0; i < frequency.size(); i++) {
             double xg = nw[i] / Math.sqrt(1 + Math.pow(frequency.get(i) / transitionFrequency, 2));
             double fg = 1 - Math.exp(-1 / Math.pow(xg,2));
@@ -277,7 +283,8 @@ public class HarmonoiseAttenuation {
      * @param modifiedFresnelWeighting modified Fresnel weighing for all segments of the (sub)profile
      * @return round attenuation for relatively flat ground
      */
-    private double[] flatGroundAttenuation(int iSource, Complex[][] geometricalWeightingFactor, double[][] coherenceFactor,
+    private double[] flatGroundAttenuation(int iSource, Complex[][] geometricalWeightingFactor,
+                                           Complex[][] reflectionCoefficient, double[][] coherenceFactor,
                                            double[][] modifiedFresnelWeighting) {
         int nbSeg = geometricalWeightingFactor.length;
         int nbFreq = geometricalWeightingFactor[0].length;
@@ -289,12 +296,12 @@ public class HarmonoiseAttenuation {
                         + modifiedFresnelWeighting[iSeg][iFreq]
                         * 10 * Math.log10(
                             Math.pow(
-                                    groundProfile.getReflectionCoefficient(iSeg + iSource, iFreq)
+                                    reflectionCoefficient[iSeg][iFreq]
                                             .multiply(geometricalWeightingFactor[iSeg][iFreq])
                                             .multiply(coherenceFactor[iSeg][iFreq])
                                             .add(1).abs(),2
                             ) + Math.pow(
-                                    groundProfile.getReflectionCoefficient(iSeg + iSource, iFreq)
+                                    reflectionCoefficient[iSeg][iFreq]
                                             .multiply(geometricalWeightingFactor[iSeg][iFreq])
                                             .abs(),2
                             ) * (1 - Math.pow(coherenceFactor[iSeg][iFreq],2))
@@ -314,8 +321,8 @@ public class HarmonoiseAttenuation {
      * @param modifiedFresnelWeighting modified Fresnel weighing for all segments of the (sub)profile
      * @return round attenuation for valley-shaped terrain
      */
-    private double[] valleyGroundAttenuation(int iSource, Complex[][] geometricalWeightingFactor, double[][] coherenceFactor,
-                                           double[][] modifiedFresnelWeighting) {
+    private double[] valleyGroundAttenuation(int iSource, Complex[][] geometricalWeightingFactor, Complex[][] reflectionCoefficient,
+                                             double[][] coherenceFactor, double[][] modifiedFresnelWeighting) {
         int nbSeg = geometricalWeightingFactor.length;
         int nbFreq = geometricalWeightingFactor[0].length;
         Complex[] sum1 = new Complex[nbFreq];
@@ -325,12 +332,12 @@ public class HarmonoiseAttenuation {
         for (int iSeg = 0; iSeg < nbSeg; iSeg++) {
             for (int iFreq = 0; iFreq < nbFreq; iFreq++) {
                 sum1[iFreq] = sum1[iFreq].add(
-                        groundProfile.getReflectionCoefficient(iSeg + iSource, iFreq)
+                        reflectionCoefficient[iSeg][iFreq]
                         .multiply(geometricalWeightingFactor[iSeg][iFreq])
                         .multiply(coherenceFactor[iSeg][iFreq])
                         .multiply(modifiedFresnelWeighting[iSeg][iFreq])
                 );
-                sum2[iFreq] += Math.pow((groundProfile.getReflectionCoefficient(iSeg + iSource, iFreq)
+                sum2[iFreq] += Math.pow((reflectionCoefficient[iSeg][iFreq]
                                 .multiply(geometricalWeightingFactor[iSeg][iFreq])).abs(),2)
                         * (1 - Math.pow(coherenceFactor[iSeg][iFreq],2))
                         * modifiedFresnelWeighting[iSeg][iFreq];
@@ -746,20 +753,19 @@ public class HarmonoiseAttenuation {
 
     /**
      *  Return, for a given (sub)profile and reflection plane, the phase difference between direct and reflected sound
-     * /!\ groundProfile.reflectionCoefficient must have been pre-computed before calling the present method
      * Ref: Eq. 57 from Salomons et al.
      *
      * @param iSeg index of the reflection plane segment
      * @param iSource index of the (secondary) source
      * @param iReceiver index of the (secondary) receiver
      * @param iFreq index of the frequency
+     * @param reflectionCoefficient spherical wave reflexion coefficient
      * @return phase difference
      */
-    private double phaseDifference(int iSeg, int iSource, int iReceiver, int iFreq){
+    private double phaseDifference(int iSeg, int iSource, int iReceiver, int iFreq, Complex reflectionCoefficient){
         Coordinate source = groundProfile.getVertex(iSource);
         Coordinate receiver = groundProfile.getVertex(iReceiver);
         Coordinate imageSource = groundProfile.getImageVertex(iSource, iSeg);
-        Complex reflectionCoefficient = groundProfile.getReflectionCoefficient(iSeg, iFreq);
         return reflectionCoefficient.getArgument() +
                 waveNumber[iFreq] * (imageSource.distance(receiver) - source.distance(receiver));
     }
@@ -773,7 +779,7 @@ public class HarmonoiseAttenuation {
      * @param iReceiver index of the (secondary) receiver
      * @return transition frequency
      */
-    double transitionFrequency(int iSource, int iReceiver){
+    double transitionFrequency(int iSource, int iReceiver, Complex[][] reflectionCoefficient){
         List<Double> frequency = scene.defaultCnossosParameters.getFrequenciesExact();
         double fMin = 0;
         double fMax = 0;
@@ -793,7 +799,7 @@ public class HarmonoiseAttenuation {
                 if (fresnelWeighting(k, iSource, iReceiver,xi1, xi2) == 0){
                     continue;
                 }
-                phaseDiff = phaseDifference(k, iSource, iReceiver, i);
+                phaseDiff = phaseDifference(k, iSource, iReceiver, i, reflectionCoefficient[k-iSource][i]);
                 if (phaseDiff > maxPhaseDiff){
                     maxPhaseDiff = phaseDiff;
                 }
