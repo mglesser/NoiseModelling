@@ -43,10 +43,9 @@ public class HarmonoiseGroundProfile {
      * Initialize HarmonoiseGroundProfile object from CutProfile object.
      *
      * @param cutProfile 3D profile from source to receiver
-     * @param nFreq size of the frequency axis
      */
-    public HarmonoiseGroundProfile(CutProfile cutProfile, int nFreq){this(cutProfile, nFreq,
-            0, 0, 0, 0);
+    public HarmonoiseGroundProfile(CutProfile cutProfile){
+        this(cutProfile, 1, 0, 0, 0, 0);
     }
 
     /**
@@ -54,11 +53,10 @@ public class HarmonoiseGroundProfile {
      * log/lin celerity profile: c(z) = c0 + az + bln(1+z/z0).
      *
      * @param cutProfile 3D profile from source to receiver
-     * @param nFreq size of the frequency axis
      * @param aMeteo linear component of the lin/log celerity profile
      * @param bMeteo log component of the lin/log celerity profile
      */
-    public HarmonoiseGroundProfile(CutProfile cutProfile, int nFreq, double aMeteo, double bMeteo,
+    public HarmonoiseGroundProfile(CutProfile cutProfile, double segmentLengthRatio, double aMeteo, double bMeteo,
                                    double z0, double c0){
         // Get the whole 2D profile including ground points
         extractGroundVertices(cutProfile);
@@ -66,7 +64,7 @@ public class HarmonoiseGroundProfile {
         if(radius != 0) {
             double dsr = cutProfile.getCutPoints().getFirst().getCoordinate()
                     .distance(cutProfile.getCutPoints().getLast().getCoordinate());
-            refine(dsr);
+            refine(dsr, segmentLengthRatio);
             curve(radius);
         }
         // The real source and real receiver ground points are replaced by respectively, the source and the receiver
@@ -120,9 +118,9 @@ public class HarmonoiseGroundProfile {
      *
      * @param dsr distance source-receiver
      */
-    private void refine(double dsr){
+    private void refine(double dsr, double segmentLengthRatio){
         GeometryFactory geometryFactory = new GeometryFactory();
-        double maxSegmentLength = min( dsr/3 , max(50, dsr/20));
+        double maxSegmentLength = min( dsr/3 , max(50, dsr/20)) / segmentLengthRatio;
         Coordinate[] refinedVertices = new Coordinate[] {vertices[0]};
         double[] refinedResistivity = new double[] {flowResistivity[0]};
         for (int k = 0; k < getNVertices() - 1; k++) {

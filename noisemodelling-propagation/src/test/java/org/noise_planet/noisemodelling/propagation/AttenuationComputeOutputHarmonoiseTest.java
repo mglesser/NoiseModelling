@@ -44,7 +44,12 @@ public class AttenuationComputeOutputHarmonoiseTest {
         }
     }
 
-    private static AttenuationOutput computeHarmonoiseAttenuation(CutProfile cutProfile, double aMeteo, double bMeteo) {
+    private static AttenuationOutput computeHarmonoiseAttenuation(CutProfile cutProfile) {
+        return computeHarmonoiseAttenuation(cutProfile, 1, 0, 0);
+    }
+
+    private static AttenuationOutput computeHarmonoiseAttenuation(CutProfile cutProfile, double segmentLengthRatio,
+                                                                  double aMeteo, double bMeteo) {
         //Create profile builder
         ProfileBuilder profileBuilder = new ProfileBuilder()
                 .finishFeeding();
@@ -63,6 +68,7 @@ public class AttenuationComputeOutputHarmonoiseTest {
         sceneWithAttenuation.defaultCnossosParameters.setaMeteo(aMeteo);
         sceneWithAttenuation.defaultCnossosParameters.setbMeteo(bMeteo);
         sceneWithAttenuation.defaultCnossosParameters.setZ0(0.1);
+        sceneWithAttenuation.defaultCnossosParameters.setSegmentLengthRatio(segmentLengthRatio);
 
         PropagationModel propagationModel = new HarmonoisePropagationModel();
 
@@ -82,7 +88,7 @@ public class AttenuationComputeOutputHarmonoiseTest {
     public void testHarmonoiseCase01() throws IOException {
         // Load data and compute attenuation
         CutProfile cutProfile = loadCutProfile("case_01");
-        AttenuationOutput output = computeHarmonoiseAttenuation(cutProfile, 0, 0);
+        AttenuationOutput output = computeHarmonoiseAttenuation(cutProfile);
         assert (output instanceof HarmonoiseAttenuationOutput);
         //Assertion
         double[] referenceExcessAttenuation = {
@@ -133,7 +139,7 @@ public class AttenuationComputeOutputHarmonoiseTest {
     public void testHarmonoiseCase02() throws IOException {
         // Load data and compute attenuation
         CutProfile cutProfile = loadCutProfile("case_02");
-        AttenuationOutput output = computeHarmonoiseAttenuation(cutProfile, 0, 0);
+        AttenuationOutput output = computeHarmonoiseAttenuation(cutProfile);
         assert (output instanceof HarmonoiseAttenuationOutput);
         //Assertion
         double[] referenceExcessAttenuation = {
@@ -184,7 +190,7 @@ public class AttenuationComputeOutputHarmonoiseTest {
     public void testHarmonoiseCase03() throws IOException {
         // Load data and compute attenuation
         CutProfile cutProfile = loadCutProfile("case_01");
-        AttenuationOutput output = computeHarmonoiseAttenuation(cutProfile, 0.2, 0);
+        AttenuationOutput output = computeHarmonoiseAttenuation(cutProfile, 5, 0.2, 0);
         assert (output instanceof HarmonoiseAttenuationOutput);
         //Assertion
         double[] referenceExcessAttenuation = {
@@ -235,7 +241,7 @@ public class AttenuationComputeOutputHarmonoiseTest {
     public void testHarmonoiseCase04() throws IOException {
         // Load data and compute attenuation
         CutProfile cutProfile = loadCutProfile("case_02");
-        AttenuationOutput output = computeHarmonoiseAttenuation(cutProfile, 0.2, 0);
+        AttenuationOutput output = computeHarmonoiseAttenuation(cutProfile, 5, 0.2, 0);
         assert (output instanceof HarmonoiseAttenuationOutput);
         //Assertion
         double[] referenceExcessAttenuation = {
@@ -287,7 +293,7 @@ public class AttenuationComputeOutputHarmonoiseTest {
     @Test
     public void testHarmonoiseCase05() throws IOException {
         CutProfile cutProfile = loadCutProfile("case_05");
-        AttenuationOutput output = computeHarmonoiseAttenuation(cutProfile, 0, 0);
+        AttenuationOutput output = computeHarmonoiseAttenuation(cutProfile);
         assert (output instanceof HarmonoiseAttenuationOutput);
         //Assertion
         double[] referenceExcessAttenuation = {
@@ -339,7 +345,7 @@ public class AttenuationComputeOutputHarmonoiseTest {
     @Test
     public void testHarmonoiseCase06() throws IOException {
         CutProfile cutProfile = loadCutProfile("case_06");
-        AttenuationOutput output = computeHarmonoiseAttenuation(cutProfile, 0, 0);
+        AttenuationOutput output = computeHarmonoiseAttenuation(cutProfile);
         assert(output.aGlobal.length !=0);
     }
 
@@ -364,7 +370,7 @@ public class AttenuationComputeOutputHarmonoiseTest {
     public void testHarmonoiseCase09() throws IOException {
         // Load data and compute attenuation
         CutProfile cutProfile = loadCutProfile("case_09");
-        AttenuationOutput output = computeHarmonoiseAttenuation(cutProfile, 0, 1);
+        AttenuationOutput output = computeHarmonoiseAttenuation(cutProfile, 1, 0, 1);
         assert (output instanceof HarmonoiseAttenuationOutput);
         //Assertion
         double[] referenceExcessAttenuation = {
@@ -415,7 +421,7 @@ public class AttenuationComputeOutputHarmonoiseTest {
     public void testHarmonoiseCase10() throws IOException {
         // Load data and compute attenuation
         CutProfile cutProfile = loadCutProfile("case_09");
-        AttenuationOutput output = computeHarmonoiseAttenuation(cutProfile, 0, 0);
+        AttenuationOutput output = computeHarmonoiseAttenuation(cutProfile);
         assert (output instanceof HarmonoiseAttenuationOutput);
         //Assertion
         double[] referenceExcessAttenuation = {
@@ -466,7 +472,7 @@ public class AttenuationComputeOutputHarmonoiseTest {
     public void testHarmonoiseCase11() throws IOException {
         // Load data and compute attenuation
         CutProfile cutProfile = loadCutProfile("case_11");
-        AttenuationOutput output = computeHarmonoiseAttenuation(cutProfile, 0, 1);
+        AttenuationOutput output = computeHarmonoiseAttenuation(cutProfile, 1, 0, 1);
         assert (output instanceof HarmonoiseAttenuationOutput);
         //Assertion
         double[] referenceExcessAttenuation = {
@@ -517,7 +523,7 @@ public class AttenuationComputeOutputHarmonoiseTest {
     public void testHarmonoiseCase12() throws IOException {
         // Load data and compute attenuation
         CutProfile cutProfile = loadCutProfile("case_11");
-        AttenuationOutput output = computeHarmonoiseAttenuation(cutProfile, 0, 0);
+        AttenuationOutput output = computeHarmonoiseAttenuation(cutProfile);
         assert (output instanceof HarmonoiseAttenuationOutput);
         //Assertion
         double[] referenceExcessAttenuation = {
@@ -568,7 +574,7 @@ public class AttenuationComputeOutputHarmonoiseTest {
     public void testHarmonoiseCase14() throws IOException {
         // Load data and compute attenuation
         CutProfile cutProfile = loadCutProfile("case_13");
-        AttenuationOutput output = computeHarmonoiseAttenuation(cutProfile, 0, 0);
+        AttenuationOutput output = computeHarmonoiseAttenuation(cutProfile);
         assert (output instanceof HarmonoiseAttenuationOutput);
         //Assertion
         double[] referenceExcessAttenuation = {
@@ -619,7 +625,7 @@ public class AttenuationComputeOutputHarmonoiseTest {
     public void testHarmonoiseCase16() throws IOException {
         // Load data and compute attenuation
         CutProfile cutProfile = loadCutProfile("case_15");
-        AttenuationOutput output = computeHarmonoiseAttenuation(cutProfile, 0, 0);
+        AttenuationOutput output = computeHarmonoiseAttenuation(cutProfile);
         assert (output instanceof HarmonoiseAttenuationOutput);
         //Assertion
         double[] referenceExcessAttenuation = {

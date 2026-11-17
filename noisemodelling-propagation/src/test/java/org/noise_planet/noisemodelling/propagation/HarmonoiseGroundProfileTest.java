@@ -33,7 +33,7 @@ public class HarmonoiseGroundProfileTest {
             throw new IOException(e);
         }
         // Create ground profile
-        profile = new HarmonoiseGroundProfile(cutProfile, 1);
+        profile = new HarmonoiseGroundProfile(cutProfile);
         // Projection of the vertices on the line passing through the third segment
         projections = new Coordinate[] {
                 new Coordinate(2, -1),
@@ -161,7 +161,7 @@ public class HarmonoiseGroundProfileTest {
             throw new IOException(e);
         }
         // Create ground profile
-        HarmonoiseGroundProfile profile09 = new HarmonoiseGroundProfile(cutProfile09, 1);
+        HarmonoiseGroundProfile profile09 = new HarmonoiseGroundProfile(cutProfile09);
         double radius = profile09.computeRadius(0, 1, 0.1,340);
         assertEquals(0.177, 340 / radius, 0.001);
     }
@@ -181,7 +181,7 @@ public class HarmonoiseGroundProfileTest {
         // Get curved profile through Harmonoise implementation
         double d = cutProfile.getSource().coordinate.distance(cutProfile.getReceiver().coordinate);
         double radius = Math.max(1000, 8 * d);
-        HarmonoiseGroundProfile harmonoiseProfile = new HarmonoiseGroundProfile(cutProfile, 1,
-                340/radius, 0, 0, 340);
+        HarmonoiseGroundProfile harmonoiseProfile = new HarmonoiseGroundProfile(cutProfile,
+                1, 340/radius, 0, 0, 340);
     }
 }

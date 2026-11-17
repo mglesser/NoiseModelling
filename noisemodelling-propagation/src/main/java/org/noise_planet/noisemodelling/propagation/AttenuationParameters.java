@@ -70,6 +70,7 @@ public class AttenuationParameters {
     double aMeteo = 0; // linear component of the lin/log celerity profile
     double bMeteo = 0; // log component of the lin/log celerity profile
     double z0 = 0;
+    double segmentLengthRatio = 1; // set ratio > 1 to split the ground profile in smaller segments before curvature
 
     public AttenuationParameters() {
         this(false);
@@ -542,5 +543,13 @@ public class AttenuationParameters {
 
     public void setZ0(double z0) {
         this.z0 = z0;
+    }
+
+    public double getSegmentLengthRatio() {
+        return segmentLengthRatio;
+    }
+
+    public void setSegmentLengthRatio(double segmentLengthRatio) {
+        this.segmentLengthRatio = segmentLengthRatio;
     }
 }
