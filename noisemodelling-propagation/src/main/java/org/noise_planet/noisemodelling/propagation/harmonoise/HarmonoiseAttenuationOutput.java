@@ -23,8 +23,8 @@ import java.util.stream.IntStream;
  * @author Martin Glesser
  */
 public class HarmonoiseAttenuationOutput extends AttenuationOutput {
-    double[] diffractionAttenuation = new double[0];
-    double[] groundAttenuation = new double[0];
+    public double[] diffractionAttenuation = new double[0];
+    public double[] groundAttenuation = new double[0];
 
     public HarmonoiseAttenuationOutput(CutProfile cutProfile){
         this.cutProfile = cutProfile;

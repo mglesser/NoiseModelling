@@ -132,8 +132,7 @@ public class HarmonoiseAttenuation {
             pathLengthDiff = - (distanceToSource + distanceToReceiver - directPathLength); // Eq. 9
         } else {
             directPathLength = distanceToSource + distanceToReceiver; // Eq. 12
-            double epsilon = Math.sqrt(distanceToSource * distanceToReceiver) / (distanceToSource + distanceToReceiver)
-                    * (theta - Math.PI); // Eq. 13
+            double epsilon = Math.sqrt(distanceToSource * distanceToReceiver) / directPathLength * (theta - Math.PI); // Eq. 13
             pathLengthDiff = directPathLength * (1.0/2 * Math.pow(epsilon,2) + 1.0/3 * Math.pow(epsilon,4)); // Eq. 11
         }
         double[] fresnelNumber = scene.defaultCnossosParameters.getFrequenciesExact()
