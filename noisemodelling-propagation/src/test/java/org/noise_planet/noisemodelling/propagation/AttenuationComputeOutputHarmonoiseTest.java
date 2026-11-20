@@ -287,6 +287,7 @@ public class AttenuationComputeOutputHarmonoiseTest {
     /**
      * Test case 5 from Harmonoise publication (Sound barrrier, 20000 kPa.s/m2 ground and
      * non refracting atmosphere)
+     * /!\ The screen is positionned at 25m and not 30m as mentionned in the paper.
      * Ref: Salomons, E., Van Maercke, D., Defrance, J.,&amp;De Roo, F. (2011). The Harmonoise sound propagation model.
      * Acta acustica united with acustica, 97(1), 62-74 (section 3)
      */
