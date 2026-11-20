@@ -200,18 +200,18 @@ public class HarmonoiseAttenuation {
             modifiedFresnelWeighting[k - iSource] = modifiedFresnelWeighting(k, iSource, iReceiver, transitionFrequency);
         }
         // Computing ground attenuation
+        double[] attenuation;
         if (groundProfile.hasConvexSegment(iSource, iReceiver)){
-            transitionGroundAttenuation(iSource, iReceiver, reflectionCoefficient, modifiedFresnelWeighting,
+            attenuation = transitionGroundAttenuation(iSource, iReceiver, reflectionCoefficient, modifiedFresnelWeighting,
                     transitionFrequency);
         } else {
-            double[] concaveGroundAttenuation = concaveGroundAttenuation(iSource, iReceiver, reflectionCoefficient, modifiedFresnelWeighting,
+            attenuation = concaveGroundAttenuation(iSource, iReceiver, reflectionCoefficient, modifiedFresnelWeighting,
                     transitionFrequency);
-            attenuationOutput.addGroundAttenuation(concaveGroundAttenuation);
         }
-
+        attenuationOutput.addGroundAttenuation(attenuation);
     }
 
-    private void transitionGroundAttenuation(int iSource, int iReceiver, Complex[][] reflectionCoefficient,
+    private double[] transitionGroundAttenuation(int iSource, int iReceiver, Complex[][] reflectionCoefficient,
                                              double[][] modifiedFresnelWeighting, double transitionFrequency){
         // Searching for diffraction points below line of sight with the smallest path
         // length difference
@@ -244,6 +244,7 @@ public class HarmonoiseAttenuation {
                 modifiedFresnelWeighting, transitionFrequency);
         double[] rightAttenuation = concaveGroundAttenuation(indexMinDistance, iReceiver, reflectionCoefficient,
                 modifiedFresnelWeighting, transitionFrequency);
+        double[] groundAttenuation = new double[waveNumber.length];
         for (int i = 0; i < waveNumber.length; i++) {
             int finalI = i;
             double[] weightings = Arrays.stream(modifiedFresnelWeighting)
@@ -251,8 +252,10 @@ public class HarmonoiseAttenuation {
                     .toArray();
             double chi = balanceFactor(iSource, indexMinDistance, iReceiver, 2 * Math.PI / waveNumber[i],
                     weightings);
-
+            double l1 = diffractionAttenuation[i] + leftAttenuation[i] + rightAttenuation[i];
+            groundAttenuation[i] = chi * l1 + (1-chi) * directAttenuation[i];
         }
+        return groundAttenuation;
     }
 
     /**
@@ -270,11 +273,11 @@ public class HarmonoiseAttenuation {
         double numerator = 0;
         double denominator = 0;
         for (int k = iSource; k < iReceiver; k++) {
-            numerator += modifiedFresnelWeighting[k] * (
+            numerator += modifiedFresnelWeighting[k-iSource] * (
                     groundProfile.getImageVertex(iSource, k).distance(groundProfile.getVertex(iReceiver))
                     - groundProfile.getVertex(iSource).distance(groundProfile.getVertex(iReceiver))
             );
-            denominator += modifiedFresnelWeighting[k];
+            denominator += modifiedFresnelWeighting[k-iSource];
         }
         double deltaSpecular = numerator / denominator;
         double chi1 = function((deltaSpecular - pathLengthDiff) / (wavelength/8));
