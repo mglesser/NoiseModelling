@@ -77,7 +77,7 @@ public class HarmonoiseAttenuation {
             double crossProduct = (vertices[i].x - vertices[0].x) * (vertices[0].y - vertices[vertices.length-1].y)
                     + (vertices[i].y - vertices[0].y) * (vertices[vertices.length-1].x - vertices[0].x);
             if (crossProduct > 0) { // if the current point is above the line crossing the first and last points
-                double distance = groundProfile.getPathLengthDifference(iSource, i, iReceiver); // Eq 5
+                double distance = groundProfile.getPathLengthDifference(iSource, i+iSource, iReceiver); // Eq 5
                 if (distance > maxDistance){
                     maxDistance = distance;
                     indexMaxDistance = i;
@@ -873,14 +873,14 @@ public class HarmonoiseAttenuation {
             if (maxPhaseDiff > Math.PI) {
                 if (i == 0){
                     fMax = frequency.getFirst();
-                } else if (i == frequency.size()-1){
-                    fMax = frequency.get(frequency.size()-2) * 2 ;
                 } else {
                     fMax = frequency.get(i-1) + (frequency.get(i) - frequency.get(i-1))
                             * (Math.PI - phaseDiffPrevious) / (maxPhaseDiff - phaseDiffPrevious) ;
                 }
                 break;
             }
+            // If maxPhaseDiff > Math.PI is not reached
+            fMax = frequency.get(frequency.size()-2) * 2 ;
         }
         return Math.sqrt(fMin * fMax);
     }

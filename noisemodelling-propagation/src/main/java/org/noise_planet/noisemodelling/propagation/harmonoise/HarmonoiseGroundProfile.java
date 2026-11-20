@@ -349,9 +349,13 @@ public class HarmonoiseGroundProfile {
         }
         Coordinate p = Intersection.intersection(getGroundVertex(iSeg), getGroundVertex(iSeg+1),
                 imageSource, receiver);
-        Vector2D ps = new Vector2D(p, source);
-        Vector2D reflexionPlane = new Vector2D(getGroundVertex(iSeg), getGroundVertex(iSeg+1));
-        return reflexionPlane.angle(ps) - Math.PI / 2;
+        if(p != null) {
+            Vector2D ps = new Vector2D(p, source);
+            Vector2D reflexionPlane = new Vector2D(getGroundVertex(iSeg), getGroundVertex(iSeg + 1));
+            return reflexionPlane.angle(ps) - Math.PI / 2;
+        } else {
+            return Math.PI / 2;
+        }
     }
 
     /**
