@@ -419,13 +419,60 @@ public class AttenuationComputeOutputHarmonoiseTest {
                 -25.196304849884527	,
                 -27.41339491916859	,
                 -29.630484988452658
-        }; // plotdigitized from publication, 1/3 oct band 25Hz - 10kHz
+        }; // plotdigitized from publication, 1/3 oct band 25Hz - 1250Hz
         assert(output.aGlobal.length !=0);
-        Graph2D plot = new Graph2D(DEFAULT_FREQUENCIES_THIRD_OCTAVE,
+        Graph2D plot = new Graph2D(
+                Arrays.copyOfRange(DEFAULT_FREQUENCIES_THIRD_OCTAVE, 0, 15),
                 Arrays.copyOfRange(referenceExcessAttenuation, 3, referenceExcessAttenuation.length),
-                output.aGlobal);
+                Arrays.copyOfRange(output.aGlobal, 0, 15));
         plot.legend("Salomons 2011", "NoiseModelling");
         plot.draw(rootDir + "/Docs/images/Validation/Harmonoise/case07.svg");
+        for (int i = 0; i < output.aGlobal.length; i++) {
+            assertEquals(referenceExcessAttenuation[i+3], output.aGlobal[i], 1);
+        }
+    }
+
+    /**
+     * Test case 8 from Harmonoise publication (200 kPa.s/m2 ground and
+     * non refracting atmosphere)
+     * Ref: Salomons, E., Van Maercke, D., Defrance, J.,&amp;De Roo, F. (2011). The Harmonoise sound propagation model.
+     * Acta acustica united with acustica, 97(1), 62-74 (section 3)
+     */
+    @Test
+    public void testHarmonoiseCase08() throws IOException {
+        CutProfile cutProfile = loadCutProfile("case_08");
+        AttenuationOutput output = computeHarmonoiseAttenuation(cutProfile);
+        assert(output.aGlobal.length !=0);
+        //Assertion
+        double[] referenceExcessAttenuation = {
+                -0.8396946564885504	,
+                -3.893129770992367	,
+                -7.633587786259541	,
+                -9.236641221374045	,
+                -8.091603053435113	,
+                -7.251908396946565	,
+                -8.015267175572518	,
+                -10.15267175572519	,
+                -11.450381679389313	,
+                -12.290076335877863	,
+                -13.96946564885496	,
+                -15.34351145038168	,
+                -16.48854961832061	,
+                -17.709923664122137	,
+                -19.083969465648856	,
+                -20.53435114503817	,
+                -22.137404580152673	,
+                -24.274809160305345	,
+                -27.251908396946565	,
+                -30
+        }; // plotdigitized from publication, 1/3 oct band 25Hz - 2000Hz
+        assert(output.aGlobal.length !=0);
+        Graph2D plot = new Graph2D(
+                Arrays.copyOfRange(DEFAULT_FREQUENCIES_THIRD_OCTAVE, 0, 17),
+                Arrays.copyOfRange(referenceExcessAttenuation, 3, referenceExcessAttenuation.length),
+                Arrays.copyOfRange(output.aGlobal, 0, 17));
+        plot.legend("Salomons 2011", "NoiseModelling");
+        plot.draw(rootDir + "/Docs/images/Validation/Harmonoise/case08.svg");
         for (int i = 0; i < output.aGlobal.length; i++) {
             assertEquals(referenceExcessAttenuation[i+3], output.aGlobal[i], 1);
         }
