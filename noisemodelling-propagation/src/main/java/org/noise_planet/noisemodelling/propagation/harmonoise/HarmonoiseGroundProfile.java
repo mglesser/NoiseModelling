@@ -213,15 +213,9 @@ public class HarmonoiseGroundProfile {
         for (int i = 0; i < nVertices; i++) {
             Complex w = new Complex(vertices[i].getX(), vertices[i].getY());
             Complex wPrim = c.multiply(w.subtract(w0)).divide(c.add(w.subtract(w0))); // Eq. 74
-            // Create new coordinate with transformed z (incl. profile translation)
-            if (i == 0) {
-                deltaY = sourceGroundPoint.getY() - wPrim.getImaginary();
-                curvedVertices[i] =
-                        new Coordinate(wPrim.getReal() + xc, vertices[i].getY() , vertices[i].getZ());
-            } else {
-                curvedVertices[i] =
-                        new Coordinate(wPrim.getReal() + xc, wPrim.getImaginary() + deltaY, vertices[i].getZ());
-            }
+            // Create new coordinate with transformed z
+            curvedVertices[i] =
+                    new Coordinate(wPrim.getReal(), wPrim.getImaginary(), vertices[i].getZ());
         }
         vertices = curvedVertices;
     }
