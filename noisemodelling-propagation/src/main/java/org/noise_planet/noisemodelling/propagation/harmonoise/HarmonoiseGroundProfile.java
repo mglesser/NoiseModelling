@@ -23,6 +23,7 @@ import org.noise_planet.noisemodelling.pathfinder.profilebuilder.*;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static java.lang.Math.*;
 
@@ -59,12 +60,10 @@ public class HarmonoiseGroundProfile {
     public HarmonoiseGroundProfile(CutProfile cutProfile, double segmentLengthRatio, double aMeteo, double bMeteo,
                                    double z0, double c0){
         // Get the whole 2D profile including ground points
-        extractGroundVertices(cutProfile);
+        int[] indices = extractGroundVertices(cutProfile);
         double radius = computeRadius(aMeteo, bMeteo, z0, c0);
         if(radius != 0) {
-            double dsr = cutProfile.getCutPoints().getFirst().getCoordinate()
-                    .distance(cutProfile.getCutPoints().getLast().getCoordinate());
-            refine(dsr, segmentLengthRatio);
+            indices = refine(segmentLengthRatio, indices);
             curve(radius);
         }
         // The real source and real receiver ground points are replaced by respectively, the source and the receiver
@@ -73,76 +72,19 @@ public class HarmonoiseGroundProfile {
     }
 
     /**
-     * Extract 2D vertices and segments flow resistivity from the cutProfile
+     * Extract 2D vertices from the cutProfile
      *
      * @param cutProfile 3D profile from source to receiver
+     * @return correspondence between cut points and vertices indices
      */
-    private void extractGroundVertices(CutProfile cutProfile){
+    private int[] extractGroundVertices(CutProfile cutProfile){
         // Extract top-elevation point, including ground points,
         List<Integer> indices = new ArrayList<>(0);
         vertices = cutProfile.computePts2DGround(0, indices).toArray(new Coordinate[0]);
-        int nVertices = vertices.length;
         // source and receiver height from ground
         sourceHeight = cutProfile.getCutPoints().getFirst().getCoordinate().getZ();
         receiverHeight = cutProfile.getCutPoints().getLast().getCoordinate().getZ();
-        // Extract flow resistivity
-        flowResistivity = extractFlowResistivity(cutProfile, nVertices, indices);
-    }
-
-    /**
-     * Extract ground segment's flow resistivity from cut profile
-     *
-     * @param cutProfile 3D profile from source to receiver
-     * @param nVertices ground profile's number of vertices
-     * @param indices correspondence between cut points and vertices indices
-     * @return ground segment's flow resistivity
-     */
-    private double[] extractFlowResistivity(CutProfile cutProfile, int nVertices, List<Integer> indices){
-        double[] resistivity = new double[nVertices];
-        for (int i = 0; i < indices.size(); i++) {
-            if (cutProfile.cutPoints.get(i) instanceof CutPointWall) {
-                // Set rigid wall
-                // TODO : get absorption from cutProfile
-                resistivity[indices.get(i)-2] = 1e6;
-                resistivity[indices.get(i)-1] = 1e6;
-                resistivity[indices.get(i)] = cutProfile.cutPoints.get(i).groundCoefficient;
-            } else {
-                resistivity[indices.get(i)] = cutProfile.cutPoints.get(i).groundCoefficient;
-            }
-        }
-        return resistivity;
-    }
-
-    /**
-     * Refine the segmentation of the profile according to section 2.5 of Salomons et al.
-     *
-     * @param dsr distance source-receiver
-     */
-    private void refine(double dsr, double segmentLengthRatio){
-        GeometryFactory geometryFactory = new GeometryFactory();
-        double maxSegmentLength = min( dsr/3 , max(50, dsr/20)) / segmentLengthRatio;
-        Coordinate[] refinedVertices = new Coordinate[] {vertices[0]};
-        double[] refinedResistivity = new double[] {flowResistivity[0]};
-        for (int k = 0; k < getNVertices() - 1; k++) {
-            // Refine current segment
-            LineString segment = geometryFactory.createLineString(
-                    new Coordinate[]{vertices[k], vertices[k + 1]});
-            segment = (LineString) Densifier.densify(segment, maxSegmentLength);
-            Coordinate[] verticesConcat = new Coordinate[refinedVertices.length + segment.getCoordinates().length - 1];
-            System.arraycopy(refinedVertices, 0, verticesConcat, 0, refinedVertices.length);
-            System.arraycopy(Arrays.copyOfRange(segment.getCoordinates(), 1, segment.getCoordinates().length),
-                    0, verticesConcat, refinedVertices.length, segment.getCoordinates().length - 1);
-            refinedVertices = verticesConcat;
-            // Update flow resistivity vector accordingly
-            double[] resistivity = new double[segment.getCoordinates().length-1];
-            Arrays.fill(resistivity, flowResistivity[k]);
-            double[] resistivityConcat = new double[refinedResistivity.length + resistivity.length];
-            System.arraycopy(refinedResistivity, 0, resistivityConcat, 0, refinedResistivity.length);
-            System.arraycopy(resistivity,0, resistivityConcat, refinedResistivity.length, resistivity.length);
-            refinedResistivity = resistivityConcat;
-        }
-        vertices = refinedVertices;
-        flowResistivity = refinedResistivity;
+        return indices.stream().mapToInt(i -> i).toArray();
     }
 
     /**
@@ -189,6 +131,67 @@ public class HarmonoiseGroundProfile {
         }
         return Math.max(1 / (ra + rb), 1.0e-6 );
     }
+
+    /**
+     * Extract ground segment's flow resistivity from cut profile
+     *
+     * @param cutProfile 3D profile from source to receiver
+     * @param nVertices ground profile's number of vertices
+     * @param indices correspondence between cut points and vertices indices
+     * @return ground segment's flow resistivity
+     */
+    private double[] extractFlowResistivity(CutProfile cutProfile, int nVertices, List<Integer> indices){
+        double[] resistivity = new double[nVertices];
+        for (int i = 0; i < indices.size(); i++) {
+            if (cutProfile.cutPoints.get(i) instanceof CutPointWall) {
+                // Set rigid wall
+                // TODO : get absorption from cutProfile
+                resistivity[indices.get(i)-2] = 1e6;
+                resistivity[indices.get(i)-1] = 1e6;
+                resistivity[indices.get(i)] = cutProfile.cutPoints.get(i).groundCoefficient;
+            } else {
+                resistivity[indices.get(i)] = cutProfile.cutPoints.get(i).groundCoefficient;
+            }
+        }
+        return resistivity;
+    }
+
+    /**
+     * Refine the segmentation of the profile according to section 2.5 of Salomons et al.
+     *
+     * @param segmentLengthRatio if >0, the profile will be refined with smaller segments
+     *                           than the paper recommendation
+     * @param indices correspondence between cut points and vertices indices before refinement
+     * @return correspondence between cut points and vertices indices after refinement
+     */
+    private int[] refine(double segmentLengthRatio, int[] indices){
+        // https://www.geeksforgeeks.org/java/how-to-insert-an-element-at-a-specific-position-in-an-array-in-java/
+        // Densifier.densifyPoints
+        GeometryFactory geometryFactory = new GeometryFactory();
+        double dsr = vertices[0].distance(vertices[vertices.length-1]);
+        double maxSegmentLength = min( dsr/3 , max(50, dsr/20)) / segmentLengthRatio;
+        Coordinate[] refinedVertices = new Coordinate[] {vertices[0]};
+        for (int i = 0; i < indices.length-1; i++) {
+            // Refine current segment (vertical segments are not refined)
+            int k = indices[i];
+            LineString segment = geometryFactory.createLineString(
+                    new Coordinate[]{vertices[k], vertices[k + 1]});
+            segment = (LineString) Densifier.densify(segment, maxSegmentLength);
+            Coordinate[] verticesConcat = new Coordinate[refinedVertices.length + segment.getCoordinates().length - 1];
+            System.arraycopy(refinedVertices, 0, verticesConcat, 0, refinedVertices.length);
+            System.arraycopy(Arrays.copyOfRange(segment.getCoordinates(), 1, segment.getCoordinates().length),
+                    0, verticesConcat, refinedVertices.length, segment.getCoordinates().length - 1);
+            refinedVertices = verticesConcat;
+            // Update indices array accordingly
+            for (int j = i + 1; j < indices.length-1; j++) {
+                indices[j] += segment.getDimension() - 1;
+            }
+        }
+        vertices = refinedVertices;
+        return indices;
+    }
+
+
 
     /**
      * Generate a curved profile from a coordinate list, two endpoints (source and receiver) and a curvature radius.
