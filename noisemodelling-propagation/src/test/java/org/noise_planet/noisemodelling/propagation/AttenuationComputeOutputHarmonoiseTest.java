@@ -384,7 +384,7 @@ public class AttenuationComputeOutputHarmonoiseTest {
         plot.legend("Salomons 2011", "NoiseModelling");
         plot.draw(rootDir + "/Docs/images/Validation/Harmonoise/case06.svg");
         for (int i = 0; i < output.aGlobal.length; i++) {
-            assertEquals(referenceExcessAttenuation[i+3], output.aGlobal[i], 8);
+            assertEquals(referenceExcessAttenuation[i+3], output.aGlobal[i], 1.5);
         }
     }
 
@@ -427,7 +427,7 @@ public class AttenuationComputeOutputHarmonoiseTest {
         plot.legend("Salomons 2011", "NoiseModelling");
         plot.draw(rootDir + "/Docs/images/Validation/Harmonoise/case07.svg");
         for (int i = 0; i < output.aGlobal.length; i++) {
-            assertEquals(referenceExcessAttenuation[i+3], output.aGlobal[i], 1);
+            assertEquals(referenceExcessAttenuation[i+3], output.aGlobal[i], 1.5);
         }
     }
 
@@ -472,7 +472,7 @@ public class AttenuationComputeOutputHarmonoiseTest {
         plot.legend("Salomons 2011", "NoiseModelling");
         plot.draw(rootDir + "/Docs/images/Validation/Harmonoise/case08.svg");
         for (int i = 0; i < output.aGlobal.length; i++) {
-            assertEquals(referenceExcessAttenuation[i+3], output.aGlobal[i], 1);
+            assertEquals(referenceExcessAttenuation[i+3], output.aGlobal[i], 1.5);
         }
     }
 

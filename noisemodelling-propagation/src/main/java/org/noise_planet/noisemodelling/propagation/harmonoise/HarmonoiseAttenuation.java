@@ -418,17 +418,14 @@ public class HarmonoiseAttenuation {
         double angle = groundProfile.getReflexionAngle(iSeg, iSource, iReceiver);
         List<Double> frequencies = scene.defaultCnossosParameters.getFrequenciesExact();
         double distance;
-        double hm;
         // In case of convex segment, source/receiver is replaced by its image
         if (groundProfile.isConvexSegment(iSeg, iSource, iReceiver)) {
             distance = groundProfile.getVertex(iSource).distance(groundProfile.getVertex(iReceiver));
-            hm = (Math.abs(groundProfile.getLocalOrdinate(iSource, iSeg))
-                    + Math.abs(groundProfile.getLocalOrdinate(iReceiver, iSeg))) / 2;
         } else {
             distance = groundProfile.getImageVertex(iSource, iSeg).distance(groundProfile.getVertex(iReceiver));
-            hm = (groundProfile.getLocalOrdinate(iSource, iSeg)
-                    + groundProfile.getLocalOrdinate(iReceiver, iSeg)) / 2;
         }
+        double hm = (Math.abs(groundProfile.getLocalOrdinate(iSource, iSeg))
+                + Math.abs(groundProfile.getLocalOrdinate(iReceiver, iSeg))) / 2;
 //        In the C++ implementation a different expression is used for hm :
 //        double hm = Math.max(groundProfile.getLocalOrdinate(iSource, iSeg),
 //                groundProfile.getLocalOrdinate(iReceiver, iSeg)) / 2;
