@@ -33,22 +33,22 @@
 <line x1="232.240084" y1="218.066158" x2="246.559499" y2="229.465649" style="fill:none; stroke-width:1; stroke:rgb(232,126,77)"/>
 <line x1="246.559499" y1="229.465649" x2="262.400835" y2="245.343511" style="fill:none; stroke-width:1; stroke:rgb(232,126,77)"/>
 <line x1="262.400835" y1="245.343511" x2="276.720251" y2="260.000000" style="fill:none; stroke-width:1; stroke:rgb(232,126,77)"/>
-<line x1="40.000000" y1="159.137199" x2="54.830743" y2="148.218869" style="fill:none; stroke-width:1; stroke:rgb(130,166,173)"/>
+<line x1="40.000000" y1="159.138453" x2="54.830743" y2="148.218869" style="fill:none; stroke-width:1; stroke:rgb(130,166,173)"/>
 <line x1="54.830743" y1="148.218869" x2="70.160752" y2="142.987795" style="fill:none; stroke-width:1; stroke:rgb(130,166,173)"/>
 <line x1="70.160752" y1="142.987795" x2="84.480167" y2="146.689868" style="fill:none; stroke-width:1; stroke:rgb(130,166,173)"/>
-<line x1="84.480167" y1="146.689868" x2="98.799582" y2="156.470647" style="fill:none; stroke-width:1; stroke:rgb(130,166,173)"/>
-<line x1="98.799582" y1="156.470647" x2="114.640919" y2="158.577679" style="fill:none; stroke-width:1; stroke:rgb(130,166,173)"/>
-<line x1="114.640919" y1="158.577679" x2="128.960334" y2="164.373906" style="fill:none; stroke-width:1; stroke:rgb(130,166,173)"/>
-<line x1="128.960334" y1="164.373906" x2="143.279749" y2="174.455289" style="fill:none; stroke-width:1; stroke:rgb(130,166,173)"/>
-<line x1="143.279749" y1="174.455289" x2="158.110493" y2="183.501986" style="fill:none; stroke-width:1; stroke:rgb(130,166,173)"/>
-<line x1="158.110493" y1="183.501986" x2="173.440501" y2="188.989510" style="fill:none; stroke-width:1; stroke:rgb(130,166,173)"/>
-<line x1="173.440501" y1="188.989510" x2="187.759916" y2="196.396169" style="fill:none; stroke-width:1; stroke:rgb(130,166,173)"/>
-<line x1="187.759916" y1="196.396169" x2="202.590660" y2="203.533435" style="fill:none; stroke-width:1; stroke:rgb(130,166,173)"/>
-<line x1="202.590660" y1="203.533435" x2="217.920668" y2="210.979692" style="fill:none; stroke-width:1; stroke:rgb(130,166,173)"/>
-<line x1="217.920668" y1="210.979692" x2="232.240084" y2="219.593753" style="fill:none; stroke-width:1; stroke:rgb(130,166,173)"/>
-<line x1="232.240084" y1="219.593753" x2="246.559499" y2="231.251867" style="fill:none; stroke-width:1; stroke:rgb(130,166,173)"/>
-<line x1="246.559499" y1="231.251867" x2="262.400835" y2="242.732165" style="fill:none; stroke-width:1; stroke:rgb(130,166,173)"/>
-<line x1="262.400835" y1="242.732165" x2="276.720251" y2="260.931765" style="fill:none; stroke-width:1; stroke:rgb(130,166,173)"/>
+<line x1="84.480167" y1="146.689868" x2="98.799582" y2="156.412084" style="fill:none; stroke-width:1; stroke:rgb(130,166,173)"/>
+<line x1="98.799582" y1="156.412084" x2="114.640919" y2="158.250726" style="fill:none; stroke-width:1; stroke:rgb(130,166,173)"/>
+<line x1="114.640919" y1="158.250726" x2="128.960334" y2="162.868445" style="fill:none; stroke-width:1; stroke:rgb(130,166,173)"/>
+<line x1="128.960334" y1="162.868445" x2="143.279749" y2="171.823359" style="fill:none; stroke-width:1; stroke:rgb(130,166,173)"/>
+<line x1="143.279749" y1="171.823359" x2="158.110493" y2="179.494313" style="fill:none; stroke-width:1; stroke:rgb(130,166,173)"/>
+<line x1="158.110493" y1="179.494313" x2="173.440501" y2="184.000831" style="fill:none; stroke-width:1; stroke:rgb(130,166,173)"/>
+<line x1="173.440501" y1="184.000831" x2="187.759916" y2="190.536489" style="fill:none; stroke-width:1; stroke:rgb(130,166,173)"/>
+<line x1="187.759916" y1="190.536489" x2="202.590660" y2="197.014622" style="fill:none; stroke-width:1; stroke:rgb(130,166,173)"/>
+<line x1="202.590660" y1="197.014622" x2="217.920668" y2="203.963542" style="fill:none; stroke-width:1; stroke:rgb(130,166,173)"/>
+<line x1="217.920668" y1="203.963542" x2="232.240084" y2="212.558801" style="fill:none; stroke-width:1; stroke:rgb(130,166,173)"/>
+<line x1="232.240084" y1="212.558801" x2="246.559499" y2="224.880366" style="fill:none; stroke-width:1; stroke:rgb(130,166,173)"/>
+<line x1="246.559499" y1="224.880366" x2="262.400835" y2="237.251235" style="fill:none; stroke-width:1; stroke:rgb(130,166,173)"/>
+<line x1="262.400835" y1="237.251235" x2="276.720251" y2="256.407930" style="fill:none; stroke-width:1; stroke:rgb(130,166,173)"/>
 <text x="210.000000" y="295" text-anchor="middle" style="stroke:none; fill:black">Frequency [Hz]</text>
 <text x="5" y="140.000000" transform="rotate(-90, 12, 140.000000)" text-anchor="middle" style="stroke:none; fill:black">Excess attenuation [dB]</text>
 <line x1="55" y1="225" x2="75" y2="225" style="fill:none; stroke-width:1; stroke:rgb(232,126,77)"/>

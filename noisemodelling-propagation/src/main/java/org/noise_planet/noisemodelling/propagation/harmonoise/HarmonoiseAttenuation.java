@@ -535,18 +535,16 @@ public class HarmonoiseAttenuation {
         Coordinate realSource = groundProfile.getVertex(0);
         Coordinate realSourceImage = groundProfile.getImageVertex(0, iSeg);
         Coordinate realReceiver = groundProfile.getVertex(lastVertex);
-        Coordinate secondarySource = groundProfile.getVertex(iSource);
-        Coordinate secondaryReceiver = groundProfile.getVertex(iReceiver);
-        // In case of convex segment, source/receiver is replaced by its image and consider specular
-        // reflection point as diffraction point
+        // In case of convex segment, source/receiver is replaced by its image and the specular
+        // reflection point is considered as diffraction point
         Complex[] pSpecImage = new Complex[nFreq];
         Complex[] pSpec = new Complex[nFreq];
         if (groundProfile.isConvexSegment(iSeg, iSource, iReceiver)) {
+            Coordinate specularReflectionPoint = Intersection.intersection(groundProfile.getGroundVertex(iSeg),
+                    groundProfile.getGroundVertex(iSeg + 1), realSource, realReceiver);
             Coordinate realReceiverImage = groundProfile.getImageVertex(lastVertex, iSeg);
-            Coordinate x = Intersection.intersection(groundProfile.getGroundVertex(iSeg),
-                    groundProfile.getGroundVertex(iSeg + 1), realSourceImage, realReceiver);
-            pSpecImage = computeDiffraction(realSource, realReceiverImage, x).pressure;
-            pSpec = computeDiffraction(realSource, realReceiver, x).pressure;
+            pSpecImage = computeDiffraction(realSource, realReceiverImage, specularReflectionPoint).pressure;
+            pSpec = computeDiffraction(realSource, realReceiver, specularReflectionPoint).pressure;
             if (groundProfile.getLocalOrdinate(iSource, iSeg) < 0) {
                 realSource = groundProfile.getImageVertex(0, iSeg);
                 realSourceImage = groundProfile.getVertex(0);
@@ -563,6 +561,8 @@ public class HarmonoiseAttenuation {
             pImage = unitSphericalWavePressure(realSourceImage.distance(realReceiver));
             p = unitSphericalWavePressure(realSource.distance(realReceiver));
         } else {
+            Coordinate secondarySource = groundProfile.getVertex(iSource);
+            Coordinate secondaryReceiver = groundProfile.getVertex(iReceiver);
             if (iSource == 0 && iReceiver < lastVertex) { // Case 2 diffraction on the receiver side only
                 pImage = computeDiffraction(realSourceImage, realReceiver, secondaryReceiver).pressure;
                 p = computeDiffraction(realSource, realReceiver, secondaryReceiver).pressure;
