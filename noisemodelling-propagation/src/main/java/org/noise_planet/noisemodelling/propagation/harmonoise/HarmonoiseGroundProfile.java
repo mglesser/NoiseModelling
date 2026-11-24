@@ -16,14 +16,12 @@ import org.locationtech.jts.densify.Densifier;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.LineString;
-import org.locationtech.jts.geom.Point;
 import org.locationtech.jts.math.Vector2D;
 import org.noise_planet.noisemodelling.pathfinder.profilebuilder.*;
 
-import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static java.lang.Math.*;
 
@@ -36,7 +34,7 @@ import static java.lang.Math.*;
 
 public class HarmonoiseGroundProfile {
     private Coordinate[] vertices;
-    private double[] flowResistivity;
+    private final double[] flowResistivity;
     private double sourceHeight;
     private double receiverHeight;
 
@@ -60,12 +58,15 @@ public class HarmonoiseGroundProfile {
     public HarmonoiseGroundProfile(CutProfile cutProfile, double segmentLengthRatio, double aMeteo, double bMeteo,
                                    double z0, double c0){
         // Get the whole 2D profile including ground points
-        int[] indices = extractGroundVertices(cutProfile);
+        List<Integer> indices = extractGroundVertices(cutProfile);
+        // Curve profile to account for meteo
         double radius = computeRadius(aMeteo, bMeteo, z0, c0);
         if(radius != 0) {
-            indices = refine(segmentLengthRatio, indices);
-            curve(radius);
+            refine(segmentLengthRatio, indices);
+            curve(radius, cutProfile, indices);
         }
+        // Get flow resistivity
+        flowResistivity = extractFlowResistivity(cutProfile,indices);
         // The real source and real receiver ground points are replaced by respectively, the source and the receiver
         vertices[0].setY(vertices[0].getY() + sourceHeight);
         vertices[getNVertices() - 1].setY(vertices[getNVertices() - 1].getY() + receiverHeight);
@@ -77,18 +78,18 @@ public class HarmonoiseGroundProfile {
      * @param cutProfile 3D profile from source to receiver
      * @return correspondence between cut points and vertices indices
      */
-    private int[] extractGroundVertices(CutProfile cutProfile){
+    private List<Integer> extractGroundVertices(CutProfile cutProfile){
         // Extract top-elevation point, including ground points,
-        List<Integer> indices = new ArrayList<>(0);
+        List<Integer> indices = new LinkedList<>();
         vertices = cutProfile.computePts2DGround(0, indices).toArray(new Coordinate[0]);
         // source and receiver height from ground
         sourceHeight = cutProfile.getCutPoints().getFirst().getCoordinate().getZ();
         receiverHeight = cutProfile.getCutPoints().getLast().getCoordinate().getZ();
-        return indices.stream().mapToInt(i -> i).toArray();
+        return indices;
     }
 
     /**
-     * Compute the equivalent curvature radius Rc of the linear profile c(z) = c0 + c0/Rc.z)
+     * Compute the equivalent curvature radius Rc of the linear profile c(z) = c0 + c0/Rc.z
      * that agree as much as possible with the lin/log profile c(z) = c0 + az + bln(1+z/z0)
      * according to Harmonoise methodology.
      * Ref: Salomons et al section 3
@@ -136,21 +137,23 @@ public class HarmonoiseGroundProfile {
      * Extract ground segment's flow resistivity from cut profile
      *
      * @param cutProfile 3D profile from source to receiver
-     * @param nVertices ground profile's number of vertices
      * @param indices correspondence between cut points and vertices indices
      * @return ground segment's flow resistivity
      */
-    private double[] extractFlowResistivity(CutProfile cutProfile, int nVertices, List<Integer> indices){
-        double[] resistivity = new double[nVertices];
+    private double[] extractFlowResistivity(CutProfile cutProfile, List<Integer> indices){
+        double[] resistivity = new double[vertices.length];
         for (int i = 0; i < indices.size(); i++) {
-            if (cutProfile.cutPoints.get(i) instanceof CutPointWall) {
+            if (cutProfile.cutPoints.get(i) instanceof CutPointWall
+                    && ((CutPointWall) cutProfile.cutPoints.get(i)).intersectionType == CutPointWall.INTERSECTION_TYPE.THIN_WALL_ENTER_EXIT) {
                 // Set rigid wall
                 // TODO : get absorption from cutProfile
                 resistivity[indices.get(i)-2] = 1e6;
                 resistivity[indices.get(i)-1] = 1e6;
                 resistivity[indices.get(i)] = cutProfile.cutPoints.get(i).groundCoefficient;
             } else {
-                resistivity[indices.get(i)] = cutProfile.cutPoints.get(i).groundCoefficient;
+                for (int j = indices.get(Math.max(i-1, 0)); j <= indices.get(i); j++) {
+                    resistivity[j] = cutProfile.cutPoints.get(Math.max(i-1, 0)).groundCoefficient;
+                }
             }
         }
         return resistivity;
@@ -161,34 +164,32 @@ public class HarmonoiseGroundProfile {
      *
      * @param segmentLengthRatio if >0, the profile will be refined with smaller segments
      *                           than the paper recommendation
-     * @param indices correspondence between cut points and vertices indices before refinement
-     * @return correspondence between cut points and vertices indices after refinement
+     * @param indices            correspondence between cut points and vertices indices
      */
-    private int[] refine(double segmentLengthRatio, int[] indices){
-        // https://www.geeksforgeeks.org/java/how-to-insert-an-element-at-a-specific-position-in-an-array-in-java/
-        // Densifier.densifyPoints
+    private void refine(double segmentLengthRatio, List<Integer> indices){
         GeometryFactory geometryFactory = new GeometryFactory();
         double dsr = vertices[0].distance(vertices[vertices.length-1]);
         double maxSegmentLength = min( dsr/3 , max(50, dsr/20)) / segmentLengthRatio;
-        Coordinate[] refinedVertices = new Coordinate[] {vertices[0]};
-        for (int i = 0; i < indices.length-1; i++) {
-            // Refine current segment (vertical segments are not refined)
-            int k = indices[i];
-            LineString segment = geometryFactory.createLineString(
-                    new Coordinate[]{vertices[k], vertices[k + 1]});
-            segment = (LineString) Densifier.densify(segment, maxSegmentLength);
-            Coordinate[] verticesConcat = new Coordinate[refinedVertices.length + segment.getCoordinates().length - 1];
-            System.arraycopy(refinedVertices, 0, verticesConcat, 0, refinedVertices.length);
-            System.arraycopy(Arrays.copyOfRange(segment.getCoordinates(), 1, segment.getCoordinates().length),
-                    0, verticesConcat, refinedVertices.length, segment.getCoordinates().length - 1);
-            refinedVertices = verticesConcat;
-            // Update indices array accordingly
-            for (int j = i + 1; j < indices.length-1; j++) {
-                indices[j] += segment.getDimension() - 1;
+        List<Coordinate> refinedVertices = new LinkedList<>(Arrays.asList(vertices));
+        for (int i = 0; i < indices.size()-1; i++) {
+            int k = indices.get(i);
+            if (vertices[k].distance(vertices[k + 1]) >= maxSegmentLength) {
+                // Refine current segment (vertical segments are not refined)
+                LineString segment = geometryFactory.createLineString(
+                        new Coordinate[]{vertices[k], vertices[k + 1]});
+                segment = (LineString) Densifier.densify(segment, maxSegmentLength);
+                List<Coordinate> points = Arrays.asList(segment.getCoordinates());
+                // Replace current segment by refined one
+                refinedVertices.remove(k);
+                refinedVertices.remove(k);
+                refinedVertices.addAll(k, points);
+                // Update indices array accordingly
+                for (int j = i + 1; j < indices.size(); j++) {
+                    indices.set(j, k + points.size() - 1);
+                }
             }
         }
-        vertices = refinedVertices;
-        return indices;
+        vertices = refinedVertices.toArray(new Coordinate[0]);
     }
 
 
@@ -199,11 +200,18 @@ public class HarmonoiseGroundProfile {
      * Note: This implementation yield similar results to the one from CurvedProfileGenerator.applyTransformation.
      * However, it works only on the whole ground profile (from zGroundSource to zGroundReceiver).
      */
-    private void curve(double radius){
+    private void curve(double radius, CutProfile cutProfile, List<Integer> indices){
         int nVertices = vertices.length;
         Coordinate sourceGroundPoint = vertices[0];
         Coordinate receiverGroundPoint = vertices[nVertices - 1];
         Coordinate[] curvedVertices;
+        // Set thin wall altitude to 0
+        for (int i = 0; i < indices.size(); i++) {
+            if (cutProfile.cutPoints.get(i) instanceof CutPointWall
+                    && ((CutPointWall) cutProfile.cutPoints.get(i)).intersectionType == CutPointWall.INTERSECTION_TYPE.THIN_WALL_ENTER_EXIT) {
+                vertices[indices.get(i)-1].setY(cutProfile.cutPoints.get(i).getzGround());
+            }
+        }
         // Ground curvature
         double hm = (sourceHeight + receiverHeight) / 2;
         double c0 = 2 * (hm + radius); // Eq. 77
@@ -211,7 +219,6 @@ public class HarmonoiseGroundProfile {
         double xc = 0.5 * (sourceGroundPoint.getX() + receiverGroundPoint.getX());
         double yc = 0.5 * (sourceGroundPoint.getY() + receiverGroundPoint.getY()) + hm;
         Complex w0 = new Complex(xc, yc); // Eq. 75
-        double deltaY = 0;
         curvedVertices = new Coordinate[nVertices];
         for (int i = 0; i < nVertices; i++) {
             Complex w = new Complex(vertices[i].getX(), vertices[i].getY());
@@ -219,6 +226,15 @@ public class HarmonoiseGroundProfile {
             // Create new coordinate with transformed z
             curvedVertices[i] =
                     new Coordinate(wPrim.getReal(), wPrim.getImaginary(), vertices[i].getZ());
+        }
+        // Reset thin wall altitude
+        for (int i = 0; i < indices.size(); i++) {
+            if (cutProfile.cutPoints.get(i) instanceof CutPointWall
+                    && ((CutPointWall) cutProfile.cutPoints.get(i)).intersectionType == CutPointWall.INTERSECTION_TYPE.THIN_WALL_ENTER_EXIT) {
+                curvedVertices[indices.get(i)-1].setY(
+                        curvedVertices[indices.get(i)-1].getY() + cutProfile.cutPoints.get(i).getCoordinate().getZ()
+                );
+            }
         }
         vertices = curvedVertices;
     }

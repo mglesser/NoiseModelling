@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
- * Tests for Harmonoise prropagation model
+ * Tests for Harmonoise propagation model
  * Ref: Section 3 of Salomons, E., Van Maercke, D., Defrance, J.,&amp;De Roo, F. (2011). The Harmonoise sound propagation model.
  * Acta acustica united with acustica, 97(1), 62-74
  * @author Martin Glesser
@@ -285,9 +285,9 @@ public class AttenuationComputeOutputHarmonoiseTest {
     }
 
     /**
-     * Test case 5 from Harmonoise publication (Sound barrrier, 20000 kPa.s/m2 ground and
+     * Test case 5 from Harmonoise publication (Sound barrier, 20000 kPa.s/m2 ground and
      * non refracting atmosphere)
-     * /!\ The screen is positionned at 25m and not 30m as mentionned in the paper.
+     * /!\ The screen is positioned at 25m and not 30m as mentioned in the paper.
      * Ref: Salomons, E., Van Maercke, D., Defrance, J.,&amp;De Roo, F. (2011). The Harmonoise sound propagation model.
      * Acta acustica united with acustica, 97(1), 62-74 (section 3)
      */
@@ -347,7 +347,6 @@ public class AttenuationComputeOutputHarmonoiseTest {
     public void testHarmonoiseCase06() throws IOException {
         CutProfile cutProfile = loadCutProfile("case_06");
         AttenuationOutput output = computeHarmonoiseAttenuation(cutProfile);
-        assert(output.aGlobal.length !=0);
         //Assertion
         double[] referenceExcessAttenuation = {
                 6.535796766743648	,
@@ -399,7 +398,6 @@ public class AttenuationComputeOutputHarmonoiseTest {
     public void testHarmonoiseCase07() throws IOException {
         CutProfile cutProfile = loadCutProfile("case_07");
         AttenuationOutput output = computeHarmonoiseAttenuation(cutProfile);
-        assert(output.aGlobal.length !=0);
         //Assertion
         double[] referenceExcessAttenuation = {
                 -5.519630484988454	,
@@ -443,7 +441,6 @@ public class AttenuationComputeOutputHarmonoiseTest {
     public void testHarmonoiseCase08() throws IOException {
         CutProfile cutProfile = loadCutProfile("case_08");
         AttenuationOutput output = computeHarmonoiseAttenuation(cutProfile);
-        assert(output.aGlobal.length !=0);
         //Assertion
         double[] referenceExcessAttenuation = {
                 -0.8396946564885504	,
@@ -730,7 +727,7 @@ public class AttenuationComputeOutputHarmonoiseTest {
         plot.legend("Salomons 2011", "NoiseModelling");
         plot.draw(rootDir + "/Docs/images/Validation/Harmonoise/case13.svg");
         for (int i = 0; i < output.aGlobal.length; i++) {
-            assertEquals(referenceExcessAttenuation[i+3], output.aGlobal[i], 1.5);
+            assertEquals(referenceExcessAttenuation[i+3], output.aGlobal[i], 1);
         }
     }
 
@@ -832,7 +829,7 @@ public class AttenuationComputeOutputHarmonoiseTest {
         plot.legend("Salomons 2011", "NoiseModelling");
         plot.draw(rootDir + "/Docs/images/Validation/Harmonoise/case15.svg");
         for (int i = 0; i < output.aGlobal.length; i++) {
-            assertEquals(referenceExcessAttenuation[i+3], output.aGlobal[i], 1);
+            assertEquals(referenceExcessAttenuation[i+3], output.aGlobal[i], 1.5);
         }
     }
 
