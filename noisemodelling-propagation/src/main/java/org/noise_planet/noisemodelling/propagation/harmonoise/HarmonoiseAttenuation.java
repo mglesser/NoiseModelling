@@ -860,13 +860,13 @@ public class HarmonoiseAttenuation {
                 }
                 break;
             }
-            // If maxPhaseDiff > Math.PI is not reached
-            if(fMin == 0){
-                fMin = frequency.getLast() ;
-            }
-            if (fMax == 0) {
-                fMax = frequency.get(frequency.size()-2) * 2 ;
-            }
+        }
+        // If maxPhaseDiff > Math.PI is not reached
+        if(fMin == 0){
+            fMin = frequency.getLast() ;
+        }
+        if (fMax == 0) {
+            fMax = frequency.get(frequency.size()-2) * 2 ;
         }
         return Math.sqrt(fMin * fMax);
     }
