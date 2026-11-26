@@ -411,11 +411,12 @@ public class HarmonoiseAttenuation {
         } else {
             distance = groundProfile.getImageVertex(iSource, iSeg).distance(groundProfile.getVertex(iReceiver));
         }
+        // Salomons et al.
         double hm = (Math.abs(groundProfile.getLocalOrdinate(iSource, iSeg))
                 + Math.abs(groundProfile.getLocalOrdinate(iReceiver, iSeg))) / 2;
-//        In the C++ implementation a different expression is used for hm :
-//        double hm = Math.max(groundProfile.getLocalOrdinate(iSource, iSeg),
-//                groundProfile.getLocalOrdinate(iReceiver, iSeg)) / 2;
+        // C++ implementation (no/small impact on unit tests)
+//        double hm = Math.max(Math.abs(groundProfile.getLocalOrdinate(iSource, iSeg)),
+//                Math.abs(groundProfile.getLocalOrdinate(iReceiver, iSeg))) / 2;
         Complex[] groundImpedance = groundProfile.getGroundImpedance(iSeg, frequencies);
         Complex[] reflectionCoefficient = new Complex[frequencies.size()];
         for (int i = 0; i < frequencies.size(); i++) {
@@ -425,7 +426,10 @@ public class HarmonoiseAttenuation {
             Complex admittance = groundImpedance[i].reciprocal();
             Complex numericalDistance = new Complex(0.5, 0.5).multiply(Math.sqrt(kr))
                     .multiply(admittance.add(Math.cos(angle)));
+            // Salomons et al.
             double hG = scene.defaultCnossosParameters.celerity / frequencies.get(i) / 32;
+            // C++ implementation (no/small impact on unit tests)
+//            double hG = scene.defaultCnossosParameters.celerity / frequencies.get(i) / 16;
             double nG = 1 - 0.7 * Math.exp(-hm / hG);
             reflectionCoefficient[i] = boundaryLossFactor(numericalDistance).pow(nG)
                     .multiply(new Complex(1).subtract(planeWaveReflectionCoefficient))
