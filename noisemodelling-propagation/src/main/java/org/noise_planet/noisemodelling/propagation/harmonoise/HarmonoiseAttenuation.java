@@ -846,8 +846,6 @@ public class HarmonoiseAttenuation {
             if (maxPhaseDiff > Math.PI/2 && fMin == 0) {
                 if (i == 0){
                     fMin = frequency.getFirst() / 2;
-                } else if (i == frequency.size()){
-                    fMin = frequency.getLast() ;
                 } else {
                     fMin = frequency.get(i-1) + (frequency.get(i) - frequency.get(i-1))
                             * (Math.PI/2 - phaseDiffPrevious) / (maxPhaseDiff - phaseDiffPrevious) ;
@@ -863,7 +861,12 @@ public class HarmonoiseAttenuation {
                 break;
             }
             // If maxPhaseDiff > Math.PI is not reached
-            fMax = frequency.get(frequency.size()-2) * 2 ;
+            if(fMin == 0){
+                fMin = frequency.getLast() ;
+            }
+            if (fMax == 0) {
+                fMax = frequency.get(frequency.size()-2) * 2 ;
+            }
         }
         return Math.sqrt(fMin * fMax);
     }
