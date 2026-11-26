@@ -85,26 +85,15 @@ public class HarmonoiseAttenuation {
             }
         }
         if (indexMaxDistance == 0) { // No diffraction point above the line crossing the first and last points
-            computeGroundAttenuation(iSource, iReceiver);
+            double[] attenuation = computeGroundAttenuation(iSource, iReceiver);
+            attenuationOutput.addGroundAttenuation(attenuation);
         }else {
-            computeDiffractionAttenuation(vertices[0], vertices[vertices.length-1],
+            Diffraction diffraction = computeDiffraction(vertices[0], vertices[vertices.length-1],
                     vertices[indexMaxDistance]);
+            attenuationOutput.addDiffractionAttenuation(diffraction.attenuation);
             computeExcessAttenuation(iSource, iSource + indexMaxDistance);
             computeExcessAttenuation(iSource + indexMaxDistance, iReceiver);
         }
-    }
-
-    /**
-     * Compute diffraction attenuation according to Harmonoise methodology and add it to AttenuationOutput
-     * Ref: section 2.3 from Salomons et al.
-     *
-     * @param source source point ("real" or secondary at diffraction edge)
-     * @param receiver receiver point ("real" or secondary at diffraction edge)
-     * @param point diffraction point
-     */
-    private void computeDiffractionAttenuation(Coordinate source, Coordinate receiver, Coordinate point) {
-        Diffraction diffraction = computeDiffraction(source, receiver, point);
-        attenuationOutput.addDiffractionAttenuation(diffraction.attenuation);
     }
 
     record Diffraction(double[] attenuation, Complex[] pressure) { }
@@ -186,7 +175,7 @@ public class HarmonoiseAttenuation {
         }
     }
 
-    private void computeGroundAttenuation(int iSource, int iReceiver) {
+    private double[] computeGroundAttenuation(int iSource, int iReceiver) {
         // Pre-computation of the reflexion coefficient necessary to compute the transition frequency
         Complex[][] reflectionCoefficient = new Complex[iReceiver-iSource][waveNumber.length];
         for (int k = iSource; k < iReceiver; k++) {
@@ -207,7 +196,7 @@ public class HarmonoiseAttenuation {
             attenuation = concaveGroundAttenuation(iSource, iReceiver, reflectionCoefficient, modifiedFresnelWeighting,
                     transitionFrequency);
         }
-        attenuationOutput.addGroundAttenuation(attenuation);
+        return attenuation;
     }
 
     private double[] transitionGroundAttenuation(int iSource, int iReceiver, Complex[][] reflectionCoefficient,
@@ -239,10 +228,8 @@ public class HarmonoiseAttenuation {
         double[] directAttenuation = concaveGroundAttenuation(iSource, iReceiver, reflectionCoefficient,
                 modifiedFresnelWeighting, transitionFrequency);
         double[] diffractionAttenuation = computeDiffraction(source, receiver, diffractionEdge).attenuation;
-        double[] leftAttenuation = concaveGroundAttenuation(iSource, indexMinDistance, reflectionCoefficient,
-                modifiedFresnelWeighting, transitionFrequency);
-        double[] rightAttenuation = concaveGroundAttenuation(indexMinDistance, iReceiver, reflectionCoefficient,
-                modifiedFresnelWeighting, transitionFrequency);
+        double[] leftAttenuation = computeGroundAttenuation(iSource, indexMinDistance);
+        double[] rightAttenuation = computeGroundAttenuation(indexMinDistance, iReceiver);
         double[] groundAttenuation = new double[waveNumber.length];
         for (int i = 0; i < waveNumber.length; i++) {
             int finalI = i;
