@@ -452,19 +452,31 @@ public class HarmonoiseAttenuation {
         // Compute z = exp(-w^2) * erfc(-iw) for different value of the numerical distance
         Complex z;
         if ( Math.abs(x) > 3.9 || Math.abs(y) > 3){
+            // First compute erf for (|x|, |y|), then correct the signs
+            Complex z1 = new Complex(Math.abs(x), Math.abs(y));
+            Complex z2 = z1.multiply(z1);
             if ( Math.abs(x) > 6. || Math.abs(y) > 6.) {
-                z = new Complex(0, 1).multiply(w)
+                z = new Complex(0, 1).multiply(z1)
                         .multiply(
-                                w.pow(2).subtract(0.2752551).reciprocal().multiply(0.5124242)
-                                .add(w.pow(2).subtract(2.724745).reciprocal().multiply(0.05176536))
+                                z2.subtract(0.2752551).reciprocal().multiply(0.5124242)
+                                .add(z2.subtract(2.724745).reciprocal().multiply(0.05176536))
                         );
             } else {
-                z = new Complex(0, 1).multiply(w)
+                z = new Complex(0, 1).multiply(z1)
                         .multiply(
-                                w.pow(2).subtract(0.1901635).reciprocal().multiply(0.461313500)
-                                .add(w.pow(2).subtract(1.7844927).reciprocal().multiply(0.099992160))
-                                .add(w.pow(2).subtract(5.5253437).reciprocal().multiply(0.002883894))
+                                z2.subtract(0.1901635).reciprocal().multiply(0.461313500)
+                                .add(z2.subtract(1.7844927).reciprocal().multiply(0.099992160))
+                                .add(z2.subtract(5.5253437).reciprocal().multiply(0.002883894))
                         );
+            }
+            // careful about the signs here
+            if (x < 0) {
+                z = z.conjugate();
+            }
+            if (y < 0) {
+                double factor = 2 * Math.exp(y * y - x * x);
+                z = new Complex(factor * Math.cos(2 * x * y), -factor * Math.sin(2 * x * y))
+                        .subtract(z.conjugate());
             }
         } else {
             double h = 0.8;
@@ -478,7 +490,7 @@ public class HarmonoiseAttenuation {
             if (cd != 0){
                 double expArgument = -(Math.pow(x, 2) + 2 * y * Math.PI / h - Math.pow(y, 2));
                 p = 2 * Math.exp(expArgument) * (a1 * c1 - b1 * d1) / cd;
-                q = 2 * Math.exp(expArgument) * (a1 * d1 - b1 * c1) / cd;
+                q = 2 * Math.exp(expArgument) * (a1 * d1 + b1 * c1) / cd;
             }
             double eh = Math.pow(10, -6);
             double h1 = 0;
