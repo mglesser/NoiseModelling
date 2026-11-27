@@ -28,7 +28,13 @@ public class AttenuationComputeOutputHarmonoiseTest {
     private static final double HUMIDITY = 70;
     private static final double TEMPERATURE = 10;
     double[] DEFAULT_FREQUENCIES_THIRD_OCTAVE = new double[] {50, 63, 80, 100, 125, 160, 200, 250, 315, 400, 500, 630, 800, 1000, 1250, 1600, 2000, 2500, 3150, 4000, 5000, 6300, 8000, 10000};
-    double DELTA = 1.5; // Tolerance for harmonoise vs. noiseModelling attenuation results comparison
+    double DELTA = 1; // Tolerance for harmonoise vs. noiseModelling attenuation results comparison
+    // Cases 8 and 16 are compared against plot-digitized curves that either the publication itself
+    // reports as deviating from the Harmonoise solution (case 8: "Harmonoise and Nord2000 deviate
+    // from the reference solution above 1 kHz") or whose largest error falls on a deep interference
+    // null where plot digitization is least accurate (case 16, 1600 Hz null). They therefore keep a
+    // slightly larger tolerance.
+    double DELTA_KNOWN_DEVIATION = 1.5;
     String rootDir = Paths.get(System.getProperty("user.dir")).getParent().toString();
 
     public static CutProfile loadCutProfile(String utName) throws IOException {
@@ -70,6 +76,8 @@ public class AttenuationComputeOutputHarmonoiseTest {
         sceneWithAttenuation.defaultCnossosParameters.setbMeteo(bMeteo);
         sceneWithAttenuation.defaultCnossosParameters.setZ0(0.1);
         sceneWithAttenuation.defaultCnossosParameters.setSegmentLengthRatio(segmentLengthRatio);
+        // Salomons et al. (2011) reference calculations assume c0 = 340 m/s (288 K), see section 3
+        sceneWithAttenuation.defaultCnossosParameters.celerity = 340;
 
         PropagationModel propagationModel = new HarmonoisePropagationModel();
 
@@ -473,7 +481,7 @@ public class AttenuationComputeOutputHarmonoiseTest {
         plot.legend("Salomons 2011", "NoiseModelling");
         plot.draw(rootDir + "/Docs/images/Validation/Harmonoise/case08.svg");
         for (int i = 0; i < referenceExcessAttenuation.length-3; i++) {
-            assertEquals(referenceExcessAttenuation[i+3], output.aGlobal[i], DELTA);
+            assertEquals(referenceExcessAttenuation[i+3], output.aGlobal[i], DELTA_KNOWN_DEVIATION);
         }
     }
 
@@ -881,7 +889,7 @@ public class AttenuationComputeOutputHarmonoiseTest {
         plot.legend("Salomons 2011", "NoiseModelling");
         plot.draw(rootDir + "/Docs/images/Validation/Harmonoise/case16.svg");
         for (int i = 0; i < output.aGlobal.length; i++) {
-            assertEquals(referenceExcessAttenuation[i+3], output.aGlobal[i], DELTA);
+            assertEquals(referenceExcessAttenuation[i+3], output.aGlobal[i], DELTA_KNOWN_DEVIATION);
         }
     }
 }
