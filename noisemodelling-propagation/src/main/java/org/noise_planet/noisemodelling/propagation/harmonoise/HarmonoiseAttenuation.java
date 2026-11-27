@@ -851,8 +851,14 @@ public class HarmonoiseAttenuation {
         Coordinate source = groundProfile.getVertex(iSource);
         Coordinate receiver = groundProfile.getVertex(iReceiver);
         Coordinate imageSource = groundProfile.getImageVertex(iSource, iSeg);
+        double pathDifference = imageSource.distance(receiver) - source.distance(receiver);
+        // The c++ implementation considers convex segments for the determination of the
+        // transition frequency
+        if (groundProfile.isConvexSegment(iSeg, iSource, iReceiver)){
+            pathDifference = -pathDifference;
+        }
         return reflectionCoefficient.getArgument() +
-                waveNumber[iFreq] * (imageSource.distance(receiver) - source.distance(receiver));
+                waveNumber[iFreq] * pathDifference;
     }
 
     /**
@@ -874,6 +880,8 @@ public class HarmonoiseAttenuation {
         for (int i = 0; i < frequency.size(); i++) {
             phaseDiffPrevious = maxPhaseDiff;
             for (int k = iSource; k < iReceiver; k++) {
+                // Note: the c++ implementation considers the convex segments for the determination
+                // of the transition frequency (which slightly degrades the unit test results)
                 if (groundProfile.isConvexSegment(k, iSource, iReceiver)){
                     continue;
                 }
