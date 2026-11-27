@@ -99,7 +99,7 @@ public class HarmonoiseAttenuation {
     record Diffraction(double[] attenuation, Complex[] pressure) { }
 
     /**
-     * Compute diffraction attenuation and diffracted sound pressure amplitude according to Harmonoise methodology
+     * Compute diffraction attenuation and diffracted sound pressure amplitude
      * Ref: section 2.3 from Salomons et al.
      *
      * @param source source point ("real" or secondary at diffraction edge)
@@ -201,7 +201,8 @@ public class HarmonoiseAttenuation {
 
     /**
      * Compute the ground attenuation resulting from a transition between diffraction and
-     * flat ground model
+     * flat ground model for profiles with convex segments
+     * Ref: section 2.4.3 from Salomons et al.
      *
      * @param iSource index of the (secondary) source
      * @param iReceiver index of the (secondary) receiver
@@ -318,6 +319,17 @@ public class HarmonoiseAttenuation {
         }
     }
 
+    /**
+     * Compute the ground attenuation for profiles without convex segments
+     * Ref: section 2.4.1 from Salomons et al.
+     *
+     * @param iSource index of the (secondary) source
+     * @param iReceiver index of the (secondary) receiver
+     * @param reflectionCoefficient spherical wave reflexion coefficient
+     * @param modifiedFresnelWeighting modified Fresnel weighting
+     * @param transitionFrequency transition frequency
+     * @return ground attenuation for profiles without convex segments
+     */
     private double[] concaveGroundAttenuation(int iSource, int iReceiver, Complex[][] reflectionCoefficient,
                                           double[][] modifiedFresnelWeighting, double transitionFrequency){
         // Initialization
@@ -334,7 +346,6 @@ public class HarmonoiseAttenuation {
                 nw[iFreq] = nw[iFreq] + modifiedFresnelWeighting[k - iSource][iFreq];
             }
         }
-
         double[] concaveGroundAttenuation = new double[waveNumber.length];
         double[] flatAttenuation = flatGroundAttenuation(geometricalWeightingFactor, reflectionCoefficient,
                 coherenceFactor,modifiedFresnelWeighting);
@@ -826,7 +837,7 @@ public class HarmonoiseAttenuation {
     }
 
     /**
-     *  Return, for a given (sub)profile and reflection plane, the phase difference between direct and reflected sound
+     * Return, for a given (sub)profile and reflection plane, the phase difference between direct and reflected sound
      * Ref: Eq. 57 from Salomons et al.
      *
      * @param iSeg index of the reflection plane segment
