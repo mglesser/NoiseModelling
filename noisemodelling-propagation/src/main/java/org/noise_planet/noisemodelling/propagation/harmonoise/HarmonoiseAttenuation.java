@@ -520,7 +520,7 @@ public class HarmonoiseAttenuation {
             if (cd != 0){
                 double expArgument = -(Math.pow(x, 2) + 2 * y * Math.PI / h - Math.pow(y, 2));
                 p = 2 * Math.exp(expArgument) * (a1 * c1 - b1 * d1) / cd;
-                q = 2 * Math.exp(expArgument) * (a1 * d1 - b1 * c1) / cd;
+                q = 2 * Math.exp(expArgument) * (a1 * d1 + b1 * c1) / cd;
             }
             double eh = Math.pow(10, -6);
             double h1 = 0;
