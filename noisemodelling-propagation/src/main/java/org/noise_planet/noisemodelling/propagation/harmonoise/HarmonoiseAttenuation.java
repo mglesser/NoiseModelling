@@ -336,9 +336,9 @@ public class HarmonoiseAttenuation {
         }
 
         double[] concaveGroundAttenuation = new double[waveNumber.length];
-        double[] flatAttenuation = flatGroundAttenuation(iSource, geometricalWeightingFactor, reflectionCoefficient,
+        double[] flatAttenuation = flatGroundAttenuation(geometricalWeightingFactor, reflectionCoefficient,
                 coherenceFactor,modifiedFresnelWeighting);
-        double[] valleyAttenuation = valleyGroundAttenuation(iSource, geometricalWeightingFactor, reflectionCoefficient,
+        double[] valleyAttenuation = valleyGroundAttenuation(geometricalWeightingFactor, reflectionCoefficient,
                 coherenceFactor, modifiedFresnelWeighting);
         for (int i = 0; i < frequency.size(); i++) {
             double xg = nw[i] / Math.sqrt(1 + Math.pow(frequency.get(i) / transitionFrequency, 2));
@@ -352,13 +352,12 @@ public class HarmonoiseAttenuation {
      * Return the ground attenuation of a (sub)profile for relatively flat ground
      * Ref: Eq. 19 and 20 from Salomons et al.
      *
-     * @param iSource index of the (secondary) source
      * @param geometricalWeightingFactor geometrical weighting factors for all segments of the (sub)profile
      * @param coherenceFactor coherence factor for all segments of the (sub)profile
      * @param modifiedFresnelWeighting modified Fresnel weighing for all segments of the (sub)profile
      * @return round attenuation for relatively flat ground
      */
-    private double[] flatGroundAttenuation(int iSource, Complex[][] geometricalWeightingFactor,
+    private double[] flatGroundAttenuation(Complex[][] geometricalWeightingFactor,
                                            Complex[][] reflectionCoefficient, double[][] coherenceFactor,
                                            double[][] modifiedFresnelWeighting) {
         int nbSeg = geometricalWeightingFactor.length;
@@ -390,13 +389,12 @@ public class HarmonoiseAttenuation {
      * Return the ground attenuation of a (sub)profile for valley-shaped terrain
      * Ref: Eq. 21 from Salomons et al.
      *
-     * @param iSource index of the (secondary) source
      * @param geometricalWeightingFactor geometrical weighting factors for all segments of the (sub)profile
      * @param coherenceFactor coherence factor for all segments of the (sub)profile
      * @param modifiedFresnelWeighting modified Fresnel weighing for all segments of the (sub)profile
      * @return round attenuation for valley-shaped terrain
      */
-    private double[] valleyGroundAttenuation(int iSource, Complex[][] geometricalWeightingFactor, Complex[][] reflectionCoefficient,
+    private double[] valleyGroundAttenuation(Complex[][] geometricalWeightingFactor, Complex[][] reflectionCoefficient,
                                              double[][] coherenceFactor, double[][] modifiedFresnelWeighting) {
         int nbSeg = geometricalWeightingFactor.length;
         int nbFreq = geometricalWeightingFactor[0].length;
