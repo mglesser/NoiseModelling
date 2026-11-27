@@ -254,7 +254,8 @@ public class HarmonoiseAttenuation {
      * @param modifiedFresnelWeighting modified Fresnel weighting
      * @return factor chi
      */
-    private double balanceFactor(int iSource, int iPoint, int iReceiver, double wavelength, double[] modifiedFresnelWeighting){
+    private double balanceFactor(int iSource, int iPoint, int iReceiver, double wavelength,
+                                 double[] modifiedFresnelWeighting){
         double pathLengthDiff = groundProfile.getPathLengthDifference(iSource, iPoint, iReceiver);
         double numerator = 0;
         double denominator = 0;
@@ -266,20 +267,20 @@ public class HarmonoiseAttenuation {
             denominator += modifiedFresnelWeighting[k-iSource];
         }
         double deltaSpecular = numerator / denominator;
-        double chi1 = function((deltaSpecular - pathLengthDiff) / (wavelength/8));
-        double chi2 = function(pathLengthDiff / (wavelength/64));
+        double chi1 = lowpassFilter((deltaSpecular - pathLengthDiff) / (wavelength/8));
+        double chi2 = lowpassFilter(pathLengthDiff / (wavelength/64));
         return chi2 + (1-chi1) * (1-chi2);
     }
 
     /**
-     * Implement Eq. 68 and 70 from Salomons et al.
+     * Lowpass filter
      *
-     * @param tau input parameter
+     * @param x input parameter
      * @return output parameter
      */
-    private double function(double tau) {
-        if (tau > 0) {
-            return 1 - Math.exp(-1/(tau*tau));
+    private double lowpassFilter(double x) {
+        if (x > 0) {
+            return 1 - Math.exp(-1/(x*x));
         } else {
             return 1.0;
         }
@@ -309,7 +310,7 @@ public class HarmonoiseAttenuation {
                 coherenceFactor, modifiedFresnelWeighting);
         for (int i = 0; i < frequency.size(); i++) {
             double xg = nw[i] / Math.sqrt(1 + Math.pow(frequency.get(i) / transitionFrequency, 2));
-            double fg = 1 - Math.exp(-1 / Math.pow(xg,2));
+            double fg = lowpassFilter(xg);
             concaveGroundAttenuation[i] = fg * flatAttenuation[i] + (1- fg) * valleyAttenuation[i];
         }
         return concaveGroundAttenuation;
