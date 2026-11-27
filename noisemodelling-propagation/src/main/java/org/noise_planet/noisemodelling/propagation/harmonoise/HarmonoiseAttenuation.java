@@ -131,6 +131,13 @@ public class HarmonoiseAttenuation {
         double[] diffractionAttenuation = Arrays.stream(fresnelNumber)
                 .map(HarmonoiseAttenuation::fresnelApproximation)
                 .toArray();
+        // In the c++ implementation, a geometric spreading term between the direct path and the diffracted path
+        // is added:
+        // att_dif = xd + 20*log10(D / rd)  (C++ CumulDiffraction / Pdif_Deygout)
+        double spreading = 20 * Math.log10(directPathLength / (distanceToSource + distanceToReceiver));
+        for (int i = 0; i < diffractionAttenuation.length; i++) {
+            diffractionAttenuation[i] += spreading;
+        }
         Complex[] sphericalPressure = unitSphericalWavePressure(directPathLength);
         Complex[] diffractedPressure = new Complex[diffractionAttenuation.length];
         for (int i = 0; i < waveNumber.length; i++) {
