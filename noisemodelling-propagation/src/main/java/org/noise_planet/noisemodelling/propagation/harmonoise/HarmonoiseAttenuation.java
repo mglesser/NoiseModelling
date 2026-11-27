@@ -199,53 +199,59 @@ public class HarmonoiseAttenuation {
         return attenuation;
     }
 
+    /**
+     * Compute the ground attenuation resulting from a transition between diffraction and
+     * flat ground model
+     *
+     * @param iSource index of the (secondary) source
+     * @param iReceiver index of the (secondary) receiver
+     * @param reflectionCoefficient spherical wave reflexion coefficient
+     * @param modifiedFresnelWeighting modified Fresnel weighting
+     * @param transitionFrequency transition frequency
+     * @return ground attenuation for profiles with convex segments
+     */
     private double[] transitionGroundAttenuation(int iSource, int iReceiver, Complex[][] reflectionCoefficient,
                                              double[][] modifiedFresnelWeighting, double transitionFrequency){
         // Searching for diffraction points below line of sight with the smallest path
         // length difference
         double minDistance = 1e6;
-        int indexMinDistance = 0;
-        for (int k = iSource; k < iReceiver - 1; k++) {
-            if( groundProfile.getLocalOrdinate(iSource, k) < 0 ){
+        int iDiffractionEdge = 0;
+        for (int k = iSource + 1; k < iReceiver; k++) {
+            if( groundProfile.isConvexSegment(k-1, iSource, iReceiver)
+                    || groundProfile.isConvexSegment(k, iSource, iReceiver)) {
                 double distance = groundProfile.getPathLengthDifference(iSource, k, iReceiver); // Eq 5
                 if (distance < minDistance){
                     minDistance = distance;
-                    indexMinDistance = k;
-                }
-            }
-            else if( groundProfile.getLocalOrdinate(iReceiver, k) < 0 ) {
-                double distance = groundProfile.getPathLengthDifference(iSource, k + 1, iReceiver); // Eq 5
-                if (distance < minDistance) {
-                    minDistance = distance;
-                    indexMinDistance = k + 1;
+                    iDiffractionEdge = k;
                 }
             }
         }
         // Compute attenuation
         Coordinate source = groundProfile.getVertex(iSource);
         Coordinate receiver = groundProfile.getVertex(iReceiver);
-        Coordinate diffractionEdge = groundProfile.getVertex(indexMinDistance);
-        double[] directAttenuation = concaveGroundAttenuation(iSource, iReceiver, reflectionCoefficient,
+        Coordinate diffractionEdge = groundProfile.getVertex(iDiffractionEdge);
+        double[] flatAttenuation = concaveGroundAttenuation(iSource, iReceiver, reflectionCoefficient,
                 modifiedFresnelWeighting, transitionFrequency);
         double[] diffractionAttenuation = computeDiffraction(source, receiver, diffractionEdge).attenuation;
-        double[] leftAttenuation = computeGroundAttenuation(iSource, indexMinDistance);
-        double[] rightAttenuation = computeGroundAttenuation(indexMinDistance, iReceiver);
+        double[] leftAttenuation = computeGroundAttenuation(iSource, iDiffractionEdge);
+        double[] rightAttenuation = computeGroundAttenuation(iDiffractionEdge, iReceiver);
         double[] groundAttenuation = new double[waveNumber.length];
         for (int i = 0; i < waveNumber.length; i++) {
             int finalI = i;
             double[] weightings = Arrays.stream(modifiedFresnelWeighting)
                     .mapToDouble(w -> w[finalI])
                     .toArray();
-            double chi = balanceFactor(iSource, indexMinDistance, iReceiver, 2 * Math.PI / waveNumber[i],
+            double chi = balanceFactor(iSource, iDiffractionEdge, iReceiver, 2 * Math.PI / waveNumber[i],
                     weightings);
-            double l1 = diffractionAttenuation[i] + leftAttenuation[i] + rightAttenuation[i];
-            groundAttenuation[i] = chi * l1 + (1-chi) * directAttenuation[i];
+            double belowLOSAttenuation = diffractionAttenuation[i] + leftAttenuation[i] + rightAttenuation[i];
+            groundAttenuation[i] = chi * belowLOSAttenuation + (1-chi) * flatAttenuation[i];
         }
         return groundAttenuation;
     }
 
     /**
-     * Implement Eq. 64 from Salomons et al. at a given frequency
+     * Balance between flat attenuation and attenuation below line of sight
+     * Implements Eq. 64 from Salomons et al. at a given frequency
      *
      * @param iSource index of the (secondary) source
      * @param iPoint index of the diffraction point
@@ -256,20 +262,46 @@ public class HarmonoiseAttenuation {
      */
     private double balanceFactor(int iSource, int iPoint, int iReceiver, double wavelength,
                                  double[] modifiedFresnelWeighting){
+        // Salomons et al. version
         double pathLengthDiff = groundProfile.getPathLengthDifference(iSource, iPoint, iReceiver);
-        double numerator = 0;
-        double denominator = 0;
+        double factor1 = 0;
+        double fresnelWeightingSum = 0;
         for (int k = iSource; k < iReceiver; k++) {
-            numerator += modifiedFresnelWeighting[k-iSource] * (
-                    groundProfile.getImageVertex(iSource, k).distance(groundProfile.getVertex(iReceiver))
-                    - groundProfile.getVertex(iSource).distance(groundProfile.getVertex(iReceiver))
-            );
-            denominator += modifiedFresnelWeighting[k-iSource];
+            double deltaSpecular = groundProfile.getImageVertex(iSource, k).distance(groundProfile.getVertex(iReceiver))
+                    - groundProfile.getVertex(iSource).distance(groundProfile.getVertex(iReceiver));
+            factor1 += modifiedFresnelWeighting[k-iSource] * (deltaSpecular);
+            fresnelWeightingSum += modifiedFresnelWeighting[k-iSource];
         }
-        double deltaSpecular = numerator / denominator;
-        double chi1 = lowpassFilter((deltaSpecular - pathLengthDiff) / (wavelength/8));
+        double deltaSpecularAverage = factor1 / fresnelWeightingSum;
+        double chi1 = lowpassFilter((deltaSpecularAverage - pathLengthDiff) / (wavelength/8));
         double chi2 = lowpassFilter(pathLengthDiff / (wavelength/64));
         return chi2 + (1-chi1) * (1-chi2);
+
+        // C++ implementation version (degrades the unit test results)
+//        double pathLengthDiff = groundProfile.getPathLengthDifference(iSource, iPoint, iReceiver);
+//        double factor1 = 0;
+//        double factor2 = 0;
+//        double fresnelWeightingSum = 0;
+//        for (int k = iSource; k < iReceiver; k++) {
+//            double deltaSpecular = groundProfile.getImageVertex(iSource, k).distance(groundProfile.getVertex(iReceiver))
+//                    - groundProfile.getVertex(iSource).distance(groundProfile.getVertex(iReceiver));
+//            if( groundProfile.isConvexSegment(k, iSource, iReceiver)){
+//                deltaSpecular = -deltaSpecular;
+//            }
+//            factor1 += modifiedFresnelWeighting[k-iSource] * (deltaSpecular);
+//            factor2 += modifiedFresnelWeighting[k-iSource] * (deltaSpecular) * (deltaSpecular);
+//            fresnelWeightingSum += modifiedFresnelWeighting[k-iSource];
+//        }
+//        if( fresnelWeightingSum > 0){
+//            factor1 = factor1 / fresnelWeightingSum;
+//            factor2 = factor2 / fresnelWeightingSum;
+//            factor1 = Math.sqrt( Math.max( 0.0, factor2 - factor1*factor1));
+//        }
+//        double deltaSpecularAverage = factor1;
+//        double chi1 = lowpassFilter((deltaSpecularAverage) / (wavelength/8));
+//        double tau2 = pathLengthDiff / (wavelength/128);
+//        double chi2 = Math.exp(-tau2) / Math.pow(1 + Math.sqrt(tau2), 1.0/3);
+//        return 1- (chi1 * (1-chi2));
     }
 
     /**
@@ -816,7 +848,6 @@ public class HarmonoiseAttenuation {
 
     /**
      * Return the transition frequency for a given (sub)profile
-     * /!\ groundProfile.reflectionCoefficient must have been pre-computed before calling the present method
      * Eq. 53 to 58 from Salomons et al.
      *
      * @param iSource index of the (secondary) source
